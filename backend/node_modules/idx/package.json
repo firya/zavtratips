@@ -1,0 +1,33 @@
+{
+  "name": "idx",
+  "version": "2.5.6",
+  "description": "Utility function for traversing properties on objects and arrays.",
+  "main": "lib/idx.js",
+  "types": "lib/idx.d.ts",
+  "files": [
+    "README.md",
+    "lib/"
+  ],
+  "repository": "facebookincubator/idx",
+  "license": "MIT",
+  "scripts": {
+    "build": "scripts/build.sh",
+    "prepublish": "yarn run build && cp ../../README.md .",
+    "test": "jest && yarn run tsc",
+    "tsc": "tsc --noEmit --strict src/idx.test.ts"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.23.0",
+    "babel-jest": "^19.0.0",
+    "babel-plugin-transform-flow-strip-types": "^6.22.0",
+    "babel-preset-env": "^1.1.11",
+    "flow-bin": "^0.92.1",
+    "jest": "^19.0.2",
+    "typescript": "^3.3.3333"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "rootDir": "src"
+  },
+  "gitHead": "431291a19453512a5a22ec0750cea381912fa48a"
+}

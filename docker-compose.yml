@@ -1,0 +1,59 @@
+version: "3.7"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: "${CONTAINER_NAME}_backend"
+    volumes:
+      - ./backend:/home/node/app
+    restart: always
+    ports:
+      - "3000:${NODE_PORT}"
+    environment:
+      - NODE_ENV=$NODE_ENV
+      - NODE_PORT=$NODE_PORT
+      - VIRTUAL_HOST=$VIRTUAL_HOST
+      - LETSENCRYPT_HOST=$LETSENCRYPT_HOST
+      - LETSENCRYPT_EMAIL=$LETSENCRYPT_EMAIL
+      - TELEGRAM_DEFAULT_ADMIN=$TELEGRAM_DEFAULT_ADMIN
+      - TELEGRAM_TOKEN=$TELEGRAM_TOKEN
+      - GOOGLE_SPREADSHEET_URL=$GOOGLE_SPREADSHEET_URL
+      - GOOGLE_SERVICE_ACCOUNT_EMAIL=$GOOGLE_SERVICE_ACCOUNT_EMAIL
+      - GOOGLE_PRIVATE_KEY=$GOOGLE_PRIVATE_KEY
+      - OMDB_API_KEY=$OMDB_API_KEY
+      - RAWG_API_KEY=$RAWG_API_KEY
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: "${CONTAINER_NAME}_frontend"
+    volumes:
+      - ./frontend:/app
+    expose:
+      - 3000
+    ports:
+      - "8080:3000"
+    environment:
+      - REACT_APP_VIRTUAL_HOST=$VIRTUAL_HOST
+      - REACT_APP_NODE_PORT=3000
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  mongo:
+    container_name: "${CONTAINER_NAME}_mongo"
+    image: mongo
+    volumes:
+      - ./data:/data/db
+    ports:
+      - "27017:27017"
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
