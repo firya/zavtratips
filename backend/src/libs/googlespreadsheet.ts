@@ -96,7 +96,7 @@ export const updateAllRows = async (
 
 		if (from || to) {
 			from = from ? from - 2 : 0;
-			to = to ? to - 2 : rows.length - 1;
+			to = to ? to - 1 : rows.length - 1;
 
 			rows = rows.slice(from, to);
 		}

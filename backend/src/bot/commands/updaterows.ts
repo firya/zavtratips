@@ -7,13 +7,13 @@ export default {
 	run: Composer.command("/updaterows", async (ctx) => {
 		const args = ctx.state.command.splitArgs;
 
-		await updateAllRows(
+		ctx.reply("in progress...");
+
+		updateAllRows(
 			process.env.GOOGLE_SPREADSHEET_URL,
 			"Рекомендации",
 			args[0],
 			args[1]
 		);
-
-		ctx.reply("👍");
 	}),
 };
