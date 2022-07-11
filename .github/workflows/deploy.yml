@@ -31,13 +31,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: executing remote ssh commands using password
-        uses: fifsky/ssh-action@master
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
-          user: ${{ secrets.USERNAME }}
+          username: ${{ secrets.USERNAME }}
           port: ${{ secrets.PORT }}
           key: ${{ secrets.SSHKEY }}
-          command: |
+          script: |
             cd zavtratips
             git pull origin master
             docker rmi --force firya/zavtratips_frontend:latest || true
