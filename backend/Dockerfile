@@ -3,8 +3,8 @@ FROM node:alpine as prod
 RUN mkdir -p /app
 WORKDIR /app
 
-COPY package*.json .
-COPY tsconfig.json .
+COPY package*.json ./
+COPY tsconfig.json ./
 COPY src ./src
 
 RUN npm install

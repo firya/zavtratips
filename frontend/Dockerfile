@@ -2,10 +2,10 @@ FROM node:alpine
 
 WORKDIR /app
 
-COPY package*.json .
-COPY tsconfig.json .
+COPY package*.json ./
+COPY tsconfig.json ./
 
-COPY . .
+COPY ./ ./
 
 RUN npm i
 
