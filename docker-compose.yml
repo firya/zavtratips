@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
       target: prod
     container_name: "zavtratips_backend"
-    image: "firya/zavtratips_backend:latest"
+    # image: "firya/zavtratips_backend:latest"
     volumes:
       - ./backend/src:/app/src
     restart: always
