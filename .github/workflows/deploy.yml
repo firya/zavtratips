@@ -23,7 +23,7 @@ jobs:
         run: docker compose build --no-cache
 
       - name: Docker compose push
-        run: docker compsoe push
+        run: docker compose push
   # update_ssh_linode:
   #   name: Telling Linode Server to Update
   #   needs: "push_to_registry"
