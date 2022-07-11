@@ -33,7 +33,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: "zavtratips_frontend"
-    image: "firya/zavtratips_frontend:latest"
+    # image: "firya/zavtratips_frontend:latest"
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
