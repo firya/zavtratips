@@ -28,8 +28,13 @@ Bot.use(botPermissions());
 
 export const secretPath = `/telegraf/${Bot.secretPathComponent()}`;
 
-Bot.telegram.setWebhook(`${hostURL}${secretPath}`);
-setupWebApp();
+try {
+	Bot.telegram.setWebhook(`${hostURL}${secretPath}`);
+	setupWebApp();
+	console.log(`bot successfully set up webhook at ${hostURL}${secretPath}`);
+} catch (e) {
+	console.log(e);
+}
 
 Bot.use(
 	inline,
