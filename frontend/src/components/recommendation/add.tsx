@@ -123,7 +123,7 @@ const AddRecommendation = () => {
 		if (!loading) {
 			setLoading(true);
 			try {
-				const result = await API({
+				await API({
 					method: "POST",
 					endpoint: "/rows",
 					data: {

@@ -145,7 +145,7 @@ const EditRecommendation = () => {
 			setLoading(true);
 			const rowNumber = recommendationList[values.podcast].rowNumber;
 			try {
-				const result = await API({
+				await API({
 					method: "PUT",
 					endpoint: `/rows/`,
 					data: {

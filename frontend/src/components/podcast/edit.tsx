@@ -48,7 +48,7 @@ const EditPodcast = () => {
 			setLoading(true);
 			const rowNumber = podcastList[values.podcast].rowNumber;
 			try {
-				const result = await API({
+				await API({
 					method: "PUT",
 					endpoint: `/rows/`,
 					data: {

@@ -1,4 +1,3 @@
-import axios from "axios";
 import { hostURL } from "../dev";
 import qs from "qs";
 
@@ -9,7 +8,7 @@ interface IapiProps {
 	headers?: {};
 }
 
-export default (props: IapiProps): Promise<any> => {
+const API = (props: IapiProps): Promise<any> => {
 	const { method = "GET", data = {}, endpoint, headers = {} } = props;
 
 	let url: string = `${hostURL}/api${endpoint}`;
@@ -40,3 +39,5 @@ export default (props: IapiProps): Promise<any> => {
 		}
 	});
 };
+
+export default API;

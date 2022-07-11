@@ -1,4 +1,4 @@
-import { Layout, PageHeader, Divider, Button, Space } from "antd";
+import { Layout, PageHeader, Button, Space } from "antd";
 import { useNavigate } from "react-router-dom";
 
 const RecommendationPage = () => {

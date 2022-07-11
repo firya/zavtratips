@@ -1,40 +1,46 @@
-# name: Publish Docker images
+name: Publish Docker images
 
-# on:
-#   push:
-#     branches:
-#       - main
+on:
+  push:
+    branches:
+      - main
 
-# jobs:
-#   push_to_docker_hub:
-#     name: Build and push docker images to Docker Hub
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v2
+jobs:
+  push_to_docker_hub:
+    name: Build and push docker images to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-#       - name: Log in to Docker Hub
-#         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
-#         with:
-#           username: ${{ secrets.DOCKER_USERNAME }}
-#           password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-#       - name: Build images
-#         run: docker compose build --no-cache
+      - name: Build images
+        run: docker compose build --no-cache
 
-#       - name: Docker compose push
-#         run: docker compose push
+      - name: Docker compose push
+        run: docker compose push
 
-# update_ssh_linode:
-#   name: Telling Linode Server to Update
-#   needs: "push_to_registry"
-#   runs-on: ubuntu-latest
-#   steps:
-#   - name: executing remote ssh commands using password
-#     uses: appleboy/ssh-action@master
-#     with:
-#       host: ${{ secrets.HOST }}
-#       username: ${{ secrets.USERNAME }}
-#       password: ${{ secrets.PASSWORD }}
-#       port: ${{ secrets.PORT }}
-#       script: bash update.sh
+  update_ssh:
+    name: Telling DigitalOcean server to update
+    needs: "push_to_docker_hub"
+    runs-on: ubuntu-latest
+    steps:
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PORT: ${{ secrets.PORT }}
+          KEY: ${{ secrets.SSHKEY }}
+          script: |
+            cd zavtratips
+            git pull origin master
+            docker rmi --force firya/zavtratips_frontend:latest || true
+            docker rmi --force firya/zavtratips_backend:latest || true
+            docker compose build --pull --no-cache
+            docker compose ud -d --force-recreate

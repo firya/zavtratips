@@ -1,8 +1,6 @@
 import { Layout } from "antd";
-import { useNavigate } from "react-router-dom";
 
 const Page404 = () => {
-	const navigate = useNavigate();
 	return (
 		<Layout
 			style={{

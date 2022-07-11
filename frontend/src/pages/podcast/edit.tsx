@@ -1,4 +1,4 @@
-import { Layout, PageHeader, Skeleton } from "antd";
+import { Layout, PageHeader } from "antd";
 import { useNavigate } from "react-router-dom";
 
 import EditPodcast from "../../components/podcast/edit";
