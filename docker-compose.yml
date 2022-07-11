@@ -28,25 +28,25 @@ services:
     depends_on:
       - mongo
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: "zavtratips_frontend"
-    image: "firya/zavtratips_frontend:latest"
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-    expose:
-      - 3000
-    ports:
-      - "8081:3000"
-    environment:
-      - REACT_APP_VIRTUAL_HOST=$VIRTUAL_HOST
-      - REACT_APP_NODE_PORT=3000
-    restart: always
-    depends_on:
-      - backend
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: "zavtratips_frontend"
+  #   image: "firya/zavtratips_frontend:latest"
+  #   volumes:
+  #     - ./frontend/src:/app/src
+  #     - ./frontend/public:/app/public
+  #   expose:
+  #     - 3000
+  #   ports:
+  #     - "8081:3000"
+  #   environment:
+  #     - REACT_APP_VIRTUAL_HOST=$VIRTUAL_HOST
+  #     - REACT_APP_NODE_PORT=3000
+  #   restart: always
+  #   depends_on:
+  #     - backend
 
   mongo:
     container_name: "zavtratips_mongo"
