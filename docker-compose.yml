@@ -14,8 +14,8 @@ services:
       - "8080:3001"
     environment:
       - NODE_ENV=$NODE_ENV
-      - VIRTUAL_HOST=$VIRTUAL_HOST
-      - LETSENCRYPT_HOST=$LETSENCRYPT_HOST
+      - VIRTUAL_HOST=$VIRTUAL_HOST_BOT
+      - LETSENCRYPT_HOST=$LETSENCRYPT_HOST_BOT
       - LETSENCRYPT_EMAIL=$LETSENCRYPT_EMAIL
       - TELEGRAM_DEFAULT_ADMIN=$TELEGRAM_DEFAULT_ADMIN
       - TELEGRAM_TOKEN=$TELEGRAM_TOKEN
@@ -37,7 +37,7 @@ services:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
     ports:
-      - "3000:80"
+      - "8080:80"
     environment:
       - REACT_APP_VIRTUAL_HOST=$VIRTUAL_HOST
       - VIRTUAL_HOST=$VIRTUAL_HOST
