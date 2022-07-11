@@ -14,6 +14,7 @@ const MainPage = () => {
 			}}
 		>
 			<Space direction="vertical" align="center">
+				{process.env.REACT_APP_BACKEND_URL}
 				<Title level={4}>Choose what to add/edit</Title>
 				<Button
 					type="primary"

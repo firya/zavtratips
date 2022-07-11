@@ -38,7 +38,7 @@ services:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
     environment:
-      - REACT_APP_BACKEND_URL=$VIRTUAL_HOST
+      - REACT_APP_BACKEND_URL=$VIRTUAL_HOST_BOT
       - VIRTUAL_HOST=$VIRTUAL_HOST
       - LETSENCRYPT_HOST=$LETSENCRYPT_HOST
       - LETSENCRYPT_EMAIL=$LETSENCRYPT_EMAIL
