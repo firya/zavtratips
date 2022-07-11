@@ -20,7 +20,7 @@ COPY tsconfig.json ./
 
 COPY ./ ./
 
-RUN npm сi
+RUN npm i
 RUN npm run build
 
 FROM nginx:stable-alpine
