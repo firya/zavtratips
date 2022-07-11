@@ -9,7 +9,7 @@ const ngrockUrlWebApp: string = "https://eb76-5-253-204-100.eu.ngrok.io";
 export const hostURL: string =
 	process.env.NODE_ENV == "development"
 		? `${ngrockUrl}`
-		: `https://${process.env.VIRTUAL_HOST}:3000`;
+		: `https://${process.env.VIRTUAL_HOST}`;
 
 export const webAppURL: string =
 	process.env.NODE_ENV == "development"
