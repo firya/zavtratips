@@ -14,4 +14,4 @@ export const hostURL: string =
 export const webAppURL: string =
 	process.env.NODE_ENV !== "production"
 		? `${ngrockUrlWebApp}`
-		: `https://${process.env.VIRTUAL_HOST}:8081`;
+		: `https://${process.env.FRONTEND_URL}`;
