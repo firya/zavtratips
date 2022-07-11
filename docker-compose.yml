@@ -49,7 +49,7 @@ services:
       - backend
 
   mongo:
-    container_name: "${CONTAINER_NAME}_mongo"
+    container_name: "zavtratips_mongo"
     image: mongo
     volumes:
       - ./data:/data/db
