@@ -36,8 +36,6 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
-    ports:
-      - "8080:80"
     environment:
       - REACT_APP_VIRTUAL_HOST=$VIRTUAL_HOST
       - VIRTUAL_HOST=$VIRTUAL_HOST

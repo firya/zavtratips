@@ -39,7 +39,7 @@ jobs:
           key: ${{ secrets.SSHKEY }}
           script: |
             cd zavtratips
-            git pull origin master
+            git pull origin main
             docker rmi --force firya/zavtratips_frontend:latest || true
             docker rmi --force firya/zavtratips_backend:latest || true
             docker compose build --pull --no-cache
