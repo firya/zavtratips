@@ -83,7 +83,7 @@ const getStatsList = async (query): Promise<ImessageProps[]> => {
 					"https://images.unsplash.com/photo-1485579149621-3123dd979885?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VhcmNofDN8fHBvZGNhc3R8ZW58MHx8fHwxNjU2MzExMDcw&ixlib=rb-1.2.1&q=80&w=200",
 				title: "Статистика ДТКД",
 				description: "Суммарная статистика шоу ДТКД",
-				message: `*Статистика подкастов* \n${podcastStatMessage(
+				message: `*Статистика ДТКД* \n${podcastStatMessage(
 					await podcastStat("ДТКД")
 				)}\n\n*Рекомендации ведущих* \n${totalStatMessage(
 					await totalStat({ podcastName: "ДТКД" })

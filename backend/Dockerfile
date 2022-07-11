@@ -1,18 +1,17 @@
-FROM node:16.13.2-alpine
+FROM node:alpine as prod
 
-RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
+RUN mkdir -p /app
+WORKDIR /app
 
-WORKDIR /home/node/app
-
-COPY ./package.json ./
-
-USER node
+COPY package*.json .
+COPY tsconfig.json .
+COPY src ./src
 
 RUN npm install
 RUN npm run build
 
-COPY --chown=node:node . .
+RUN npm i pm2 -g
 
-EXPOSE 3000
+EXPOSE 3001
 
-CMD ["npm","start"]
+CMD ["pm2-runtime", "start", "dist/index.js"]

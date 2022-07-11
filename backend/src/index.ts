@@ -34,6 +34,6 @@ app.use(function (req, res) {
 	res.status(404).send({ url: req.originalUrl + " not found" });
 });
 
-app.listen(process.env.NODE_PORT, () => {
-	console.log(`Example app listening on port ${process.env.NODE_PORT}!`);
+app.listen(3001, () => {
+	console.log(`Example app listening on port 3001!`);
 });

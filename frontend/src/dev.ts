@@ -1,5 +1,5 @@
 /*
-	Two ngrock instances for bot backend
+	Ngrock instance for bot backend
 	For local use only
 */
 

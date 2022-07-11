@@ -5,15 +5,16 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: prod
     container_name: "${CONTAINER_NAME}_backend"
+    image: "firya/${CONTAINER_NAME}_backend:latest"
     volumes:
-      - ./backend:/home/node/app
+      - ./backend/src:/app/src
     restart: always
     ports:
-      - "3000:${NODE_PORT}"
+      - "3000:3001"
     environment:
       - NODE_ENV=$NODE_ENV
-      - NODE_PORT=$NODE_PORT
       - VIRTUAL_HOST=$VIRTUAL_HOST
       - LETSENCRYPT_HOST=$LETSENCRYPT_HOST
       - LETSENCRYPT_EMAIL=$LETSENCRYPT_EMAIL
@@ -32,8 +33,10 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: "${CONTAINER_NAME}_frontend"
+    image: "firya/${CONTAINER_NAME}_frontend:latest"
     volumes:
-      - ./frontend:/app
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
     expose:
       - 3000
     ports:
@@ -41,7 +44,7 @@ services:
     environment:
       - REACT_APP_VIRTUAL_HOST=$VIRTUAL_HOST
       - REACT_APP_NODE_PORT=3000
-    restart: unless-stopped
+    restart: always
     depends_on:
       - backend
 
@@ -55,5 +58,4 @@ services:
 
 networks:
   default:
-    external:
-      name: nginx-proxy
+    name: nginx-proxy
