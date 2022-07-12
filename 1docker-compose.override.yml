@@ -1,0 +1,50 @@
+version: "3.7"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+
+  frontend:
+    build:
+      context: ./backend/frontend
+      dockerfile: Dockerfile
+    container_name: "zavtratips_frontend"
+    ports:
+      - "8000:3000"
+    volumes:
+      - ./backend/frontend/src:/app/src
+      - ./backend/frontend/public:/app/public
+    environment:
+      - REACT_APP_BACKEND_URL=$VIRTUAL_HOST_BOT
+      - DANGEROUSLY_DISABLE_HOST_CHECK=true
+    restart: always
+    depends_on:
+      - backend
+
+  ngrok_backend:
+    container_name: "zavtratips_ngrok_backend"
+    ports:
+      - "0.0.0.0:4040:4040"
+    image: wernight/ngrok
+    restart: unless-stopped
+    links:
+      - "backend"
+    environment:
+      - NGROK_AUTH=$NGROCK_AUTH
+      - NGROK_REGION=eu
+      - NGROK_PORT=backend:3001
+
+  ngrok_frontend:
+    container_name: "zavtratips_ngrok_frontend"
+    ports:
+      - "0.0.0.0:4041:4040"
+    image: wernight/ngrok
+    restart: unless-stopped
+    links:
+      - "frontend"
+    environment:
+      - NGROK_AUTH=$NGROCK_AUTH_2
+      - NGROK_REGION=eu
+      - NGROK_PORT=frontend:3000

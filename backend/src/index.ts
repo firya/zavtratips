@@ -22,12 +22,10 @@ app.use(bodyParser.json());
 app.use(cors());
 
 router(app);
+console.log(secretPath);
 app.use(Bot.webhookCallback(secretPath));
 
 app.use(express.static("public", { extensions: ["html"] }));
-app.get("/*", (req, res) => {
-	res.sendFile(path.join(__dirname, "..", "public", "index.html"));
-});
 
 app.listen(3001, () => {
 	console.log(`Example app listening on port 3001!`);
