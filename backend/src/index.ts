@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import path from "path";
 import Bot, { secretPath } from "./bot";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
@@ -16,22 +17,16 @@ DB.once("open", function () {
 });
 
 const app = express();
-
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
 
-app.get("/", (req: Request, res: Response) =>
-	res.send("These aren't the droids you're looking for.")
-);
-
 router(app);
-
-app.use(express.static("public", { extensions: ["html"] }));
 app.use(Bot.webhookCallback(secretPath));
 
-app.use(function (req, res) {
-	res.status(404).send({ url: req.originalUrl + " not found" });
+app.use(express.static("public", { extensions: ["html"] }));
+app.get("/*", (req, res) => {
+	res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
 app.listen(3001, () => {

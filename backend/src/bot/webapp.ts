@@ -1,5 +1,5 @@
 import Users from "../models/users";
-import { webAppURL } from "../dev";
+import { WebAppUrl } from "../dev";
 import Bot from "./index";
 
 export default async (userList: number[] = [], status: boolean = true) => {
@@ -18,7 +18,7 @@ export default async (userList: number[] = [], status: boolean = true) => {
 								type: "web_app",
 								text: "Add",
 								web_app: {
-									url: webAppURL,
+									url: WebAppUrl,
 								},
 						  }
 						: { type: "default" },
