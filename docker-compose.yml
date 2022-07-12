@@ -6,7 +6,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: "zavtratips_backend"
-    # image: "firya/zavtratips_backend:latest"
     volumes:
       - ./backend/src:/app/src
     restart: always
@@ -15,7 +14,7 @@ services:
     environment:
       - NODE_ENV=$NODE_ENV
       - VIRTUAL_HOST=$VIRTUAL_HOST
-      - LETSENCRYPT_HOST=$LETSENCRYPT_HOST_BOT
+      - LETSENCRYPT_HOST=$LETSENCRYPT_HOST
       - LETSENCRYPT_EMAIL=$LETSENCRYPT_EMAIL
       - TELEGRAM_DEFAULT_ADMIN=$TELEGRAM_DEFAULT_ADMIN
       - TELEGRAM_TOKEN=$TELEGRAM_TOKEN
