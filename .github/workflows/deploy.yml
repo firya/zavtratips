@@ -19,6 +19,7 @@ jobs:
           key: ${{ secrets.SSHKEY }}
           script: |
             cd zavtratips
+            git reset --hard origin/main
             git pull origin main
             docker compose stop
             docker compose build --no-cache
