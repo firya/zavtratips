@@ -3,7 +3,7 @@ import * as SearchController from "./controllers/search";
 import { verifyTelegramWebAppData, verifyUser } from "./libs/api";
 
 export default (app) => {
-	app.post("/api/*", checkPermissions);
+	app.post("/api/*", checkPermissions).put("/api/*", checkPermissions);
 
 	app
 		.route("/api/rows")
@@ -16,6 +16,7 @@ export default (app) => {
 
 const checkPermissions = async (req, res, next) => {
 	const { dataCheckString } = req.body;
+
 	if (
 		verifyTelegramWebAppData(dataCheckString) &&
 		(await verifyUser(dataCheckString))

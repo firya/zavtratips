@@ -3,15 +3,14 @@
 	For local use only
 */
 
-const ngrockUrl: string = "https://8478-5-253-204-100.eu.ngrok.io";
-const ngrockUrlWebApp: string = "https://eb76-5-253-204-100.eu.ngrok.io";
+const ngrockUrl: string = "https://4cce-46-246-41-172.eu.ngrok.io";
+const ngrockWebAppUrl: string = "https://5ccf-46-246-41-172.eu.ngrok.io";
 
 export const hostURL: string =
 	process.env.NODE_ENV !== "production"
 		? `${ngrockUrl}`
 		: `https://${process.env.VIRTUAL_HOST}`;
-
-export const webAppURL: string =
+export const WebAppUrl: string =
 	process.env.NODE_ENV !== "production"
-		? `${ngrockUrlWebApp}`
-		: `https://${process.env.FRONTEND_URL}`;
+		? `${ngrockWebAppUrl}`
+		: `https://${process.env.VIRTUAL_HOST}`;

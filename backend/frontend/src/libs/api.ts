@@ -1,5 +1,5 @@
-import { hostURL } from "../dev";
 import qs from "qs";
+import { hostURL } from "../dev";
 
 interface IapiProps {
 	method: "POST" | "GET" | "PUT" | "DELETE";

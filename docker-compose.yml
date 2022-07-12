@@ -14,8 +14,7 @@ services:
       - "8080:3001"
     environment:
       - NODE_ENV=$NODE_ENV
-      - VIRTUAL_HOST=$VIRTUAL_HOST_BOT
-      - FRONTEND_URL=$VIRTUAL_HOST
+      - VIRTUAL_HOST=$VIRTUAL_HOST
       - LETSENCRYPT_HOST=$LETSENCRYPT_HOST_BOT
       - LETSENCRYPT_EMAIL=$LETSENCRYPT_EMAIL
       - TELEGRAM_DEFAULT_ADMIN=$TELEGRAM_DEFAULT_ADMIN
@@ -27,24 +26,6 @@ services:
       - RAWG_API_KEY=$RAWG_API_KEY
     depends_on:
       - mongo
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: "zavtratips_frontend"
-    image: "firya/zavtratips_frontend:latest"
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-    environment:
-      - REACT_APP_BACKEND_URL=$VIRTUAL_HOST_BOT
-      - VIRTUAL_HOST=$VIRTUAL_HOST
-      - LETSENCRYPT_HOST=$LETSENCRYPT_HOST
-      - LETSENCRYPT_EMAIL=$LETSENCRYPT_EMAIL
-    restart: always
-    depends_on:
-      - backend
 
   mongo:
     container_name: "zavtratips_mongo"

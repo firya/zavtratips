@@ -174,7 +174,6 @@ const EditRecommendation = () => {
 					description: "",
 					placement: "top",
 				});
-				form.resetFields();
 			} catch (e: any) {
 				notification.open({
 					message: e.error.message,
