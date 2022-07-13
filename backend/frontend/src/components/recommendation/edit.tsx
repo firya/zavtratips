@@ -253,7 +253,9 @@ const EditRecommendation = () => {
 						>
 							{recommendationList.map((recommendation, i) => (
 								<option value={i} key={i}>
-									{recommendation.data["Название"]}
+									{recommendation.data["Тип"] +
+										": " +
+										recommendation.data["Название"]}
 								</option>
 							))}
 						</select>

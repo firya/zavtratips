@@ -119,7 +119,6 @@ const AddRecommendation = () => {
 	};
 
 	const onFinish = async (values: any) => {
-		console.log(values);
 		if (!loading) {
 			setLoading(true);
 			try {
@@ -151,7 +150,16 @@ const AddRecommendation = () => {
 					description: "",
 					placement: "top",
 				});
-				form.resetFields();
+				form.resetFields([
+					"name",
+					"anothername",
+					"description",
+					"link",
+					"dima",
+					"timur",
+					"maksim",
+					"guest",
+				]);
 			} catch (e: any) {
 				notification.open({
 					message: e.error.message,

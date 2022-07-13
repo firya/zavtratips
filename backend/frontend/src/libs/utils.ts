@@ -5,10 +5,10 @@ export const generateName = (
 ): string => {
 	let result = name;
 
-	if (anothername !== "") {
+	if (anothername) {
 		result += ` / ${anothername}`;
 	}
-	if (description !== "") {
+	if (description) {
 		result += ` (${description})`;
 	}
 
