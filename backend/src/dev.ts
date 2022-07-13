@@ -3,8 +3,8 @@
 	For local use only
 */
 
-const ngrockUrl: string = "https://a647-46-246-41-171.eu.ngrok.io";
-const ngrockWebAppUrl: string = "https://1218-46-246-41-171.eu.ngrok.io";
+const ngrockUrl: string = "https://6d22-46-246-41-171.eu.ngrok.io";
+const ngrockWebAppUrl: string = "https://97a5-46-246-41-171.eu.ngrok.io";
 
 export const hostURL: string =
 	process.env.NODE_ENV !== "production"

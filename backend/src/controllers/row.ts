@@ -23,8 +23,9 @@ export const listAllRows = async (req, res) => {
 			.limit(limit)
 			.sort({ [sortQuery]: orderQuery });
 		res.json(rows);
-	} catch (err) {
-		console.log(err);
+	} catch (e) {
+		console.log(e);
+		res.json({ error: e });
 	}
 };
 
@@ -45,6 +46,7 @@ export const createRow = async (req, res) => {
 		res.json(rows);
 	} catch (e) {
 		console.log(e);
+		res.json({ error: e });
 	}
 };
 
@@ -65,5 +67,6 @@ export const updateRow = async (req, res) => {
 		res.json(row);
 	} catch (e) {
 		console.log(e);
+		res.json({ error: e });
 	}
 };

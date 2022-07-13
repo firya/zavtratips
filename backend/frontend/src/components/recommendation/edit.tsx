@@ -143,7 +143,7 @@ const EditRecommendation = () => {
 	const onFinish = async (values: any) => {
 		if (!loading) {
 			setLoading(true);
-			const rowNumber = recommendationList[values.podcast].rowNumber;
+			const rowNumber = recommendationList[values.recommendation].rowNumber;
 			try {
 				await API({
 					method: "PUT",
@@ -175,6 +175,7 @@ const EditRecommendation = () => {
 					placement: "top",
 				});
 			} catch (e: any) {
+				console.log(e);
 				notification.open({
 					message: e.error.message,
 					description: "",
