@@ -34,7 +34,7 @@ jobs:
           port: ${{ secrets.PORT }}
           key: ${{ secrets.SSHKEY }}
           script: |
-            cd pong
+            cd zavtratips
             git pull origin main
             docker rmi --force firya/zavtratips:latest || true
             docker compose pull
