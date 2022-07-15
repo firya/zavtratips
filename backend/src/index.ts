@@ -7,7 +7,11 @@ import cors from "cors";
 import router from "./router";
 import "./cron";
 
-mongoose.connect(`mongodb://mongo:27017`);
+mongoose.connect(`mongodb://mongo:27017/server`, {
+	authSource: "admin", 
+	user: process.env.MONGO_USER,
+	pass: process.env.MONGO_PASS,
+});
 
 const DB = mongoose.connection;
 
