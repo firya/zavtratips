@@ -4,7 +4,7 @@ import { updateSheets } from "./spreadsheet";
 import { updateAllRows } from "../libs/googlespreadsheet";
 
 new Cron.CronJob(
-	"*/30 * * * *",
+	"* * * * *",
 	async () => {
 		console.log("start update");
 		await updateSheets();

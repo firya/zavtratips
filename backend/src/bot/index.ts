@@ -21,7 +21,7 @@ if (token === undefined) {
 	throw new Error("TELEGRAM_TOKEN must be provided!");
 }
 
-const Bot = new Telegraf(token);
+const Bot = new Telegraf(token, {handlerTimeout: 9_000_000});
 
 Bot.use(commandParts());
 Bot.use(botPermissions());
