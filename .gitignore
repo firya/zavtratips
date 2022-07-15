@@ -2,3 +2,4 @@ docker-compose.override.yml
 .env
 data/
 init-mongo.js
+.DS_Store
