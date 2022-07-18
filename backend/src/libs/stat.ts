@@ -35,6 +35,19 @@ export const podcastStat = async (
   };
 };
 
+export const streamStat = async (): Promise<IpodcastStat> => {
+  const filter = { sheetTitle: "Стримы" };
+  const streams = await RowModel.find(filter);
+
+  if (streams.length === 0) return { onAir: "", count: 0, length: "" };
+
+  return {
+    onAir: dateDifference(strToDate(streams[0].data["Дата"]), new Date()),
+    count: streams.length,
+    length: sumTime(streams.map((item) => item.data["Продолжительность"])),
+  };
+};
+
 export const podcastStatMessage = (stats: IpodcastStat): string => {
   return `🗓 В эфире: ${stats.onAir}\n🎙 Количество выпусков: ${stats.count}\n⏱ Общая длительность: ${stats.length}`;
 };

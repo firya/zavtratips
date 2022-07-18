@@ -6,6 +6,7 @@ import RowModel from "../models/row";
 import {
   podcastStat,
   totalStat,
+  streamStat,
   podcastStatMessage,
   totalStatMessage,
 } from "../libs/stat";
@@ -22,6 +23,7 @@ const statsQueries = [
   "Статистика подкастов",
   "Статистика завтракаста",
   "Статистика ДТКД",
+  "Статистика стримов",
   "Статистика Димы",
   "Статистика Тимура",
   "Статистика Максима",
@@ -87,6 +89,15 @@ const getStatsList = async (query): Promise<ImessageProps[]> => {
           await podcastStat("ДТКД")
         )}\n\n*Рекомендации ведущих* \n${totalStatMessage(
           await totalStat({ podcastName: "ДТКД" })
+        )}`,
+      });
+    } else if (foundQuery === "Статистика стримов") {
+      results.push({
+        image: "https://m.media-amazon.com/images/I/41b0qMQXitL.jpg",
+        title: "Статистика стримов",
+        description: "Суммарная статистика стримов",
+        message: `*Статистика стримов* \n${podcastStatMessage(
+          await streamStat()
         )}`,
       });
     } else if (foundQuery === "Статистика Димы") {

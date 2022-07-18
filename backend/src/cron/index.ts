@@ -2,17 +2,35 @@ import Cron from "cron";
 
 import { updateSheets } from "./spreadsheet";
 import { updateAllRows } from "../libs/googlespreadsheet";
+import { updateConfig } from "./config";
+import { updateStreamList } from "./youtube";
 
 new Cron.CronJob(
-	"*/5 * * * *",
-	async () => {
-		console.log("start update");
-		await updateSheets();
-		console.log("update completed");
-	},
-	null,
-	true,
-	"Europe/Moscow"
+  "*/5 * * * *",
+  async () => {
+    await updateSheets();
+  },
+  null,
+  true,
+  "Europe/Moscow"
+);
+new Cron.CronJob(
+  "*/30 * * * *",
+  async () => {
+    updateConfig();
+  },
+  null,
+  true,
+  "Europe/Moscow"
+);
+new Cron.CronJob(
+  "0 0 * * *",
+  async () => {
+    await updateStreamList();
+  },
+  null,
+  true,
+  "Europe/Moscow"
 );
 // new Cron.CronJob(
 // 	"0 0 1 * *",

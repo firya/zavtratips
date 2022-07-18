@@ -1,64 +1,21 @@
 import { useState, useEffect } from "react";
-import {
-  Form,
-  Button,
-  Input,
-  Skeleton,
-  AutoComplete,
-  notification,
-} from "antd";
+import { Form, Button, Input, Skeleton, notification } from "antd";
 import API from "../../libs/api";
 import { generateName } from "../../libs/utils";
-import { useDebounce } from "../../libs/debounce";
+import AutocompleteField from "../autocomplete";
 
 const AddRecommendation = () => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [loadingPodcastList, setLoadingPodcastList] = useState<boolean>(true);
-  const [podcastList, setPodcastList] = useState<any[]>([]);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [form] = Form.useForm();
 
-  const [searchValue, setSearchValue] = useState<string>("");
-  const searchValueDebounced = useDebounce(searchValue);
-
-  const typeProviderList = {
-    imdb: [
-      "🎬 Фильм",
-      "🦁 Мультфильм",
-      "🍿 Сериал",
-      "🚶‍♂️ Мультсериал",
-      "😸 Аниме",
-      "🎞 Документалка",
-      "🎤 Стендап",
-    ],
-    rawg: ["🎮 Игра"],
-    other: [
-      "🎲 Настольная игра",
-      "📦 Вещь",
-      "📱 Техника",
-      "💽 Софт",
-      "📕 Книга",
-      "🌅 Манга",
-      "💬 Статья",
-      "🔗 Ссылка",
-      "🍔 Еда",
-      "🍺 Пиво",
-      "🍷 Бухло",
-      "🎶 Мюзикл",
-      "🕺 Событие",
-      "📍 Место",
-    ],
-  };
-
-  const typeList = [
-    ...typeProviderList.imdb,
-    ...typeProviderList.rawg,
-    ...typeProviderList.other,
-  ];
-
-  const recomendList = ["", "👍", "❌"];
+  const [loading, setLoading] = useState<boolean>(false);
+  const [loadingPodcastList, setLoadingPodcastList] = useState<boolean>(true);
+  const [loadingConfig, setLoadingConfig] = useState<boolean>(true);
+  const [podcastList, setPodcastList] = useState<any[]>([]);
+  const [typeList, setTypeList] = useState<string[]>([]);
+  const [reactionList, setReactionList] = useState<string[]>([]);
 
   useEffect(() => {
+    loadConfig();
     loadPodcastList();
   }, []);
 
@@ -69,6 +26,18 @@ const AddRecommendation = () => {
       });
     }
   }, [podcastList]);
+
+  const loadConfig = async () => {
+    const result = await API({
+      method: "GET",
+      endpoint: "/config",
+    });
+
+    setTypeList(result.typeList);
+    setReactionList(["", ...result.reactionList]);
+
+    setLoadingConfig(false);
+  };
 
   const loadPodcastList = async () => {
     const result = await API({
@@ -83,51 +52,6 @@ const AddRecommendation = () => {
 
     setPodcastList(result);
     setLoadingPodcastList(false);
-  };
-
-  useEffect(() => {
-    if (searchValueDebounced.length >= 3) {
-      searchSuggestions(searchValueDebounced);
-    }
-  }, [searchValueDebounced]);
-
-  const searchSuggestions = async (searchText: string) => {
-    const type = form.getFieldValue("type");
-    const provider = (
-      Object.keys(typeProviderList) as (keyof typeof typeProviderList)[]
-    ).find((key) => {
-      return typeProviderList[key].indexOf(type) !== -1;
-    });
-
-    if (provider !== "other") {
-      const result = await API({
-        method: "GET",
-        endpoint: "/search",
-        data: {
-          provider: provider,
-          value: searchText,
-        },
-      });
-
-      if (result.length > 0) {
-        setSuggestions(
-          result.map((item: any, i: number) => ({
-            value: i,
-            label: `${item.title} (${item.year})`,
-            title: item.title,
-            key: i,
-            link: item.link,
-          }))
-        );
-      }
-    }
-  };
-
-  const selectSuggestion = (value: string, option: any) => {
-    form.setFieldsValue({
-      link: option.link,
-      name: option.title,
-    });
   };
 
   const onFinish = async (values: any) => {
@@ -203,7 +127,7 @@ const AddRecommendation = () => {
         </select>
       </Form.Item>
 
-      {loadingPodcastList ? (
+      {loadingPodcastList && loadingConfig ? (
         <Skeleton active />
       ) : (
         <>
@@ -216,16 +140,7 @@ const AddRecommendation = () => {
               ))}
             </select>
           </Form.Item>
-          <Form.Item label="Name" name="name">
-            <AutoComplete
-              options={suggestions}
-              onSearch={(value) => setSearchValue(value)}
-              onSelect={selectSuggestion}
-              className="input"
-              size="large"
-              tabIndex={2}
-            />
-          </Form.Item>
+          <AutocompleteField form={form} typeList={typeList} />
           <Form.Item label="Another name" name="anothername">
             <Input className="input" size="large" tabIndex={3} />
           </Form.Item>
@@ -238,7 +153,7 @@ const AddRecommendation = () => {
 
           <Form.Item label="Dima" name="dima">
             <select className="select" tabIndex={6}>
-              {recomendList.map((emoji, i) => (
+              {reactionList.map((emoji, i) => (
                 <option value={emoji} key={i}>
                   {emoji}
                 </option>
@@ -248,7 +163,7 @@ const AddRecommendation = () => {
 
           <Form.Item label="Timur" name="timur">
             <select className="select" tabIndex={7}>
-              {recomendList.map((emoji, i) => (
+              {reactionList.map((emoji, i) => (
                 <option value={emoji} key={i}>
                   {emoji}
                 </option>
@@ -258,7 +173,7 @@ const AddRecommendation = () => {
 
           <Form.Item label="Maksim" name="maksim">
             <select className="select" tabIndex={8}>
-              {recomendList.map((emoji, i) => (
+              {reactionList.map((emoji, i) => (
                 <option value={emoji} key={i}>
                   {emoji}
                 </option>
