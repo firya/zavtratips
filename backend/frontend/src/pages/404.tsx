@@ -1,17 +1,8 @@
 import { Layout } from "antd";
+import DefaultLayout from "../layout";
 
 const Page404 = () => {
-	return (
-		<Layout
-			style={{
-				minHeight: "100vh",
-				width: "100%",
-				padding: "24px",
-			}}
-		>
-			404
-		</Layout>
-	);
+  return <DefaultLayout title="404"></DefaultLayout>;
 };
 
 export default Page404;

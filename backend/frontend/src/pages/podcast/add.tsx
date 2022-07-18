@@ -1,22 +1,13 @@
-import { Layout, PageHeader } from "antd";
-import { useNavigate } from "react-router-dom";
+import DefaultLayout from "../../layout";
 
 import AddPodcast from "../../components/podcast/add";
 
 const AddPodcastPage = () => {
-	const navigate = useNavigate();
-
-	return (
-		<Layout
-			style={{
-				minHeight: "100vh",
-				width: "100%",
-			}}
-		>
-			<PageHeader onBack={() => navigate("/podcast")} title="Add podcast" />
-			<AddPodcast />
-		</Layout>
-	);
+  return (
+    <DefaultLayout title="Add podcast" link="/podcast">
+      <AddPodcast />
+    </DefaultLayout>
+  );
 };
 
 export default AddPodcastPage;

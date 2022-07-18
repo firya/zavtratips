@@ -2,89 +2,89 @@ import RowModel from "../models/row";
 import { sumTime, strToDate, dateDifference } from "../libs/utils";
 
 interface IpodcastStat {
-	onAir: string;
-	count: number;
-	length: string;
+  onAir: string;
+  count: number;
+  length: string;
 }
 
 interface ItotalStat {
-	total: number;
-	byType: {};
+  total: number;
+  byType: {};
 }
 
 interface ItotalStatProps {
-	hostName?: string;
-	podcastName?: string;
+  hostName?: string;
+  podcastName?: string;
 }
 
 export const podcastStat = async (
-	showName: string = ""
+  showName: string = ""
 ): Promise<IpodcastStat> => {
-	const filter = { sheetTitle: "Выпуски" };
-	if (showName !== "") {
-		filter[`data.Шоу`] = showName;
-	}
-	const podcasts = await RowModel.find(filter);
+  const filter = { sheetTitle: "Выпуски" };
+  if (showName !== "") {
+    filter[`data.Шоу`] = showName;
+  }
+  const podcasts = await RowModel.find(filter);
 
-	if (podcasts.length === 0) return { onAir: "", count: 0, length: "" };
+  if (podcasts.length === 0) return { onAir: "", count: 0, length: "" };
 
-	return {
-		onAir: dateDifference(strToDate(podcasts[0].data["Дата"]), new Date()),
-		count: podcasts.length,
-		length: sumTime(podcasts.map((item) => item.data["Продолжительность"])),
-	};
+  return {
+    onAir: dateDifference(strToDate(podcasts[0].data["Дата"]), new Date()),
+    count: podcasts.length,
+    length: sumTime(podcasts.map((item) => item.data["Продолжительность"])),
+  };
 };
 
 export const podcastStatMessage = (stats: IpodcastStat): string => {
-	return `🗓 В эфире: ${stats.onAir}\n🎙 Количество подкастов: ${stats.count}\n⏱ Общая длительность: ${stats.length}`;
+  return `🗓 В эфире: ${stats.onAir}\n🎙 Количество выпусков: ${stats.count}\n⏱ Общая длительность: ${stats.length}`;
 };
 
 export const totalStat = async ({
-	hostName = "",
-	podcastName = "",
+  hostName = "",
+  podcastName = "",
 }: ItotalStatProps = {}): Promise<ItotalStat> => {
-	const filter = {
-		sheetTitle: "Рекомендации",
-	};
+  const filter = {
+    sheetTitle: "Рекомендации",
+  };
 
-	if (hostName !== "") {
-		filter[`data.${hostName}`] = { $ne: "" };
-	}
+  if (hostName !== "") {
+    filter[`data.${hostName}`] = { $ne: "" };
+  }
 
-	if (podcastName !== "") {
-		filter[`data.Выпуск`] = { $regex: podcastName, $options: "i" };
-	}
+  if (podcastName !== "") {
+    filter[`data.Выпуск`] = { $regex: podcastName, $options: "i" };
+  }
 
-	const recommendations = await RowModel.find(filter);
+  const recommendations = await RowModel.find(filter);
 
-	if (recommendations.length === 0) return { total: 0, byType: {} };
+  if (recommendations.length === 0) return { total: 0, byType: {} };
 
-	return {
-		total: recommendations.length,
-		byType: countByType(recommendations),
-	};
+  return {
+    total: recommendations.length,
+    byType: countByType(recommendations),
+  };
 };
 
 export const totalStatMessage = (stats: ItotalStat): string => {
-	return `❗️ Всего рекомендаций: ${stats.total}\nПо типам: \n${Object.keys(
-		stats.byType
-	)
-		.map((key) => `${key}: ${stats.byType[key]}`)
-		.join("\n")}`;
+  return `❗️ Всего рекомендаций: ${stats.total}\nПо типам: \n${Object.keys(
+    stats.byType
+  )
+    .map((key) => `${key}: ${stats.byType[key]}`)
+    .join("\n")}`;
 };
 
 const countByType = (array: any[]) => {
-	const result = {};
+  const result = {};
 
-	array.forEach((item) => {
-		if (item.data["Тип"] !== "") {
-			if (result[item.data["Тип"]]) {
-				result[item.data["Тип"]]++;
-			} else {
-				result[item.data["Тип"]] = 1;
-			}
-		}
-	});
+  array.forEach((item) => {
+    if (item.data["Тип"]) {
+      if (result[item.data["Тип"]]) {
+        result[item.data["Тип"]]++;
+      } else {
+        result[item.data["Тип"]] = 1;
+      }
+    }
+  });
 
-	return result;
+  return result;
 };

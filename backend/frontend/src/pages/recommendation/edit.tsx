@@ -1,25 +1,13 @@
-import { Layout, PageHeader } from "antd";
-import { useNavigate } from "react-router-dom";
+import DefaultLayout from "../../layout";
 
 import EditRecommendation from "../../components/recommendation/edit";
 
 const EditRecommendationPage = () => {
-	const navigate = useNavigate();
-
-	return (
-		<Layout
-			style={{
-				minHeight: "100vh",
-				width: "100%",
-			}}
-		>
-			<PageHeader
-				onBack={() => navigate("/recommendation")}
-				title="Edit recommendation"
-			/>
-			<EditRecommendation />
-		</Layout>
-	);
+  return (
+    <DefaultLayout title="Edit recommendation" link="/recommendation">
+      <EditRecommendation />
+    </DefaultLayout>
+  );
 };
 
 export default EditRecommendationPage;
