@@ -14,14 +14,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: cd backend
-        run: cd backend
-
       - name: Install dependencies
-        run: npm install
+        run: cd backend && npm install
 
       - name: Run tests
-        run: npm run test
+        run: cd backend && npm run test
   push_to_docker_hub:
     name: Build and push docker images to Docker Hub
     runs-on: ubuntu-latest
