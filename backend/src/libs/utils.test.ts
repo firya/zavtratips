@@ -10,7 +10,7 @@ import {
 
 describe("leftPad", () => {
   test("Correct one number parameter", () => {
-    expect(leftPad(1)).toBe("01");
+    expect(leftPad(1)).toBe("1");
   });
   test("Correct two parameter", () => {
     expect(leftPad(1, 3)).toBe("001");
