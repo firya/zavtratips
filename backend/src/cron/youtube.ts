@@ -22,6 +22,7 @@ export const updateStreamList = async () => {
   }
 
   allVideos = allVideos.sort((a, b) => a.date.getTime() - b.date.getTime());
+  allVideos = allVideos.filter((row) => row.duration === "00:00:00");
 
   await addRows(
     process.env.GOOGLE_SPREADSHEET_URL,
