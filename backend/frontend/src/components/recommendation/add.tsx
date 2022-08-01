@@ -13,6 +13,7 @@ const AddRecommendation = () => {
   const [podcastList, setPodcastList] = useState<any[]>([]);
   const [typeList, setTypeList] = useState<string[]>([]);
   const [reactionList, setReactionList] = useState<string[]>([]);
+  const link = Form.useWatch("link", form);
 
   useEffect(() => {
     loadConfig();
@@ -58,27 +59,30 @@ const AddRecommendation = () => {
     if (!loading) {
       setLoading(true);
       try {
+        const data: any = {
+          dataCheckString: window.Telegram.WebApp.initData,
+          sheetTitle: "Рекомендации",
+          data: {
+            Выпуск: podcastList[values.podcast].data["Шоу и номер"],
+            Тип: values.type,
+            Название: generateName(
+              values.name,
+              values.anothername,
+              values.description
+            ),
+            Ссылка: values.link,
+          },
+        };
+
+        if (values.dima.length) data["Дима"] = values.dima;
+        if (values.timur.length) data["Тимур"] = values.timur;
+        if (values.maksim.length) data["Максим"] = values.maksim;
+        if (values.guest.length) data["Гость"] = values.guest;
+
         await API({
           method: "POST",
           endpoint: "/rows",
-          data: {
-            dataCheckString: window.Telegram.WebApp.initData,
-            sheetTitle: "Рекомендации",
-            data: {
-              Выпуск: podcastList[values.podcast].data["Шоу и номер"],
-              Тип: values.type,
-              Название: generateName(
-                values.name,
-                values.anothername,
-                values.description
-              ),
-              Ссылка: values.link,
-              Дима: values.dima,
-              Тимур: values.timur,
-              Максим: values.maksim,
-              Гость: values.guest,
-            },
-          },
+          data: data,
         });
 
         notification.open({
@@ -148,7 +152,16 @@ const AddRecommendation = () => {
             <Input className="input" size="large" tabIndex={4} />
           </Form.Item>
           <Form.Item label="Link" name="link">
-            <Input className="input" size="large" tabIndex={5} />
+            <Input
+              className="input"
+              size="large"
+              tabIndex={5}
+              suffix={
+                <a href={link} target="_blank">
+                  Check
+                </a>
+              }
+            />
           </Form.Item>
 
           <Form.Item label="Dima" name="dima">

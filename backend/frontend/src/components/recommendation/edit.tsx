@@ -19,6 +19,7 @@ const EditRecommendation = () => {
 
   const [typeList, setTypeList] = useState<string[]>([]);
   const [reactionList, setReactionList] = useState<string[]>([]);
+  const link = Form.useWatch("link", form);
 
   useEffect(() => {
     loadConfig();
@@ -229,7 +230,16 @@ const EditRecommendation = () => {
                 <Input className="input" size="large" tabIndex={5} />
               </Form.Item>
               <Form.Item label="Link" name="link">
-                <Input className="input" size="large" tabIndex={6} />
+                <Input
+                  className="input"
+                  size="large"
+                  tabIndex={6}
+                  suffix={
+                    <a href={link} target="_blank">
+                      Check
+                    </a>
+                  }
+                />
               </Form.Item>
 
               <Form.Item label="Dima" name="dima">
