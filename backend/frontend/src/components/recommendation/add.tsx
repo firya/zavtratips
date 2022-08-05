@@ -74,10 +74,10 @@ const AddRecommendation = () => {
           },
         };
 
-        if (values.dima.length) data["Дима"] = values.dima;
-        if (values.timur.length) data["Тимур"] = values.timur;
-        if (values.maksim.length) data["Максим"] = values.maksim;
-        if (values.guest.length) data["Гость"] = values.guest;
+        if (values.dima?.length) data["Дима"] = values.dima;
+        if (values.timur?.length) data["Тимур"] = values.timur;
+        if (values.maksim?.length) data["Максим"] = values.maksim;
+        if (values.guest?.length) data["Гость"] = values.guest;
 
         await API({
           method: "POST",
@@ -101,8 +101,9 @@ const AddRecommendation = () => {
           "guest",
         ]);
       } catch (e: any) {
+        const errorMessage = e.error?.message ? e.error.message : e.message;
         notification.open({
-          message: e.error.message,
+          message: errorMessage,
           description: "",
           placement: "top",
         });

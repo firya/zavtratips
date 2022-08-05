@@ -53,7 +53,7 @@ const AutocmpleteField = ({ typeList, form }: Iautocomplete) => {
       if (result.length > 0) {
         setSuggestions(
           result.map((item: any, i: number) => ({
-            value: i,
+            value: i.toString(),
             label: `${item.title} (${item.year})`,
             title: item.title,
             key: i,
