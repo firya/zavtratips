@@ -4,7 +4,7 @@ import * as ConfigController from "./controllers/config";
 import { verifyTelegramWebAppData, verifyUser } from "./libs/api";
 
 export default (app) => {
-  app.post("/api/*", checkPermissions).put("/api/*", checkPermissions);
+  // app.post("/api/*", checkPermissions).put("/api/*", checkPermissions);
 
   app
     .route("/api/rows")

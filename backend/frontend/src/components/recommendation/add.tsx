@@ -74,10 +74,10 @@ const AddRecommendation = () => {
           },
         };
 
-        if (values.dima?.length) data["Дима"] = values.dima;
-        if (values.timur?.length) data["Тимур"] = values.timur;
-        if (values.maksim?.length) data["Максим"] = values.maksim;
-        if (values.guest?.length) data["Гость"] = values.guest;
+        if (values.dima?.length) data.data["Дима"] = values.dima;
+        if (values.timur?.length) data.data["Тимур"] = values.timur;
+        if (values.maksim?.length) data.data["Максим"] = values.maksim;
+        if (values.guest?.length) data.data["Гость"] = values.guest;
 
         await API({
           method: "POST",
