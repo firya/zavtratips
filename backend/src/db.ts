@@ -7,7 +7,7 @@ export const createDB = async () => {
         connectionString: process.env.POSTGRES_URL + "?sslmode=require",
     })
 
-    await removeAllTables(pool)
+    // await removeAllTables(pool)
 
     const promises = [
         createUserTable(pool),
@@ -16,7 +16,7 @@ export const createDB = async () => {
         createStreamsTable(pool)
     ];
 
-    await Promise.all(promises)
+    await Promise.all(promises);
 }
 
 const removeAllTables = async (pool: pg.Pool) => {
@@ -32,12 +32,12 @@ const removeAllTables = async (pool: pg.Pool) => {
 
 const createUserTable = async (pool: pg.Pool) => {
     try {
-        await pool.query(`CREATE TABLE zt_accounts (
+        await pool.query(`CREATE TABLE IF NOT EXISTS zt_accounts (
             telegram_id serial PRIMARY KEY,
             role VARCHAR (50) DEFAULT 'moderator'
         );`);
         await pool.query(`INSERT INTO zt_accounts VALUES
-        ('1690894', 'admin');`);
+        ('1690894', 'admin') ON CONFLICT DO NOTHING;`);
     } catch(e) {
         console.log(e);
     }
@@ -45,7 +45,7 @@ const createUserTable = async (pool: pg.Pool) => {
 
 const createPodcastTable = async (pool: pg.Pool) => {
     try {
-        await pool.query(`CREATE TABLE zt_podcasts (
+        await pool.query(`CREATE TABLE IF NOT EXISTS zt_podcasts (
             date timestamp default NULL,
             podcast varchar(128),
             number varchar(128),
@@ -61,7 +61,7 @@ const createPodcastTable = async (pool: pg.Pool) => {
 
 const createStreamsTable = async (pool: pg.Pool) => {
     try {
-        await pool.query(`CREATE TABLE zt_recommendation (
+        await pool.query(`CREATE TABLE IF NOT EXISTS zt_recommendation (
             date timestamp default NULL,
             podcast varchar(128),
             type varchar(128),
@@ -85,7 +85,7 @@ const createStreamsTable = async (pool: pg.Pool) => {
 
 const createRecommendationTable = async (pool: pg.Pool) => {
     try {
-        await pool.query(`CREATE TABLE zt_streams (
+        await pool.query(`CREATE TABLE IF NOT EXISTS zt_streams (
             date timestamp default NULL,
             title varchar(512),
             link varchar(512),
