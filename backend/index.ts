@@ -1,14 +1,15 @@
 import express, { Express } from 'express';
 import dotenv from 'dotenv';
 import { router } from "./src/router";
-import { createDB } from './src/db'
+import { DB, createAllTables, removeAllTables } from './src/db'
 
 dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 8000;
 
-createDB()
+const pool = DB.getInstance()
+createAllTables(pool)
 
 router(app);
 
