@@ -1,16 +1,32 @@
 {
-  "name": "nuxt-app",
-  "private": true,
+  "name": "zavtratips",
+  "version": "2.0.0",
+  "description": "Zavtracast hosts recommendations bot",
+  "main": "index.js",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "start": "npm run frontend:generate && npm run backend:build && npm run backend:start",
+    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
+    "frontend:dev": "npm run dev --workspace=frontend",
+    "frontend:generate": "npm run generate --workspace=frontend",
+    "backend:dev": "npm run dev --workspace=backend",
+    "backend:build": "npm run build --workspace=backend",
+    "backend:start": "npm run start --workspace=backend"
   },
-  "devDependencies": {
-    "@nuxt/devtools": "latest",
-    "@types/node": "^18.17.3",
-    "nuxt": "^3.6.5"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/firya/zavtratips.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/firya/zavtratips/issues"
+  },
+  "homepage": "https://github.com/firya/zavtratips#readme",
+  "dependencies": {
+    "concurrently": "^8.2.0"
   }
 }
