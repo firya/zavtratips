@@ -37,10 +37,23 @@ export const createAllTables = (pool: pg.Pool) => {
         createUserTable(pool),
         createPodcastTable(pool),
         createRecommendationTable(pool),
-        createStreamsTable(pool)
+        createStreamsTable(pool),
+        createConfigTable(pool)
     ];
 
-    return Promise.all(promises);
+    void Promise.all(promises);
+}
+
+export const createConfigTable = async (pool: pg.Pool) => {
+    try {
+        await pool.query(`CREATE TABLE IF NOT EXISTS zt_config (
+            id serial PRIMARY KEY,
+            key VARCHAR (128),
+            value VARCHAR (128)
+        );`);
+    } catch(e) {
+        console.log(e);
+    }
 }
 
 export const createUserTable = async (pool: pg.Pool) => {
@@ -59,22 +72,24 @@ export const createUserTable = async (pool: pg.Pool) => {
 export const createPodcastTable = async (pool: pg.Pool) => {
     try {
         await pool.query(`CREATE TABLE IF NOT EXISTS zt_podcasts (
+            id serial PRIMARY KEY,
             date timestamp default NULL,
             podcast varchar(128),
             number varchar(128),
             title varchar(128),
             length interval hour to minute
         );`);
-        await pool.query(`INSERT INTO zt_podcasts VALUES
-        (to_timestamp(${Date.now()/1000}), 'dsa', '288', 'test title', '01:02:03');`);
+        // await pool.query(`INSERT INTO zt_podcasts VALUES
+        // (0, to_timestamp(${Date.now()/1000}), 'dsa', '288', 'test title', '01:02:03');`);
     } catch(e) {
         console.log(e);
     }
 }
 
-export const createStreamsTable = async (pool: pg.Pool) => {
+export const createRecommendationTable = async (pool: pg.Pool) => {
     try {
         await pool.query(`CREATE TABLE IF NOT EXISTS zt_recommendation (
+            id serial PRIMARY KEY,
             date timestamp default NULL,
             podcast varchar(128),
             type varchar(128),
@@ -96,9 +111,10 @@ export const createStreamsTable = async (pool: pg.Pool) => {
     }
 }
 
-export const createRecommendationTable = async (pool: pg.Pool) => {
+export const createStreamsTable = async (pool: pg.Pool) => {
     try {
         await pool.query(`CREATE TABLE IF NOT EXISTS zt_streams (
+            id serial PRIMARY KEY,
             date timestamp default NULL,
             title varchar(512),
             link varchar(512),
