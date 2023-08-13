@@ -63,7 +63,7 @@ export const createUserTable = async (pool: pg.Pool) => {
             role VARCHAR (50) DEFAULT 'moderator'
         );`);
         await pool.query(`INSERT INTO zt_accounts VALUES
-        ('1690894', 'admin') ON CONFLICT DO NOTHING;`);
+        (${process.env.TELEGRAM_DEFAULT_ADMIN}, 'admin') ON CONFLICT DO NOTHING;`);
     } catch(e) {
         console.log(e);
     }
@@ -96,7 +96,7 @@ export const createRecommendationTable = async (pool: pg.Pool) => {
             title varchar(512),
             link varchar(512),
             image varchar(512),
-            platforms varchar(128),
+            platforms varchar(256),
             rating varchar(16),
             genres varchar(256),
             releaseDate timestamp default NULL,

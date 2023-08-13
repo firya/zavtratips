@@ -10,7 +10,3 @@ export const strToDate = (date: string): Date => {
 export const typedObjectKeys = <T extends object>(obj: T) => {
     return Object.keys(obj) as [keyof typeof obj]
 }
-
-export const escapeString = (str: string) => {
-    return str.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-}

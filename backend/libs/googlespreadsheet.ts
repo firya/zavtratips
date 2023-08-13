@@ -52,208 +52,65 @@ export const getRowList = async (
         return [];
     }
 };
-//
-// export const addRows = async (url: string, sheetTitle: string, data: {}[]) => {
-//     try {
-//         const doc = await getDoc(url);
-//
-//         const config = await ConfigModel.findOne({ sheetUrl: url });
-//         const sheetConfig = config.sheetList.find(
-//             (sheet) => sheet.title === sheetTitle
-//         );
-//
-//         const sheet = doc.sheetsByTitle[sheetTitle];
-//         await sheet.loadHeaderRow();
-//         const headers = sheet.headerValues;
-//
-//         let rows = data.map((row) => ({ ...createEmptyRow(headers), ...row }));
-//
-//         const result = await sheet.addRows(rows);
-//
-//         return { data: rowToObject(result, headers) };
-//     } catch (e) {
-//         throw new Error(e);
-//     }
-// };
-//
-// export const addRow = async (url: string, sheetTitle: string, data: {}) => {
-//     try {
-//         const doc = await getDoc(url);
-//
-//         const config = await ConfigModel.findOne({ sheetUrl: url });
-//         const sheetConfig = config.sheetList.find(
-//             (sheet) => sheet.title === sheetTitle
-//         );
-//
-//         const sheet = doc.sheetsByTitle[sheetTitle];
-//         await sheet.loadHeaderRow();
-//         const headers = sheet.headerValues;
-//
-//         let additional = {};
-//         if (sheetConfig.additional) {
-//             additional = prepareAdditionalToInsert(
-//                 await getAdditional(data[sheetConfig.additional])
-//             );
-//         }
-//
-//         let row = { ...createEmptyRow(headers), ...data, ...additional };
-//
-//         const result = await sheet.addRow(row);
-//
-//         return { rowNumber: result.rowNumber, data: rowToObject(result, headers) };
-//     } catch (e) {
-//         throw new Error(e);
-//     }
-// };
-//
-// export const updateAllRows = async (
-//     url: string,
-//     sheetTitle: string,
-//     from: number = null,
-//     to: number = null
-// ) => {
-//     try {
-//         const doc = await getDoc(url);
-//
-//         const config = await ConfigModel.findOne({ sheetUrl: url });
-//         const sheetConfig = config.sheetList.find(
-//             (sheet) => sheet.title === sheetTitle
-//         );
-//
-//         const sheet = doc.sheetsByTitle[sheetTitle];
-//         let rows = await sheet.getRows();
-//
-//         if (from || to) {
-//             from = from ? from - 2 : 0;
-//             to = to ? to - 1 : rows.length - 1;
-//
-//             rows = rows.slice(from, to);
-//         }
-//
-//         const headers = sheet.headerValues;
-//
-//         for await (const row of rows) {
-//             let resultRow = rowToObject(row, headers);
-//
-//             let additional = {};
-//
-//             if (sheetConfig.additional) {
-//                 additional = prepareAdditionalToInsert(
-//                     await getAdditional(resultRow[sheetConfig.additional])
-//                 );
-//             }
-//
-//             resultRow = {
-//                 ...resultRow,
-//                 ...additional,
-//             };
-//
-//             const updatedRow = fillRow(row, resultRow, sheetConfig.uneditableColumns);
-//
-//             await updatedRow.save();
-//
-//             console.log(`row ${row.rowNumber} updated`);
-//             await new Promise((resolve) => setTimeout(resolve, 1000)); // avoid google api limit
-//         }
-//
-//         return true;
-//     } catch (e) {
-//         throw new Error(e);
-//     }
-// };
-//
-// export const updateRow = async (
-//     url: string,
-//     sheetTitle: string,
-//     rowNumber: number,
-//     data: {} = {}
-// ) => {
-//     try {
-//         const doc = await getDoc(url);
-//
-//         const config = await ConfigModel.findOne({ sheetUrl: url });
-//         const sheetConfig = config.sheetList.find(
-//             (sheet) => sheet.title === sheetTitle
-//         );
-//
-//         const sheet = doc.sheetsByTitle[sheetTitle];
-//         const rows = await sheet.getRows();
-//
-//         const headers = sheet.headerValues;
-//
-//         let row = {
-//             ...rowToObject(rows[rowNumber - 2], headers),
-//             ...data,
-//         };
-//
-//         let additional = {};
-//         if (sheetConfig.additional) {
-//             additional = prepareAdditionalToInsert(
-//                 await getAdditional(row[sheetConfig.additional])
-//             );
-//         }
-//
-//         row = {
-//             ...row,
-//             ...additional,
-//         };
-//
-//         const updatedRow = fillRow(
-//             rows[rowNumber - 2],
-//             row,
-//             sheetConfig.uneditableColumns
-//         );
-//
-//         await updatedRow.save();
-//
-//         return { rowNumber: rowNumber, data: rowToObject(updatedRow, headers) };
-//     } catch (e) {
-//         throw new Error(e);
-//     }
-// };
-//
-// export const deleteRow = async (
-//     url: string,
-//     sheetTitle: string,
-//     rowNumber: number
-// ) => {
-//     try {
-//         const doc = await getDoc(url);
-//
-//         const sheet = doc.sheetsByTitle[sheetTitle];
-//         const rows = await sheet.getRows();
-//
-//         const headers = sheet.headerValues;
-//
-//         const deletedRow = fillRow(rows[rowNumber - 2], createEmptyRow(headers));
-//
-//         if (deletedRow) {
-//             await deletedRow.save();
-//         }
-//
-//         return { rowNumber: rowNumber };
-//     } catch (e) {
-//         throw new Error(e);
-//     }
-// };
-//
-// const createEmptyRow = (headers: string[]) => {
-//     let result: {} = {};
-//     headers.forEach((header) => {
-//         result[header] = "";
-//     });
-//     return result;
-// };
-//
-// const fillRow = (row, data, uneditableColumns: string[] = []) => {
-//     if (!row) return null;
-//     Object.keys(data).forEach((header) => {
-//         row[header] = uneditableColumns.includes(header) ? "" : data[header];
-//     });
-//
-//     return row;
-// };
-//
+
+export const addRows = async (url: string, sheetTitle: string, data: Record<string, string>[]) => {
+    try {
+        const doc = await getDoc(url);
+
+        const sheetData = doc.sheetsByTitle[sheetTitle];
+        await sheetData.loadHeaderRow();
+        const headers = sheetData.headerValues;
+
+        let rows = data.map((row) => ({ ...createEmptyRow(headers), ...row }));
+
+        return await sheetData.addRows(rows);
+    } catch (e) {
+        console.log(e)
+    }
+};
+
+export const clearRow = async (
+    url: string,
+    sheetTitle: string,
+    rowNumber: number
+) => {
+    try {
+        const doc = await getDoc(url);
+
+        const sheet = doc.sheetsByTitle[sheetTitle];
+        const rows = await sheet.getRows();
+
+        const headers = sheet.headerValues;
+
+        const deletedRow = fillRow(rows[rowNumber - 2], createEmptyRow(headers));
+
+        if (deletedRow) {
+            await deletedRow.save();
+        }
+
+        return { rowNumber: rowNumber };
+    } catch (e) {
+        console.log(e)
+    }
+};
+
+const createEmptyRow = (headers: string[]) => {
+    let result: Record<string, string> = {};
+    headers.forEach((header) => {
+        result[header] = "";
+    });
+    return result;
+};
+
+const fillRow = (row: GoogleSpreadsheetRow, data: Record<string, string>) => {
+    if (!row) return null;
+    Object.keys(data).forEach((header) => {
+        row.set(header, data[header])
+    });
+
+    return row;
+};
+
 const rowToObject = (row: GoogleSpreadsheetRow, headers: string[]) => {
     const object: Record<string, string> = {};
 
