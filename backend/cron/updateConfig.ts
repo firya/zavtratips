@@ -1,24 +1,17 @@
-import { getRowList } from "../libs/googlespreadsheet";
 import { DB } from "../db";
-import PGformat from "pg-format";
+import { clearConfigTable, insertIntoConfigTable } from "../db/config";
+import { getExcelConfig } from "../db/excel";
 
 export const updateConfig = async () => {
-    if (!process.env.GOOGLE_SPREADSHEET_URL) return console.log('there is no GOOGLE_SPREADSHEET_URL')
+  if (!process.env.GOOGLE_SPREADSHEET_URL)
+    return console.log("there is no GOOGLE_SPREADSHEET_URL");
 
-    const pool = DB.getInstance()
-    const res = await getRowList(process.env.GOOGLE_SPREADSHEET_URL, 'Config');
+  const pool = DB.getInstance();
+  const values = await getExcelConfig();
+  if (!values) return;
 
-    let values: string[][] = []
-    res.map((row) => {
-        Object.keys(row).map((key) => {
-            if (row[key]) values.push([key, row[key]])
-        })
-    })
+  await clearConfigTable(pool);
+  await insertIntoConfigTable(pool, values);
 
-    await pool.query(`TRUNCATE TABLE zt_config`)
-
-    const query = PGformat(`INSERT INTO zt_config (key, value) VALUES %L`, values)
-    await pool.query(query);
-
-    console.log('zt_config table updated');
+  console.log("zt_config table updated");
 };

@@ -11,12 +11,12 @@ dotenv.config({
 const app: Express = express();
 const port = process.env.PORT || "8000";
 
-const pool = DB.getInstance();
-createAllTables(pool);
-
 router(app);
 cronJobs();
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+
+  const pool = DB.getInstance();
+  await createAllTables(pool);
 });

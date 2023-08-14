@@ -12,7 +12,7 @@ import {
 } from "./commands";
 // import inline from "./inline";
 
-// import setupWebApp from "./webapp";
+import { setupWebApp } from "./webapp";
 // import commandParts from "./middlewares/commandParts";
 // import botPermissions from "./middlewares/botPermissions";
 
@@ -20,7 +20,7 @@ export const telegramBotInit = () => {
   const token = process.env.TELEGRAM_TOKEN;
   const hostURL =
     process.env.NODE_ENV === "dev"
-      ? "https://3710d3fbe8986c.lhr.life"
+      ? "https://b1964d009ca4ff.lhr.life"
       : process.env.HOST_URL;
 
   if (!token) throw new Error("TELEGRAM_TOKEN must be provided!");
@@ -35,7 +35,7 @@ export const telegramBotInit = () => {
 
   try {
     bot.telegram.setWebhook(`${hostURL}${secretPath}`);
-    // setupWebApp();
+    setupWebApp(bot, `${hostURL}/webapp`);
     console.log(`bot successfully set up webhook`);
   } catch (e) {
     console.log(e);
