@@ -4,8 +4,8 @@ import { telegramBotInit } from "./bot";
 export const router = (app: Express) => {
   const { bot, secretPath } = telegramBotInit();
 
-  app.get("/webapp", express.static("../frontend/dist"));
-  app.get("/webapp/*", express.static("../frontend/dist"));
+  app.use("/webapp", express.static("../frontend/dist"));
+  app.use("/webapp/*", express.static("../frontend/dist"));
 
   app.use(bot.webhookCallback(secretPath));
 
