@@ -1,11 +1,12 @@
 import { Context, Telegraf } from "telegraf";
 import { getAccountList } from "../db/accounts";
 import { DB } from "../db";
-import { localhostURL, webAppURL } from "./constants";
 
 export const setupWebApp = async (bot: Telegraf) => {
   const pool = DB.getInstance();
   const userList = await getAccountList(pool);
+
+  if (!process.env.WEBAPP_URL) throw Error("WEBAPP_URL not set");
 
   if (userList) {
     for (const { telegram_id } of userList) {
@@ -16,7 +17,7 @@ export const setupWebApp = async (bot: Telegraf) => {
             type: "web_app",
             text: "Edit",
             web_app: {
-              url: webAppURL,
+              url: process.env.WEBAPP_URL,
             },
           },
         });
@@ -31,6 +32,8 @@ export const setupWebAppForId = async (
   ctx: Context,
   remove: boolean = false,
 ) => {
+  if (!process.env.WEBAPP_URL) throw Error("WEBAPP_URL not set");
+
   try {
     await ctx.setChatMenuButton(
       remove
@@ -39,7 +42,7 @@ export const setupWebAppForId = async (
             type: "web_app",
             text: "Edit",
             web_app: {
-              url: webAppURL,
+              url: process.env.WEBAPP_URL,
             },
           },
     );

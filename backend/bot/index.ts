@@ -6,13 +6,11 @@ import * as commandList from "./commands";
 import { setupWebApp } from "./webapp";
 import { commandParts } from "./middlewares/commandParts";
 import { botPermissions } from "./middlewares/botPermissions";
-import { localhostURL } from "./constants";
 import { typedObjectKeys } from "../utils";
 
 export const telegramBotInit = () => {
   const token = process.env.TELEGRAM_TOKEN;
-  const hostURL =
-    process.env.NODE_ENV === "dev" ? localhostURL : process.env.HOST_URL;
+  const hostURL = process.env.HOST_URL;
 
   if (!token) throw new Error("TELEGRAM_TOKEN must be provided!");
   if (!hostURL) throw new Error("HOST_URL must be provided!");
