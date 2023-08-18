@@ -14,13 +14,9 @@ export const insertIntoTable = async <T extends object[]>(
     values.push(Object.values(row));
   }
 
-  try {
-    const query = PGformat(
-      `INSERT INTO ${tableName} (${headers.join(", ")}) VALUES %L`,
-      values,
-    );
-    await pool.query(query);
-  } catch (e) {
-    console.log(e);
-  }
+  const query = PGformat(
+    `INSERT INTO ${tableName} (${headers.join(", ")}) VALUES %L`,
+    values,
+  );
+  return await pool.query(query);
 };

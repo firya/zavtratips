@@ -1,22 +1,32 @@
-// import { Composer } from "telegraf";
-// import Users from "../../models/users";
-// import setupWebApp from "../webapp";
-//
-// export default {
-// 	help: "/removeuser <id> — Remove user by telegram id",
-// 	run: Composer.command("/removeuser", async (ctx) => {
-// 		const args = ctx.state.command.splitArgs;
-//
-// 		try {
-// 			await Users.deleteOne({
-// 				id: args[0],
-// 			});
-//
-// 			setupWebApp([args[0]], false);
-//
-// 			ctx.reply("👍");
-// 		} catch (e) {
-// 			ctx.reply(e._message);
-// 		}
-// 	}),
-// };
+import { Composer } from "telegraf";
+import { CommandType } from "./index.types";
+import { removeAccountById } from "../../db/accounts";
+import { DB } from "../../db";
+import { setupWebAppForId } from "../webapp";
+
+const command: string = "removeuser";
+
+export const removeuser: CommandType = {
+  public: true,
+  command,
+  help: `/${command} — remove user by telegram id`,
+  run: Composer.command(command, async (ctx) => {
+    const args = ctx.state.command.splitArgs;
+
+    if (!args.length) {
+      ctx.reply("RTFM (/help)");
+      return;
+    }
+
+    try {
+      const pool = DB.getInstance();
+      await removeAccountById(pool, String(args[0]));
+
+      await setupWebAppForId(ctx, true);
+      ctx.reply("👍");
+    } catch (e) {
+      // @ts-expect-error send error
+      ctx.reply(e?.message || "something went wrong");
+    }
+  }),
+};

@@ -1,27 +1,18 @@
 import { Telegraf } from "telegraf";
 
-import {
-  // adduser,
-  // removeuser,
-  // userlist,
-  // init,
-  myid,
-  // forceload,
-  // updaterows,
-  // help,
-} from "./commands";
+import * as commandList from "./commands";
 // import inline from "./inline";
 
 import { setupWebApp } from "./webapp";
-// import commandParts from "./middlewares/commandParts";
-// import botPermissions from "./middlewares/botPermissions";
+import { commandParts } from "./middlewares/commandParts";
+import { botPermissions } from "./middlewares/botPermissions";
+import { localhostURL } from "./constants";
+import { typedObjectKeys } from "../utils";
 
 export const telegramBotInit = () => {
   const token = process.env.TELEGRAM_TOKEN;
   const hostURL =
-    process.env.NODE_ENV === "dev"
-      ? "https://b1964d009ca4ff.lhr.life"
-      : process.env.HOST_URL;
+    process.env.NODE_ENV === "dev" ? localhostURL : process.env.HOST_URL;
 
   if (!token) throw new Error("TELEGRAM_TOKEN must be provided!");
   if (!hostURL) throw new Error("HOST_URL must be provided!");
@@ -30,27 +21,19 @@ export const telegramBotInit = () => {
 
   const secretPath = `/telegraf/${bot.secretPathComponent()}`;
 
-  // Bot.use(commandParts());
-  // Bot.use(botPermissions());
+  bot.use(commandParts());
+  bot.use(botPermissions());
 
   try {
     bot.telegram.setWebhook(`${hostURL}${secretPath}`);
-    setupWebApp(bot, `${hostURL}/webapp`);
+    setupWebApp(bot);
     console.log(`bot successfully set up webhook`);
   } catch (e) {
     console.log(e);
   }
 
   bot.use(
-    // inline,
-    // init.run,
-    myid.run,
-    // adduser.run,
-    // removeuser.run,
-    // userlist.run,
-    // forceload.run,
-    // updaterows.run,
-    // help
+    ...typedObjectKeys(commandList).map((command) => commandList[command].run),
   );
 
   return { bot, secretPath };

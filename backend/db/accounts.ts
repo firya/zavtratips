@@ -46,8 +46,40 @@ export const clearAccountsTable = async (pool: pg.Pool) => {
   }
 };
 
-export const getAccountList = async (pool: pg.Pool) => {
-  return await pool.query(`SELECT * FROM ${DB_NAME}`);
+export const getAccountList = async (
+  pool: pg.Pool,
+): Promise<AccountRow[] | undefined> => {
+  try {
+    const res = await pool.query(`SELECT * FROM ${DB_NAME}`);
+    return res.rows.length ? res.rows : undefined;
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+export const getAccountById = async (
+  pool: pg.Pool,
+  telegram_id: string,
+): Promise<AccountRow | undefined> => {
+  try {
+    const res = await pool.query(
+      `SELECT * FROM ${DB_NAME} WHERE telegram_id=${telegram_id}`,
+    );
+
+    return res.rows.length === 1 ? res.rows[0] : undefined;
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+export const removeAccountById = async (pool: pg.Pool, telegram_id: string) => {
+  try {
+    return await pool.query(
+      `DELETE FROM ${DB_NAME} WHERE telegram_id=${telegram_id}`,
+    );
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 export const insertIntoAccountsTable = async (

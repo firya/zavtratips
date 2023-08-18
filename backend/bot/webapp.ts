@@ -1,21 +1,24 @@
-import { Telegraf } from "telegraf";
+import { Context, Telegraf } from "telegraf";
 import { getAccountList } from "../db/accounts";
 import { DB } from "../db";
+import { localhostURL, webAppURL } from "./constants";
 
-export const setupWebApp = async (bot: Telegraf, url: string) => {
+export const setupWebApp = async (bot: Telegraf) => {
+  const hostURL =
+    process.env.NODE_ENV === "dev" ? localhostURL : process.env.HOST_URL;
   const pool = DB.getInstance();
   const userList = await getAccountList(pool);
 
-  if (userList.rows.length > 0) {
-    for (const { telegram_id } of userList.rows) {
+  if (userList) {
+    for (const { telegram_id } of userList) {
       try {
         await bot.telegram.setChatMenuButton({
-          chatId: telegram_id,
+          chatId: Number(telegram_id),
           menuButton: {
             type: "web_app",
             text: "Edit",
             web_app: {
-              url: url,
+              url: `${hostURL}${webAppURL}`,
             },
           },
         });
@@ -23,5 +26,28 @@ export const setupWebApp = async (bot: Telegraf, url: string) => {
         console.log(e);
       }
     }
+  }
+};
+
+export const setupWebAppForId = async (
+  ctx: Context,
+  remove: boolean = false,
+) => {
+  const hostURL =
+    process.env.NODE_ENV === "dev" ? localhostURL : process.env.HOST_URL;
+  try {
+    await ctx.setChatMenuButton(
+      remove
+        ? { type: "default" }
+        : {
+            type: "web_app",
+            text: "Edit",
+            web_app: {
+              url: `${hostURL}${webAppURL}`,
+            },
+          },
+    );
+  } catch (e) {
+    console.log(e);
   }
 };
