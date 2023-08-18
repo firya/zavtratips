@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="b6f0e12f-f874-4edc-84db-8a4f4fc29db8" name="Changes" comment="test remove dotenv" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="v2.0.0" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 0
+}]]></component>
+  <component name="ProjectId" id="2TtWKdnF4gEvOSDs313u3RdH6O0" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "Rebasing v2.0.0",
+    "last_opened_file_path": "/Users/lebedevm/Documents/zavtratips/backend/cron",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.standard": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.standard": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "prettierjs.PrettierConfiguration.Package": "/Users/lebedevm/Documents/zavtratips/node_modules/prettier",
+    "settings.editor.selected.configurable": "settings.vue",
+    "ts.external.directory.path": "/Users/lebedevm/Documents/zavtratips/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/backend/cron" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/backend/db" />
+      <recent name="$PROJECT_DIR$/backend/cron" />
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/backend" />
+      <recent name="$PROJECT_DIR$/backend/src" />
+    </key>
+  </component>
+  <component name="RunManager" selected="npm.backend:dev">
+    <configuration name="backend:dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="backend:dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="build" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="build" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="generate" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="generate" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="npm.generate" />
+        <item itemvalue="npm.dev" />
+        <item itemvalue="npm.build" />
+        <item itemvalue="npm.backend:dev" />
+        <item itemvalue="npm.generate" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="b6f0e12f-f874-4edc-84db-8a4f4fc29db8" name="Changes" comment="" />
+      <created>1691862794807</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1691862794807</updated>
+      <workItem from="1691862796070" duration="489000" />
+      <workItem from="1691911198434" duration="666000" />
+      <workItem from="1691911909188" duration="12000" />
+      <workItem from="1691911928847" duration="32000" />
+      <workItem from="1691911971269" duration="3101000" />
+      <workItem from="1691950102582" duration="2704000" />
+      <workItem from="1691952847434" duration="2533000" />
+      <workItem from="1692011140717" duration="18033000" />
+      <workItem from="1692361103106" duration="8972000" />
+    </task>
+    <task id="LOCAL-00001" summary="start over">
+      <created>1691912166092</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1691912166092</updated>
+    </task>
+    <task id="LOCAL-00002" summary="create pg tables">
+      <created>1691934999540</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1691934999540</updated>
+    </task>
+    <task id="LOCAL-00003" summary="fix creating table">
+      <created>1691935811655</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1691935811655</updated>
+    </task>
+    <task id="LOCAL-00004" summary="first approach api">
+      <created>1691937374278</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1691937374278</updated>
+    </task>
+    <task id="LOCAL-00005" summary="cron for update streams and config">
+      <created>1691946093116</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1691946093116</updated>
+    </task>
+    <task id="LOCAL-00006" summary="cron for update recommendations">
+      <created>1691952755337</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1691952755337</updated>
+    </task>
+    <task id="LOCAL-00007" summary="bot restore (it's worked!)">
+      <created>1692013198738</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1692013198738</updated>
+    </task>
+    <task id="LOCAL-00008" summary="add eslint and prettier">
+      <created>1692014444916</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1692014444916</updated>
+    </task>
+    <task id="LOCAL-00009" summary="fix create and update tables">
+      <created>1692042411352</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1692042411352</updated>
+    </task>
+    <task id="LOCAL-00010" summary="fix all bot command except inline">
+      <option name="closed" value="true" />
+      <created>1692366981163</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1692366981163</updated>
+    </task>
+    <task id="LOCAL-00011" summary="add vercel config">
+      <option name="closed" value="true" />
+      <created>1692367418929</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1692367418929</updated>
+    </task>
+    <task id="LOCAL-00012" summary="test vercel deployment">
+      <option name="closed" value="true" />
+      <created>1692367625851</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1692367625851</updated>
+    </task>
+    <task id="LOCAL-00013" summary="test vercel deployment 2">
+      <option name="closed" value="true" />
+      <created>1692368045262</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1692368045262</updated>
+    </task>
+    <task id="LOCAL-00014" summary="test vercel deployment 3">
+      <option name="closed" value="true" />
+      <created>1692368485767</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1692368485767</updated>
+    </task>
+    <task id="LOCAL-00015" summary="test vercel deployment 3">
+      <option name="closed" value="true" />
+      <created>1692368494987</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1692368494987</updated>
+    </task>
+    <task id="LOCAL-00016" summary="test vercel deployment 4">
+      <option name="closed" value="true" />
+      <created>1692368599061</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1692368599061</updated>
+    </task>
+    <task id="LOCAL-00017" summary="test vercel deployment 5">
+      <option name="closed" value="true" />
+      <created>1692368785270</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1692368785270</updated>
+    </task>
+    <task id="LOCAL-00018" summary="test vercel deployment 6">
+      <option name="closed" value="true" />
+      <created>1692368849381</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1692368849381</updated>
+    </task>
+    <task id="LOCAL-00019" summary="test vercel deployment 7">
+      <option name="closed" value="true" />
+      <created>1692369032559</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1692369032559</updated>
+    </task>
+    <task id="LOCAL-00020" summary="test vercel deployment 8">
+      <option name="closed" value="true" />
+      <created>1692369220661</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1692369220661</updated>
+    </task>
+    <task id="LOCAL-00021" summary="test remove dotenv">
+      <option name="closed" value="true" />
+      <created>1692369625993</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1692369625993</updated>
+    </task>
+    <task id="LOCAL-00022" summary="test remove dotenv">
+      <option name="closed" value="true" />
+      <created>1692369919967</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1692369919967</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="start over" />
+    <MESSAGE value="create pg tables" />
+    <MESSAGE value="fix creating table" />
+    <MESSAGE value="first approach api" />
+    <MESSAGE value="cron for update streams and config" />
+    <MESSAGE value="cron for update recommendations" />
+    <MESSAGE value="bot restore (it's worked!)" />
+    <MESSAGE value="add eslint and prettier" />
+    <MESSAGE value="fix create and update tables" />
+    <MESSAGE value="fix all bot command except inline" />
+    <MESSAGE value="add vercel config" />
+    <MESSAGE value="test vercel deployment" />
+    <MESSAGE value="test vercel deployment 2" />
+    <MESSAGE value="test vercel deployment 3" />
+    <MESSAGE value="test vercel deployment 4" />
+    <MESSAGE value="test vercel deployment 5" />
+    <MESSAGE value="test vercel deployment 6" />
+    <MESSAGE value="test vercel deployment 7" />
+    <MESSAGE value="test vercel deployment 8" />
+    <MESSAGE value="test remove dotenv" />
+    <option name="LAST_COMMIT_MESSAGE" value="test remove dotenv" />
+  </component>
+  <component name="VueSettings">
+    <option name="innerServiceType" value="DISABLED" />
+  </component>
+</project>
