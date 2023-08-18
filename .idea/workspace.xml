@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b6f0e12f-f874-4edc-84db-8a4f4fc29db8" name="Changes" comment="test remove dotenv" />
+    <list default="true" id="b6f0e12f-f874-4edc-84db-8a4f4fc29db8" name="Changes" comment="remove master">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,7 +39,7 @@
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "Rebasing v2.0.0",
+    "git-widget-placeholder": "main",
     "last_opened_file_path": "/Users/lebedevm/Documents/zavtratips/backend/cron",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.standard": "true",
@@ -48,7 +50,7 @@
     "nodejs_package_manager_path": "npm",
     "prettierjs.PrettierConfiguration.Package": "/Users/lebedevm/Documents/zavtratips/node_modules/prettier",
     "settings.editor.selected.configurable": "settings.vue",
-    "ts.external.directory.path": "/Users/lebedevm/Documents/zavtratips/node_modules/typescript/lib",
+    "ts.external.directory.path": "/Applications/WebStorm.app/Contents/plugins/javascript-impl/jsLanguageServicesImpl/external",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -134,7 +136,7 @@
       <workItem from="1691950102582" duration="2704000" />
       <workItem from="1691952847434" duration="2533000" />
       <workItem from="1692011140717" duration="18033000" />
-      <workItem from="1692361103106" duration="8972000" />
+      <workItem from="1692361103106" duration="9576000" />
     </task>
     <task id="LOCAL-00001" summary="start over">
       <created>1691912166092</created>
@@ -303,7 +305,23 @@
       <option name="project" value="LOCAL" />
       <updated>1692369919967</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="remove master">
+      <option name="closed" value="true" />
+      <created>1692370304054</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1692370304054</updated>
+    </task>
+    <task id="LOCAL-00024" summary="remove master">
+      <option name="closed" value="true" />
+      <created>1692370397727</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1692370397727</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -341,7 +359,8 @@
     <MESSAGE value="test vercel deployment 7" />
     <MESSAGE value="test vercel deployment 8" />
     <MESSAGE value="test remove dotenv" />
-    <option name="LAST_COMMIT_MESSAGE" value="test remove dotenv" />
+    <MESSAGE value="remove master" />
+    <option name="LAST_COMMIT_MESSAGE" value="remove master" />
   </component>
   <component name="VueSettings">
     <option name="innerServiceType" value="DISABLED" />
