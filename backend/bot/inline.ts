@@ -1,4 +1,4 @@
-// import { Composer } from "telegraf";
+import { Composer } from "telegraf";
 //
 // import ConfigModel from "../models/config";
 // import RowModel from "../models/row";
