@@ -7,7 +7,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "backend/index.ts" },
-    { "source": "/webapp", "destination": "backend/index.ts" }
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
