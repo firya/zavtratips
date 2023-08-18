@@ -1,9 +1,8 @@
 {
   "version": 2,
-  "devCommand": "npm run start",
   "builds": [
     {
-      "src": "backend/index.ts",
+      "src": "./backend/index.ts",
       "use": "@vercel/node"
     }
   ],
