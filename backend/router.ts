@@ -12,4 +12,8 @@ export const router = (app: Express) => {
   app.get("/", (req: Request, res: Response) => {
     res.send("Get out! You are not welcome here");
   });
+
+  app.get("/test", (req: Request, res: Response) => {
+    res.send("Get out!");
+  });
 };
