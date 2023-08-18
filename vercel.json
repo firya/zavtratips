@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "devCommand": "npm run start",
   "builds": [
     {
       "src": "backend/index.ts",
