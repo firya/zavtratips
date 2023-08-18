@@ -29,7 +29,8 @@ export const DB = (function () {
   };
 })();
 
-export const removeAllTables = async (pool: pg.Pool) => {
+export const removeAllTables = async () => {
+  const pool = DB.getInstance();
   try {
     await removeAccountsTable(pool);
     await removeConfigTable(pool);
@@ -41,7 +42,8 @@ export const removeAllTables = async (pool: pg.Pool) => {
   }
 };
 
-export const createAllTables = async (pool: pg.Pool) => {
+export const createAllTables = async () => {
+  const pool = DB.getInstance();
   const promises = [
     await createConfigTable(pool),
     await createAccountsTable(pool),

@@ -20,7 +20,7 @@ export const createPodcastTable = async (pool: pg.Pool) => {
             podcast varchar(128),
             number varchar(128),
             title varchar(128),
-            length interval hour to minute
+            length varchar(128)
         );`);
   } catch (e) {
     console.log(e);
@@ -38,6 +38,18 @@ export const removePodcastsTable = async (pool: pg.Pool) => {
 export const clearPodcastsTable = async (pool: pg.Pool) => {
   try {
     await pool.query(`TRUNCATE TABLE ${DB_NAME}`);
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+export const getPodcastList = async (
+  pool: pg.Pool,
+): Promise<PodcastsRow[] | undefined> => {
+  try {
+    const res = await pool.query(`SELECT * FROM ${DB_NAME}`);
+
+    return res.rows.length ? res.rows : undefined;
   } catch (e) {
     console.log(e);
   }

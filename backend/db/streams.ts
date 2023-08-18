@@ -18,7 +18,7 @@ export const createStreamsTable = async (pool: pg.Pool) => {
             date timestamp default NULL,
             title varchar(512),
             link varchar(512),
-            length interval hour to minute
+            length varchar(128)
         );`);
   } catch (e) {
     console.log(e);
@@ -36,6 +36,18 @@ export const removeStreamsTable = async (pool: pg.Pool) => {
 export const clearStreamsTable = async (pool: pg.Pool) => {
   try {
     await pool.query(`TRUNCATE TABLE ${DB_NAME}`);
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+export const getStreamsList = async (
+  pool: pg.Pool,
+): Promise<StreamsRow[] | undefined> => {
+  try {
+    const res = await pool.query(`SELECT * FROM ${DB_NAME}`);
+
+    return res.rows.length ? res.rows : undefined;
   } catch (e) {
     console.log(e);
   }

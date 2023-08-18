@@ -1,7 +1,7 @@
 import { Telegraf } from "telegraf";
 
 import * as commandList from "./commands";
-// import inline from "./inline";
+import { inline } from "./inline";
 
 import { setupWebApp } from "./webapp";
 import { commandParts } from "./middlewares/commandParts";
@@ -31,6 +31,7 @@ export const telegramBotInit = () => {
   }
 
   bot.use(
+    inline,
     ...typedObjectKeys(commandList).map((command) => commandList[command].run),
   );
 

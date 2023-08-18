@@ -64,6 +64,18 @@ export const clearRecommendationsTable = async (pool: pg.Pool) => {
   }
 };
 
+export const getRecommendationList = async (
+  pool: pg.Pool,
+): Promise<RecommendationsRow[] | undefined> => {
+  try {
+    const res = await pool.query(`SELECT * FROM ${DB_NAME}`);
+
+    return res.rows.length ? res.rows : undefined;
+  } catch (e) {
+    console.log(e);
+  }
+};
+
 export const insertIntoRecommendationsTable = async (
   pool: pg.Pool,
   rows: StreamsRow[],
