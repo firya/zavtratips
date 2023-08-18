@@ -2,20 +2,6 @@
   "name": "zavtratips",
   "version": "2.0.0",
   "description": "Zavtracast hosts recommendations bot",
-  "main": "index.js",
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
-  "scripts": {
-    "start": "npm run frontend:generate && npm run backend:build && npm run backend:start",
-    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
-    "frontend:dev": "npm run dev --workspace=frontend",
-    "frontend:generate": "npm run generate --workspace=frontend",
-    "backend:dev": "npm run dev --workspace=backend",
-    "backend:build": "npm run build --workspace=backend",
-    "backend:start": "npm run start --workspace=backend"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/firya/zavtratips.git"
