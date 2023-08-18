@@ -7,6 +7,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.ts" }
+    { "source": "/(.*)", "destination": "index.ts" }
   ]
 }
