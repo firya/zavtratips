@@ -4,8 +4,6 @@ import { DB } from "../db";
 import { localhostURL, webAppURL } from "./constants";
 
 export const setupWebApp = async (bot: Telegraf) => {
-  const hostURL =
-    process.env.NODE_ENV === "dev" ? localhostURL : process.env.HOST_URL;
   const pool = DB.getInstance();
   const userList = await getAccountList(pool);
 
@@ -18,7 +16,7 @@ export const setupWebApp = async (bot: Telegraf) => {
             type: "web_app",
             text: "Edit",
             web_app: {
-              url: `${hostURL}${webAppURL}`,
+              url: webAppURL,
             },
           },
         });
@@ -33,8 +31,6 @@ export const setupWebAppForId = async (
   ctx: Context,
   remove: boolean = false,
 ) => {
-  const hostURL =
-    process.env.NODE_ENV === "dev" ? localhostURL : process.env.HOST_URL;
   try {
     await ctx.setChatMenuButton(
       remove
@@ -43,7 +39,7 @@ export const setupWebAppForId = async (
             type: "web_app",
             text: "Edit",
             web_app: {
-              url: `${hostURL}${webAppURL}`,
+              url: webAppURL,
             },
           },
     );
