@@ -13,8 +13,6 @@ if (process.env.NODE_ENV === "dev") {
 const app: Express = express();
 const port = process.env.PORT || "8080";
 
-console.log(process.env);
-
 router(app);
 cronJobs();
 
