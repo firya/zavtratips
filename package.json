@@ -1,0 +1,41 @@
+{
+  "name": "zavtratips",
+  "version": "2.0.0",
+  "description": "Zavtracast hosts recommendations bot",
+  "main": "index.js",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "start": "npm run frontend:generate && npm run backend:build && npm run backend:start",
+    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
+    "frontend:dev": "npm run dev --workspace=frontend",
+    "frontend:generate": "npm run generate --workspace=frontend",
+    "backend:dev": "npm run dev --workspace=backend",
+    "backend:build": "npm run build --workspace=backend",
+    "backend:start": "npm run start --workspace=backend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/firya/zavtratips.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/firya/zavtratips/issues"
+  },
+  "homepage": "https://github.com/firya/zavtratips#readme",
+  "dependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.3.0",
+    "@typescript-eslint/parser": "^6.3.0",
+    "eslint": "^8.47.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.28.0",
+    "eslint-plugin-vue": "^9.17.0",
+    "prettier": "3.0.1"
+  }
+}
