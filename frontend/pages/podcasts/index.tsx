@@ -13,9 +13,7 @@ export default defineComponent({
 
     return () => (
       <div>
-        <NButton onClick={clickHandler}>
-          {process.env.HOST_URL || "test"}
-        </NButton>
+        <NButton onClick={clickHandler}>test</NButton>
       </div>
     );
   },

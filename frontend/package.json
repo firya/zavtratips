@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --dotenv ../.env",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@pinia/nuxt": "^0.4.11",
-    "axios": "^1.4.0",
     "naive-ui": "^2.34.4",
     "pinia": "^2.1.6",
     "vee-validate": "^4.11.1"

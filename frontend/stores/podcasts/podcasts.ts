@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { PodcastsState } from "~/stores/podcasts/podcasts.types";
-import axios from "axios";
+import { Api } from "~/api";
 
 export const usePodcastsStore = defineStore("podcasts", {
   state: (): PodcastsState => ({
@@ -10,7 +10,7 @@ export const usePodcastsStore = defineStore("podcasts", {
   }),
   actions: {
     async getPodcasts() {
-      const res = await axios.get("http://localhost:8000/api/podcasts", {
+      const res = await Api("/podcasts", {
         params: {
           page: this.page,
           pageSize: this.pageSize,
