@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { router } from "./router";
 import { createAllTables } from "./db";
 import { cronJobs } from "./cron";
+import cors from "cors";
 
 dotenv.config({
   path: "../.env",
@@ -11,6 +12,7 @@ dotenv.config({
 const app: Express = express();
 const port = process.env.PORT || "8080";
 
+app.use(cors());
 router(app);
 cronJobs();
 
