@@ -12,12 +12,12 @@ export const dateDifference = (date1: Date, date2: Date): string => {
   ${pluralWord(days, ["день", "дня", "дней"])}`;
 };
 
-export const strToDate = (date: string): Date => {
+export const strToDate = (date: string): Date | null => {
   const dateArr = date.split(".");
-  if (dateArr.length !== 3) return new Date();
+  if (dateArr.length !== 3) return null;
 
   const [day, month, year] = dateArr.map((item) => parseInt(item, 10));
-  if (!day || !month || !year) return new Date();
+  if (!day || !month || !year) return null;
   return new Date(year, month - 1, day);
 };
 

@@ -1,5 +1,10 @@
-import pg from "pg";
-import { insertIntoTable } from "./common";
+import {
+  dropTable,
+  getAllTable,
+  insertIntoTable,
+  truncateTable,
+} from "./common";
+import { DB } from "./index";
 
 export type StreamsRow = {
   row?: number;
@@ -11,7 +16,9 @@ export type StreamsRow = {
 
 export const DB_NAME = "zt_streams";
 
-export const createStreamsTable = async (pool: pg.Pool) => {
+export const createStreamsTable = async () => {
+  const pool = DB.getInstance();
+
   try {
     await pool.query(`CREATE TABLE IF NOT EXISTS ${DB_NAME} (
             row serial PRIMARY KEY,
@@ -25,37 +32,30 @@ export const createStreamsTable = async (pool: pg.Pool) => {
   }
 };
 
-export const removeStreamsTable = async (pool: pg.Pool) => {
+export const removeStreamsTable = async () => {
   try {
-    await pool.query(`DROP TABLE IF EXISTS ${DB_NAME}`);
+    await dropTable(DB_NAME);
   } catch (e) {
     console.log(e);
   }
 };
 
-export const clearStreamsTable = async (pool: pg.Pool) => {
+export const clearStreamsTable = async () => {
   try {
-    await pool.query(`TRUNCATE TABLE ${DB_NAME}`);
+    await truncateTable(DB_NAME);
   } catch (e) {
     console.log(e);
   }
 };
 
-export const getStreamsList = async (
-  pool: pg.Pool,
-): Promise<StreamsRow[] | undefined> => {
+export const getStreamsList = async (): Promise<StreamsRow[] | undefined> => {
   try {
-    const res = await pool.query(`SELECT * FROM ${DB_NAME}`);
-
-    return res.rows.length ? res.rows : undefined;
+    return await getAllTable(DB_NAME, "date");
   } catch (e) {
     console.log(e);
   }
 };
 
-export const insertIntoStreamsTable = async (
-  pool: pg.Pool,
-  rows: StreamsRow[],
-) => {
-  return insertIntoTable(pool, DB_NAME, rows);
+export const insertIntoStreamsTable = async (rows: StreamsRow[]) => {
+  return insertIntoTable(DB_NAME, rows);
 };

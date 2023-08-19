@@ -1,5 +1,6 @@
-import pg from "pg";
 import PGformat from "pg-format";
+import { DB } from "./index";
+import { dropTable, truncateTable } from "./common";
 
 export type ConfigRow = {
   id?: number;
@@ -9,7 +10,8 @@ export type ConfigRow = {
 
 const DB_NAME = "zt_config";
 
-export const createConfigTable = async (pool: pg.Pool) => {
+export const createConfigTable = async () => {
+  const pool = DB.getInstance();
   try {
     await pool.query(`CREATE TABLE IF NOT EXISTS ${DB_NAME} (
             id serial PRIMARY KEY,
@@ -21,26 +23,40 @@ export const createConfigTable = async (pool: pg.Pool) => {
   }
 };
 
-export const removeConfigTable = async (pool: pg.Pool) => {
+export const removeConfigTable = async () => {
   try {
-    await pool.query(`DROP TABLE IF EXISTS ${DB_NAME}`);
+    await dropTable(DB_NAME);
   } catch (e) {
     console.log(e);
   }
 };
 
-export const clearConfigTable = async (pool: pg.Pool) => {
+export const clearConfigTable = async () => {
   try {
-    await pool.query(`TRUNCATE TABLE ${DB_NAME}`);
+    await truncateTable(DB_NAME);
   } catch (e) {
     console.log(e);
   }
 };
 
-export const insertIntoConfigTable = async (
-  pool: pg.Pool,
-  rows: ConfigRow[],
-) => {
+export const getConfig = async () => {
+  const pool = DB.getInstance();
+  try {
+    const query = PGformat(`SELECT * FROM %I`, DB_NAME);
+    const res = await pool.query(query);
+
+    return res.rows.reduce<Record<string, string[]>>((acc, row) => {
+      if (!acc[row.key]) acc[row.key] = [];
+      acc[row.key].push(row.value);
+      return acc;
+    }, {});
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+export const insertIntoConfigTable = async (rows: ConfigRow[]) => {
+  const pool = DB.getInstance();
   if (!rows.length) return;
   const headers: string[] = Object.keys(rows[0]);
   const values: unknown[] = [];
@@ -50,7 +66,8 @@ export const insertIntoConfigTable = async (
   }
   try {
     const query = PGformat(
-      `INSERT INTO ${DB_NAME} (${headers.join(", ")}) VALUES %L`,
+      `INSERT INTO %I (${headers.join(", ")}) VALUES %L`,
+      DB_NAME,
       values,
     );
     await pool.query(query);

@@ -1,5 +1,12 @@
-import pg from "pg";
-import { insertIntoTable } from "./common";
+import {
+  defaultPageSize,
+  dropTable,
+  findInTable,
+  getAllTable,
+  insertIntoTable,
+  truncateTable,
+} from "./common";
+import { DB } from "./index";
 
 export type PodcastsRow = {
   row?: number;
@@ -12,7 +19,9 @@ export type PodcastsRow = {
 
 export const DB_NAME = "zt_podcasts";
 
-export const createPodcastTable = async (pool: pg.Pool) => {
+export const createPodcastTable = async () => {
+  const pool = DB.getInstance();
+
   try {
     await pool.query(`CREATE TABLE IF NOT EXISTS ${DB_NAME} (
             row serial PRIMARY KEY,
@@ -27,37 +36,51 @@ export const createPodcastTable = async (pool: pg.Pool) => {
   }
 };
 
-export const removePodcastsTable = async (pool: pg.Pool) => {
+export const removePodcastsTable = async () => {
   try {
-    await pool.query(`DROP TABLE IF EXISTS ${DB_NAME}`);
+    await dropTable(DB_NAME);
   } catch (e) {
     console.log(e);
   }
 };
 
-export const clearPodcastsTable = async (pool: pg.Pool) => {
+export const clearPodcastsTable = async () => {
   try {
-    await pool.query(`TRUNCATE TABLE ${DB_NAME}`);
+    await truncateTable(DB_NAME);
   } catch (e) {
     console.log(e);
   }
 };
 
-export const getPodcastList = async (
-  pool: pg.Pool,
+export const getAllPodcastList = async (): Promise<
+  PodcastsRow[] | undefined
+> => {
+  try {
+    return await getAllTable(DB_NAME, "date");
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+export const findPodcasts = async (
+  query: string,
+  page: number = 1,
+  pageSize: number = defaultPageSize,
 ): Promise<PodcastsRow[] | undefined> => {
   try {
-    const res = await pool.query(`SELECT * FROM ${DB_NAME}`);
-
-    return res.rows.length ? res.rows : undefined;
+    return await findInTable<PodcastsRow>({
+      tableName: DB_NAME,
+      queryParam: "number",
+      queryString: query,
+      sortBy: "date",
+      page: page,
+      limit: pageSize,
+    });
   } catch (e) {
     console.log(e);
   }
 };
 
-export const insertIntoPodcastsTable = async (
-  pool: pg.Pool,
-  rows: PodcastsRow[],
-) => {
-  return insertIntoTable(pool, DB_NAME, rows);
+export const insertIntoPodcastsTable = async (rows: PodcastsRow[]) => {
+  return insertIntoTable(DB_NAME, rows);
 };

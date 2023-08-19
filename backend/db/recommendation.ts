@@ -1,6 +1,11 @@
-import pg from "pg";
-import { insertIntoTable } from "./common";
-import { StreamsRow } from "./streams";
+import {
+  dropTable,
+  findInTableStrict,
+  getAllTable,
+  insertIntoTable,
+  truncateTable,
+} from "./common";
+import { DB } from "./index";
 
 export type RecommendationsRow = {
   row?: number;
@@ -23,7 +28,8 @@ export type RecommendationsRow = {
 
 export const DB_NAME = "zt_recommendations";
 
-export const createRecommendationsTable = async (pool: pg.Pool) => {
+export const createRecommendationsTable = async () => {
+  const pool = DB.getInstance();
   try {
     await pool.query(`CREATE TABLE IF NOT EXISTS ${DB_NAME} (
             row serial PRIMARY KEY,
@@ -48,37 +54,51 @@ export const createRecommendationsTable = async (pool: pg.Pool) => {
   }
 };
 
-export const removeRecommendationsTable = async (pool: pg.Pool) => {
+export const removeRecommendationsTable = async () => {
   try {
-    await pool.query(`DROP TABLE IF EXISTS ${DB_NAME}`);
+    await dropTable(DB_NAME);
   } catch (e) {
     console.log(e);
   }
 };
 
-export const clearRecommendationsTable = async (pool: pg.Pool) => {
+export const clearRecommendationsTable = async () => {
   try {
-    await pool.query(`TRUNCATE TABLE ${DB_NAME}`);
+    await truncateTable(DB_NAME);
   } catch (e) {
     console.log(e);
   }
 };
 
-export const getRecommendationList = async (
-  pool: pg.Pool,
+export const getRecommendationList = async (): Promise<
+  RecommendationsRow[] | undefined
+> => {
+  try {
+    return await getAllTable(DB_NAME, "date");
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+export const getRecommendationByPodcast = async (
+  podcast: string,
 ): Promise<RecommendationsRow[] | undefined> => {
   try {
-    const res = await pool.query(`SELECT * FROM ${DB_NAME}`);
-
-    return res.rows.length ? res.rows : undefined;
+    return await findInTableStrict<RecommendationsRow>({
+      tableName: DB_NAME,
+      queryParam: "podcast",
+      queryString: podcast,
+      sortBy: "type",
+      page: 1,
+      limit: 100,
+    });
   } catch (e) {
     console.log(e);
   }
 };
 
 export const insertIntoRecommendationsTable = async (
-  pool: pg.Pool,
-  rows: StreamsRow[],
+  rows: RecommendationsRow[],
 ) => {
-  return insertIntoTable(pool, DB_NAME, rows);
+  return insertIntoTable(DB_NAME, rows);
 };

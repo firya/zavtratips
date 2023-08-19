@@ -1,7 +1,6 @@
 import { Composer } from "telegraf";
 import { CommandType } from "./index.types";
 import { removeAccountById } from "../../db/accounts";
-import { DB } from "../../db";
 import { setupWebAppForId } from "../webapp";
 
 const command: string = "removeuser";
@@ -19,8 +18,7 @@ export const removeuser: CommandType = {
     }
 
     try {
-      const pool = DB.getInstance();
-      await removeAccountById(pool, String(args[0]));
+      await removeAccountById(String(args[0]));
 
       await setupWebAppForId(ctx, true);
       ctx.reply("👍");

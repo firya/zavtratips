@@ -1,5 +1,12 @@
 import pg from "pg";
-import { insertIntoTable } from "./common";
+import {
+  dropTable,
+  getAllTable,
+  insertIntoTable,
+  truncateTable,
+} from "./common";
+import { DB } from "./index";
+import PGformat from "pg-format";
 
 export type AccountRow = {
   telegram_id: string;
@@ -8,7 +15,8 @@ export type AccountRow = {
 
 const DB_NAME = "zt_accounts";
 
-export const createAccountsTable = async (pool: pg.Pool) => {
+export const createAccountsTable = async () => {
+  const pool = DB.getInstance();
   try {
     await pool.query(`CREATE TABLE IF NOT EXISTS ${DB_NAME} (
             telegram_id serial PRIMARY KEY,
@@ -30,41 +38,41 @@ export const createAccountsTable = async (pool: pg.Pool) => {
   }
 };
 
-export const removeAccountsTable = async (pool: pg.Pool) => {
+export const removeAccountsTable = async () => {
   try {
-    await pool.query(`DROP TABLE IF EXISTS ${DB_NAME}`);
+    await dropTable(DB_NAME);
   } catch (e) {
     console.log(e);
   }
 };
 
-export const clearAccountsTable = async (pool: pg.Pool) => {
+export const clearAccountsTable = async () => {
   try {
-    await pool.query(`TRUNCATE TABLE ${DB_NAME}`);
+    await truncateTable(DB_NAME);
   } catch (e) {
     console.log(e);
   }
 };
 
-export const getAccountList = async (
-  pool: pg.Pool,
-): Promise<AccountRow[] | undefined> => {
+export const getAccountList = async (): Promise<AccountRow[] | undefined> => {
   try {
-    const res = await pool.query(`SELECT * FROM ${DB_NAME}`);
-    return res.rows.length ? res.rows : undefined;
+    return await getAllTable(DB_NAME, "telegram_id", "ASC");
   } catch (e) {
     console.log(e);
   }
 };
 
 export const getAccountById = async (
-  pool: pg.Pool,
   telegram_id: string,
 ): Promise<AccountRow | undefined> => {
+  const pool = DB.getInstance();
   try {
-    const res = await pool.query(
-      `SELECT * FROM ${DB_NAME} WHERE telegram_id=${telegram_id}`,
+    const query = PGformat(
+      `SELECT * FROM %I WHERE telegram_id=%L`,
+      DB_NAME,
+      telegram_id,
     );
+    const res = await pool.query(query);
 
     return res.rows.length === 1 ? res.rows[0] : undefined;
   } catch (e) {
@@ -72,11 +80,15 @@ export const getAccountById = async (
   }
 };
 
-export const removeAccountById = async (pool: pg.Pool, telegram_id: string) => {
+export const removeAccountById = async (telegram_id: string) => {
+  const pool = DB.getInstance();
   try {
-    return await pool.query(
-      `DELETE FROM ${DB_NAME} WHERE telegram_id=${telegram_id}`,
+    const query = PGformat(
+      `DELETE FROM %I WHERE telegram_id=%L`,
+      DB_NAME,
+      telegram_id,
     );
+    return await pool.query(query);
   } catch (e) {
     console.log(e);
   }
@@ -86,5 +98,5 @@ export const insertIntoAccountsTable = async (
   pool: pg.Pool,
   rows: AccountRow[],
 ) => {
-  return insertIntoTable(pool, DB_NAME, rows);
+  return insertIntoTable(DB_NAME, rows);
 };

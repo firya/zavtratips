@@ -6,7 +6,7 @@ import { PodcastsRow } from "../podcasts";
 const PODCASTS_COLUMN_MAP: ColumnMapType<keyof PodcastsRow> = {
   date: {
     label: "Дата",
-    transform: (val: string) => strToDate(val).toISOString(),
+    transform: (val: string) => strToDate(val)?.toISOString(),
   },
   podcast: {
     label: "Шоу",

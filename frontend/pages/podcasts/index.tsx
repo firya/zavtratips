@@ -1,20 +1,9 @@
 import { defineComponent } from "vue";
-import { NButton } from "naive-ui";
-import { usePodcastsStore } from "~/stores/podcasts/podcasts";
+import { PodcastsComponent } from "~/components/pages/podcasts";
 
 export default defineComponent({
   name: "PodcastsPage",
   setup() {
-    const podcastsStore = usePodcastsStore();
-
-    const clickHandler = () => {
-      podcastsStore.getPodcasts();
-    };
-
-    return () => (
-      <div>
-        <NButton onClick={clickHandler}>test</NButton>
-      </div>
-    );
+    return () => <PodcastsComponent />;
   },
 });

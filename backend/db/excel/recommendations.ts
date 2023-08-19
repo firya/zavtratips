@@ -6,7 +6,7 @@ import { RecommendationsRow } from "../recommendation";
 const RECOMMENDATIONS_COLUMN_MAP: ColumnMapType<keyof RecommendationsRow> = {
   date: {
     label: "Дата",
-    transform: (val: string) => strToDate(val).toISOString(),
+    transform: (val: string) => strToDate(val)?.toISOString(),
   },
   podcast: {
     label: "Выпуск",
@@ -34,7 +34,7 @@ const RECOMMENDATIONS_COLUMN_MAP: ColumnMapType<keyof RecommendationsRow> = {
   },
   releaseDate: {
     label: "Дата релиза",
-    transform: (val: string) => (val ? strToDate(val).toISOString() : null),
+    transform: (val: string) => (val ? strToDate(val)?.toISOString() : null),
   },
   length: {
     label: "Продолжительность",

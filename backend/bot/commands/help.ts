@@ -1,6 +1,5 @@
 import { Composer } from "telegraf";
 import * as commandList from "./index";
-import { DB } from "../../db";
 import { getAccountById } from "../../db/accounts";
 import { typedObjectKeys } from "../../utils";
 import { CommandType } from "./index.types";
@@ -15,8 +14,7 @@ export const help: CommandType = {
     try {
       const { id } = ctx.update.message.from;
 
-      const pool = DB.getInstance();
-      const userData = await getAccountById(pool, String(id));
+      const userData = await getAccountById(String(id));
 
       let helpText = "";
       if (!userData || userData.role !== "admin") {

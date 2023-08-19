@@ -1,10 +1,8 @@
 import { Context, Telegraf } from "telegraf";
 import { getAccountList } from "../db/accounts";
-import { DB } from "../db";
 
 export const setupWebApp = async (bot: Telegraf) => {
-  const pool = DB.getInstance();
-  const userList = await getAccountList(pool);
+  const userList = await getAccountList();
 
   if (!process.env.WEBAPP_URL) throw Error("WEBAPP_URL not set");
 

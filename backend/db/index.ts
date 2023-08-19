@@ -30,26 +30,24 @@ export const DB = (function () {
 })();
 
 export const removeAllTables = async () => {
-  const pool = DB.getInstance();
   try {
-    await removeAccountsTable(pool);
-    await removeConfigTable(pool);
-    await removePodcastsTable(pool);
-    await removeRecommendationsTable(pool);
-    await removeStreamsTable(pool);
+    await removeAccountsTable();
+    await removeConfigTable();
+    await removePodcastsTable();
+    await removeRecommendationsTable();
+    await removeStreamsTable();
   } catch (e) {
     console.log(e);
   }
 };
 
 export const createAllTables = async () => {
-  const pool = DB.getInstance();
   const promises = [
-    await createConfigTable(pool),
-    await createAccountsTable(pool),
-    await createPodcastTable(pool),
-    await createRecommendationsTable(pool),
-    await createStreamsTable(pool),
+    await createConfigTable(),
+    await createAccountsTable(),
+    await createPodcastTable(),
+    await createRecommendationsTable(),
+    await createStreamsTable(),
   ];
 
   void Promise.all(promises);

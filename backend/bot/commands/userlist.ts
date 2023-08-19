@@ -1,7 +1,6 @@
 import { Composer } from "telegraf";
 import { CommandType } from "./index.types";
 import { getAccountList } from "../../db/accounts";
-import { DB } from "../../db";
 
 const command: string = "userlist";
 
@@ -11,8 +10,7 @@ export const userlist: CommandType = {
   help: `/${command} — show list of users`,
   run: Composer.command(command, async (ctx) => {
     try {
-      const pool = DB.getInstance();
-      const res = await getAccountList(pool);
+      const res = await getAccountList();
 
       if (!res) {
         ctx.reply("No users (it's impossible!)");

@@ -1,5 +1,4 @@
 import { InlineReplyMessage } from "./index.types";
-import { DB } from "../../db";
 import {
   getRecommendationList,
   RecommendationsRow,
@@ -9,8 +8,7 @@ import { formatDate, typedObjectKeys } from "../../utils";
 export const getRecommendationInlineResults = async (
   query: string,
 ): Promise<InlineReplyMessage[]> => {
-  const pool = DB.getInstance();
-  const res = await getRecommendationList(pool);
+  const res = await getRecommendationList();
 
   if (!res) return [];
 

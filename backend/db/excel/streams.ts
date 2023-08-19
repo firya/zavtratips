@@ -6,7 +6,7 @@ import { getAllExcelRows } from "./common";
 const STREAM_COLUMN_MAP: ColumnMapType<keyof StreamsRow> = {
   date: {
     label: "Дата",
-    transform: (val: string) => strToDate(val).toISOString(),
+    transform: (val: string) => strToDate(val)?.toISOString(),
   },
   title: {
     label: "Название",

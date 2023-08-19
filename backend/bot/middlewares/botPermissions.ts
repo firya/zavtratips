@@ -1,6 +1,5 @@
 import { Context } from "telegraf";
 import { publicCommands } from "../constants";
-import { DB } from "../../db";
 import { getAccountById } from "../../db/accounts";
 
 export const botPermissions =
@@ -11,8 +10,7 @@ export const botPermissions =
           // @ts-expect-error poor typing
           const { id } = ctx.update.message.from;
 
-          const pool = DB.getInstance();
-          const userData = await getAccountById(pool, id);
+          const userData = await getAccountById(id);
 
           if (!userData || userData.role !== "admin") {
             ctx.reply(`You have no permission to use this command`);

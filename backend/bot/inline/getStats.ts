@@ -1,6 +1,5 @@
 import { InlineReplyMessage } from "./index.types";
-import { DB } from "../../db";
-import { getPodcastList } from "../../db/podcasts";
+import { getAllPodcastList } from "../../db/podcasts";
 import { dateDifference, sumTime, typedObjectKeys } from "../../utils";
 import {
   getRecommendationList,
@@ -122,8 +121,7 @@ export const getStatInlineResults = async (query: string) => {
 };
 
 export async function getPodcastsStat(podcast?: string) {
-  const pool = DB.getInstance();
-  const res = await getPodcastList(pool);
+  const res = await getAllPodcastList();
 
   if (!res) return statMessage({ onAir: "", count: 0, length: "" });
 
@@ -149,8 +147,7 @@ export async function getTotalStat({
   podcast?: string;
   host?: "dima" | "timur" | "maksim";
 }) {
-  const pool = DB.getInstance();
-  const res = await getRecommendationList(pool);
+  const res = await getRecommendationList();
 
   if (!res) return recommendationStatMessage({ total: 0, byType: {} });
 
@@ -193,8 +190,7 @@ export function countByType(array: RecommendationsRow[]) {
 }
 
 export async function getStreamsStat() {
-  const pool = DB.getInstance();
-  const res = await getStreamsList(pool);
+  const res = await getStreamsList();
 
   if (!res) return statMessage({ onAir: "", count: 0, length: "" });
 
