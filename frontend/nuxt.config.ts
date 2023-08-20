@@ -10,25 +10,20 @@ export default defineNuxtConfig({
     },
   },
   build: {
-    transpile:
-      process.env.NODE_ENV === "production"
-        ? [
-            "naive-ui",
-            "vueuc",
-            "@css-render/vue3-ssr",
-            "@juggle/resize-observer",
-          ]
-        : ["@juggle/resize-observer"],
+    transpile: ["primevue"],
   },
   vite: {
-    optimizeDeps: {
-      include:
-        process.env.NODE_ENV === "dev"
-          ? ["naive-ui", "vueuc", "date-fns-tz/esm/formatInTimeZone"]
-          : [],
-    },
     vueJsx: {
       mergeProps: true,
     },
+  },
+  css: [
+    "primeicons/primeicons.css",
+    "primevue/resources/themes/lara-light-blue/theme.css",
+    "@/assets/css/global.css",
+  ],
+  ssr: false,
+  imports: {
+    autoImport: false,
   },
 });

@@ -1,7 +1,7 @@
 import { defineComponent } from "vue";
-import { NSpace, NButton } from "naive-ui";
-
+import Button from "primevue/button";
 import styles from "./main.module.css";
+import { useRouter } from "#imports";
 
 export const MainComponent = defineComponent({
   name: "MainComponent",
@@ -9,26 +9,27 @@ export const MainComponent = defineComponent({
     const $router = useRouter();
 
     const menuClickHandler = (path: string) => {
-      console.log($router.push(path));
+      $router.push(path);
     };
 
     return () => (
-      <NSpace vertical>
-        <NButton
-          type={"primary"}
+      <div class={styles.wrapper}>
+        <Button
+          severity={"success"}
           class={styles.button}
           onClick={() => menuClickHandler("/podcasts")}
         >
           🎤 Podcasts
-        </NButton>
-        <NButton
-          type={"info"}
+        </Button>
+
+        <Button
+          severity={"primary"}
           class={styles.button}
           onClick={() => menuClickHandler("/recommendations")}
         >
           🤔 Recommendations
-        </NButton>
-      </NSpace>
+        </Button>
+      </div>
     );
   },
 });

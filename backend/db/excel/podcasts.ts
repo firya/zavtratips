@@ -14,6 +14,9 @@ const PODCASTS_COLUMN_MAP: ColumnMapType<keyof PodcastsRow> = {
   number: {
     label: "Выпуск, №",
   },
+  podcastnumber: {
+    label: "Шоу и номер",
+  },
   title: {
     label: "Название",
   },

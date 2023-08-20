@@ -13,6 +13,7 @@ export type PodcastsRow = {
   date: string;
   podcast: string;
   number: string;
+  podcastnumber: string;
   title: string;
   length: string;
 };
@@ -28,6 +29,7 @@ export const createPodcastTable = async () => {
             date timestamp default NULL,
             podcast varchar(128),
             number varchar(128),
+            podcastnumber varchar(256),
             title varchar(128),
             length varchar(128)
         );`);
@@ -70,7 +72,7 @@ export const findPodcasts = async (
   try {
     return await findInTable<PodcastsRow>({
       tableName: DB_NAME,
-      queryParam: "number",
+      queryParam: "podcastnumber",
       queryString: query,
       sortBy: "date",
       page: page,

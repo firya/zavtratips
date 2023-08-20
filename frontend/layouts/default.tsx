@@ -1,7 +1,8 @@
 import { defineComponent } from "vue";
-import { NPageHeader, NLayout, NLayoutHeader, NLayoutContent } from "naive-ui";
-
+import Toast from "primevue/toast";
 import styles from "./default.module.css";
+import { computed, useRoute, useRouter } from "#imports";
+import Button from "primevue/button";
 
 export default defineComponent({
   name: "DefaultLayout",
@@ -17,17 +18,22 @@ export default defineComponent({
   },
   render() {
     return (
-      <NLayout class={styles.layout}>
-        <NLayoutHeader class={styles.header}>
-          <NPageHeader
-            title={"Zavtratips WebApp"}
-            onBack={this.showBack ? this.handleBack : undefined}
-          />
-        </NLayoutHeader>
-        <NLayoutContent content-style="padding: 1em 2em;">
-          {this.$slots.default?.()}
-        </NLayoutContent>
-      </NLayout>
+      <div class={styles.layout}>
+        <div class={styles.header}>
+          {this.showBack ? (
+            <Button
+              text
+              icon="pi pi-arrow-left"
+              class={styles.back}
+              onClick={this.handleBack}
+            />
+          ) : null}
+          <div class={styles.title}>Zavtratips WebApp</div>
+          {this.showBack ? <div class={styles.back}></div> : null}
+        </div>
+        <div class={styles.content}>{this.$slots.default?.()}</div>
+        <Toast />
+      </div>
     );
   },
 });

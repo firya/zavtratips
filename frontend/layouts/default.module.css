@@ -1,9 +1,24 @@
 .layout {
     max-width: 480px;
     margin: 0 auto;
+    padding: 1em
 }
 
 .header {
-    padding: 1em 2em;
+    padding: 0 0 2rem;
+    display: flex;
+    gap: 1em;
+    height: 3em;
+    align-items: center;
+}
+
+.title {
+    display: block;
+    font-size: 1.5em;
     text-align: center;
+    flex: 1;
+}
+
+.back {
+    flex: 2em 0 0;
 }
