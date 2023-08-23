@@ -21,3 +21,6 @@ app.listen(port, async () => {
 
   await createAllTables();
 });
+(async () => {
+  // await updateStreams();
+})();

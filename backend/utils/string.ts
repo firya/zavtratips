@@ -34,3 +34,26 @@ export const splitName = (
 
   return { name: name, anothername: anotherName, description: description };
 };
+
+export const convertYoutubeDuration = (duration: string): string => {
+  if (!duration) return "00:00:00";
+
+  const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+
+  if (!match) return "00:00:00";
+
+  const result = match.slice(1).map(function (x) {
+    if (x != null) {
+      return x.replace(/\D/, "");
+    }
+  });
+
+  const hours: number = result[0] ? parseInt(result[0]) : 0;
+  const minutes: number = result[1] ? parseInt(result[1]) : 0;
+  const seconds: number = result[2] ? parseInt(result[2]) : 0;
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0",
+  )}:${String(seconds).padStart(2, "0")}`;
+};
