@@ -1,9 +1,9 @@
 import { defineComponent } from "vue";
 import { useField } from "vee-validate";
-import InputText from "primevue/inputtext";
+import Calendar from "primevue/calendar";
 
-export const TextField = defineComponent({
-  name: "TextField",
+export const DateField = defineComponent({
+  name: "DateField",
   props: {
     name: {
       type: String,
@@ -15,21 +15,22 @@ export const TextField = defineComponent({
     },
   },
   setup(props) {
-    const { value, errorMessage, handleChange } = useField<string>(
-      () => props.name,
-    );
+    const { value, errorMessage } = useField<string>(() => props.name);
 
     return {
-      value,
       errorMessage,
-      handleChange,
+      value,
     };
   },
   render() {
     return (
       <div>
         {this.label ? <label>{this.label}</label> : null}
-        <InputText v-model={this.value} class={"w-100"} />
+        <Calendar
+          class={"w-100"}
+          v-model={this.value}
+          dateFormat={"dd.mm.yy"}
+        />
         {this.errorMessage ? (
           <span class={"errorText"}>{this.errorMessage}</span>
         ) : null}

@@ -5,4 +5,5 @@ export type ColumnMapType<T extends string = string> = Partial<
 export type ColumnType = {
   label: string;
   transform?: (val: string) => unknown;
+  transformExcel?: (val: string) => string;
 };

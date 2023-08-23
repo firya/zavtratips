@@ -15,6 +15,7 @@ export type PodcastsRow = {
   number: string;
   podcastnumber: string;
   title: string;
+  fullname: string;
   length: string;
 };
 
@@ -30,6 +31,7 @@ export const createPodcastTable = async () => {
             podcast varchar(128),
             number varchar(128),
             podcastnumber varchar(256),
+            fullname varchar(512),
             title varchar(128),
             length varchar(128)
         );`);

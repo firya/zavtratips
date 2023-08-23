@@ -3,6 +3,7 @@ export type PodcastsState = {
   page: number;
   pageSize: number;
   query: string;
+  current: number | null;
   isFetching: boolean;
 };
 
@@ -14,4 +15,12 @@ export type PodcastItem = {
   podcastnumber: string;
   row: number;
   title: string;
+};
+
+export type PodcastAddBody = {
+  date?: Date | null;
+  podcast?: string;
+  number: string;
+  title?: string;
+  length?: string;
 };

@@ -1,8 +1,11 @@
 import { GoogleSpreadsheet, GoogleSpreadsheetRow } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
 
-export const getDoc = async (url: string) => {
-  const id = new URL(url).pathname.split("/")[3];
+export const getDoc = async () => {
+  if (!process.env.GOOGLE_SPREADSHEET_URL)
+    return console.log("there is no GOOGLE_SPREADSHEET_URL");
+
+  const id = new URL(process.env.GOOGLE_SPREADSHEET_URL).pathname.split("/")[3];
 
   const serviceAccountAuth = new JWT({
     email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -18,12 +21,12 @@ export const getDoc = async (url: string) => {
 };
 
 export const getRowList = async (
-  url: string,
   sheetTitle: string,
   headerRowIndex: number = 1,
 ) => {
   try {
-    const doc = await getDoc(url);
+    const doc = await getDoc();
+    if (!doc) return [];
 
     const sheetData = doc.sheetsByTitle[sheetTitle];
 
@@ -48,12 +51,12 @@ export const getRowList = async (
 };
 
 export const addRows = async (
-  url: string,
   sheetTitle: string,
   data: Record<string, string>[],
 ) => {
   try {
-    const doc = await getDoc(url);
+    const doc = await getDoc();
+    if (!doc) return;
 
     const sheetData = doc.sheetsByTitle[sheetTitle];
     await sheetData.loadHeaderRow();
@@ -67,42 +70,69 @@ export const addRows = async (
   }
 };
 
-export const clearRow = async (
-  url: string,
+export const updateRow = async (
   sheetTitle: string,
   rowNumber: number,
+  data: Record<string, string> = {},
 ) => {
   try {
-    const doc = await getDoc(url);
+    const doc = await getDoc();
+    if (!doc) return;
 
     const sheet = doc.sheetsByTitle[sheetTitle];
     const rows = await sheet.getRows();
-
     const headers = sheet.headerValues;
 
-    const deletedRow = fillRow(rows[rowNumber - 2], createEmptyRow(headers));
+    const row = {
+      ...rowToObject(rows[rowNumber], headers),
+      ...data,
+    };
 
-    if (deletedRow) {
-      await deletedRow.save();
-    }
+    const updatedRow = fillRow(rows[rowNumber], row);
+    if (!updatedRow) return;
+    await updatedRow.save();
 
-    return { rowNumber: rowNumber };
+    return rowNumber;
   } catch (e) {
     console.log(e);
   }
 };
 
-const createEmptyRow = (headers: string[]) => {
+export const removeRow = async (sheetTitle: string, rowNumber: number) => {
+  try {
+    const doc = await getDoc();
+    if (!doc) return;
+
+    const sheet = doc.sheetsByTitle[sheetTitle];
+    const rows = await sheet.getRows();
+
+    await rows[rowNumber].delete();
+
+    return rowNumber;
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+const createEmptyRow = (headers: string[], value = "") => {
   const result: Record<string, string> = {};
   headers.forEach((header) => {
-    result[header] = "";
+    result[header] = value;
   });
   return result;
 };
 
-const fillRow = (row: GoogleSpreadsheetRow, data: Record<string, string>) => {
+const fillRow = (
+  row: GoogleSpreadsheetRow,
+  data: Record<string, string>,
+  uneditable: string[] = [],
+) => {
   if (!row) return null;
   Object.keys(data).forEach((header) => {
+    if (uneditable.includes(header)) {
+      row.set(header, "");
+      return;
+    }
     row.set(header, data[header]);
   });
 

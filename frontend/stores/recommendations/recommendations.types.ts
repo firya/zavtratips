@@ -1,4 +1,4 @@
-export type RecommendationsSatate = {
+export type RecommendationsState = {
   list: RecommendationItem[];
   page: number;
   pageSize: number;

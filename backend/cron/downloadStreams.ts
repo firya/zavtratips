@@ -3,14 +3,7 @@ import { formatDate } from "../utils";
 import { getPlaylistVideos } from "../libs/youtube";
 
 export const downloadStreamList = async () => {
-  if (!process.env.GOOGLE_SPREADSHEET_URL)
-    return console.log("there is no GOOGLE_SPREADSHEET_URL");
-
-  const rowData = await getRowList(
-    process.env.GOOGLE_SPREADSHEET_URL,
-    "Стримы",
-    3,
-  );
+  const rowData = await getRowList("Стримы", 3);
 
   let allVideos = await getPlaylistVideos("PLRd7kI_0sLY4wThdB1QQcLEvE5HwdZ_mR");
 
@@ -25,8 +18,8 @@ export const downloadStreamList = async () => {
   allVideos = allVideos.sort((a, b) => a.date.getTime() - b.date.getTime());
   allVideos = allVideos.filter((row) => row.duration !== "00:00:00");
 
+  // TODO: move it
   await addRows(
-    process.env.GOOGLE_SPREADSHEET_URL,
     "Стримы",
     allVideos.map((row) => ({
       Дата: formatDate(row.date),

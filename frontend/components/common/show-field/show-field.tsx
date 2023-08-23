@@ -4,8 +4,8 @@ import Dropdown from "primevue/dropdown";
 import { useConfigStore } from "~/stores/config/config";
 import { useRecommendationsStore } from "~/stores";
 
-export const TypeField = defineComponent({
-  name: "TypeField",
+export const ShowField = defineComponent({
+  name: "ShowField",
   props: {
     name: {
       type: String,
@@ -21,16 +21,16 @@ export const TypeField = defineComponent({
 
     const isLoading = computed(() => configStore.isFetching);
     const options = computed(() => {
-      return configStore.typeList.map((item) => ({
+      return configStore.showList.map((item) => ({
         label: item,
         value: item,
       }));
     });
 
     const updateConfig = async () => {
-      if (!configStore.typeList.length) await configStore.getConfig();
+      if (!configStore.showList.length) await configStore.getConfig();
 
-      handleChange(configStore.typeList[0]);
+      handleChange(configStore.showList[0]);
     };
 
     updateConfig();
@@ -60,7 +60,7 @@ export const TypeField = defineComponent({
   render() {
     return (
       <div>
-        <label>Тип</label>
+        <label>Шоу</label>
         <Dropdown
           class={"w-100"}
           v-model={this.value}

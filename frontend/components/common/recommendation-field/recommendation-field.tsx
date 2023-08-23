@@ -16,7 +16,7 @@ export const RecommendationField = defineComponent({
     },
   },
   setup(props) {
-    const { value, errorMessage, handleChange } = useField<string>(
+    const { value, errorMessage, handleChange } = useField<number>(
       () => props.name,
     );
     const recommendationsStore = useRecommendationsStore();

@@ -4,10 +4,9 @@ import { ConfigRow } from "../config";
 const SHEET_NAME = "Config";
 
 export const getExcelConfig = async () => {
-  if (!process.env.GOOGLE_SPREADSHEET_URL)
-    return console.log("there is no GOOGLE_SPREADSHEET_URL");
+  const res = await getRowList(SHEET_NAME);
 
-  const res = await getRowList(process.env.GOOGLE_SPREADSHEET_URL, SHEET_NAME);
+  if (!res) return;
 
   const values: ConfigRow[] = [];
   res.map((row) => {

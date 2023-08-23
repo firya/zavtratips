@@ -80,7 +80,7 @@ export const findInTable = async <T extends object>({
   const pool = DB.getInstance();
 
   const query = PGformat(
-    `SELECT * FROM %I WHERE %I LIKE '%' || %L || '%' ORDER BY %I %s LIMIT %L OFFSET %L`,
+    `SELECT * FROM %I WHERE %I ILIKE '%' || %L || '%' ORDER BY %I %s LIMIT %L OFFSET %L`,
     tableName,
     queryParam,
     queryString,

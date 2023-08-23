@@ -14,11 +14,16 @@ export const dateDifference = (date1: Date, date2: Date): string => {
 
 export const strToDate = (date: string): Date | null => {
   const dateArr = date.split(".");
-  if (dateArr.length !== 3) return null;
+  const dateArrUs = date.split("/");
+  if (dateArr.length !== 3 && dateArrUs.length !== 3) return null;
 
-  const [day, month, year] = dateArr.map((item) => parseInt(item, 10));
-  if (!day || !month || !year) return null;
-  return new Date(year, month - 1, day);
+  if (dateArr.length === 3) {
+    const [first, second, third] = dateArr.map((item) => parseInt(item, 10));
+    return new Date(third, second - 1, first);
+  } else {
+    const [first, second, third] = dateArrUs.map((item) => parseInt(item, 10));
+    return new Date(third, first - 1, second);
+  }
 };
 
 export const sumTime = (time: string[]): string => {
@@ -41,10 +46,23 @@ export const sumTime = (time: string[]): string => {
   )}:${String(Math.floor(totalSeconds % 60)).padStart(2, "0")}`;
 };
 
-export const formatDate = (date: Date, join: string = "."): string => {
-  return [
-    String(date.getDate()).padStart(2, "0"),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    date.getFullYear(),
-  ].join(join);
+export type DateFormat = "ru" | "us";
+
+export const formatDate = (date: Date, format: DateFormat = "ru"): string => {
+  if (!date) return "";
+
+  switch (format) {
+    case "us":
+      return [
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+        date.getFullYear(),
+      ].join("/");
+    default:
+      return [
+        String(date.getDate()).padStart(2, "0"),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        date.getFullYear(),
+      ].join(".");
+  }
 };

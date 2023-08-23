@@ -1,4 +1,9 @@
-import { getRowList } from "../../libs/googlespreadsheet";
+import {
+  addRows,
+  getRowList,
+  removeRow,
+  updateRow,
+} from "../../libs/googlespreadsheet";
 import { typedObjectKeys } from "../../utils";
 import { ColumnMapType } from "./index.types";
 
@@ -10,14 +15,7 @@ export const getAllExcelRows = async <
   startRow: number,
   columnMap: U,
 ): Promise<T[] | void> => {
-  if (!process.env.GOOGLE_SPREADSHEET_URL)
-    return console.log("there is no GOOGLE_SPREADSHEET_URL");
-
-  const res = await getRowList(
-    process.env.GOOGLE_SPREADSHEET_URL,
-    sheetName,
-    startRow,
-  );
+  const res = await getRowList(sheetName, startRow);
 
   const values: T[] = [];
 
@@ -28,8 +26,9 @@ export const getAllExcelRows = async <
       if (!mapElement) return acc;
 
       const result = row[mapElement.label];
+
       // @ts-expect-error wtf?
-      acc[key] = mapElement.transform ? mapElement.transform?.(result) : result;
+      acc[key] = mapElement.transform ? mapElement.transform(result) : result;
 
       return acc;
     }, {} as T);
@@ -40,4 +39,65 @@ export const getAllExcelRows = async <
   });
 
   return values;
+};
+
+export const addExcelRow = async <
+  T extends Record<string, unknown>,
+  U extends ColumnMapType,
+>(
+  sheetName: string,
+  rowData: T,
+  columnMap: U,
+) => {
+  const res = typedObjectKeys(rowData).reduce<Record<string, string>>(
+    (acc, key) => {
+      const mapElement = columnMap[key as string];
+      if (!mapElement) return acc;
+
+      const result = rowData[key];
+
+      // @ts-expect-error wtf?
+      acc[mapElement.label] =
+        mapElement.transformExcel && result
+          ? mapElement.transformExcel(result as string)
+          : result;
+
+      return acc;
+    },
+    {},
+  );
+  return await addRows(sheetName, [res]);
+};
+
+export const updateExcelRow = async <
+  T extends Record<string, unknown>,
+  U extends ColumnMapType,
+>(
+  sheetName: string,
+  rowNumber: number,
+  rowData: T,
+  columnMap: U,
+) => {
+  const res = typedObjectKeys(rowData).reduce<Record<string, string>>(
+    (acc, key) => {
+      const mapElement = columnMap[key as string];
+      if (!mapElement) return acc;
+
+      const result = rowData[key];
+
+      // @ts-expect-error wtf?
+      acc[mapElement.label] =
+        mapElement.transformExcel && result
+          ? mapElement.transformExcel(result as string)
+          : result;
+
+      return acc;
+    },
+    {},
+  );
+  return await updateRow(sheetName, rowNumber, res);
+};
+
+export const removeExcelRow = async (sheetName: string, rowNumber: number) => {
+  return await removeRow(sheetName, rowNumber);
 };

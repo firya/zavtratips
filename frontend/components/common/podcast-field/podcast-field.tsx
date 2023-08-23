@@ -3,6 +3,7 @@ import { useField } from "vee-validate";
 import AutoComplete, { AutoCompleteCompleteEvent } from "primevue/autocomplete";
 import { usePodcastsStore } from "~/stores";
 import { useDebounceFn } from "@vueuse/core";
+import { DropdownChangeEvent } from "primevue/dropdown";
 
 export const PodcastField = defineComponent({
   name: "PodcastField",
@@ -13,7 +14,7 @@ export const PodcastField = defineComponent({
     },
   },
   setup(props) {
-    const { value, errorMessage, setValue } = useField<string>(
+    const { value, errorMessage, handleChange } = useField<string>(
       () => props.name,
     );
     const podcastStore = usePodcastsStore();
@@ -36,7 +37,22 @@ export const PodcastField = defineComponent({
       await searchPodcastHandler();
       const firstElement = podcastStore.list[0];
       if (!firstElement) return;
-      setValue(firstElement.podcastnumber);
+      handleChange(firstElement.podcastnumber);
+      podcastStore.setCurrent(0);
+    };
+
+    const changeHandler = ({ value }: DropdownChangeEvent) => {
+      const res = podcastStore.list.findIndex(
+        (item) => item.podcastnumber === value,
+      );
+      if (res < 0) return;
+
+      podcastStore.setCurrent(res);
+    };
+
+    const blurHandler = () => {
+      if (podcastStore.current === null) return;
+      handleChange(podcastStore.list[podcastStore.current].podcastnumber);
     };
 
     setDefaultValue();
@@ -44,7 +60,9 @@ export const PodcastField = defineComponent({
     return {
       options,
       inputHandler,
+      changeHandler,
       errorMessage,
+      blurHandler,
       isLoading,
       value,
     };
@@ -61,6 +79,8 @@ export const PodcastField = defineComponent({
           loading={this.isLoading}
           // @ts-expect-error primevue not ready for jsx
           onComplete={this.inputHandler}
+          onChange={this.changeHandler}
+          onBlur={this.blurHandler}
         />
         {this.errorMessage ? (
           <span class={"errorText"}>{this.errorMessage}</span>

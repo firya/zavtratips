@@ -2,12 +2,12 @@ import { defineStore } from "pinia";
 import { Api } from "~/api";
 import {
   RecommendationItem,
-  RecommendationsSatate,
+  RecommendationsState,
 } from "./recommendations.types";
 import { AxiosError } from "axios";
 
 export const useRecommendationsStore = defineStore("recommendations", {
-  state: (): RecommendationsSatate => ({
+  state: (): RecommendationsState => ({
     page: 1,
     pageSize: 20,
     list: [],
@@ -46,7 +46,7 @@ export const useRecommendationsStore = defineStore("recommendations", {
         this.isFetching = false;
       }
     },
-    setCurrent(current: RecommendationsSatate["current"]) {
+    setCurrent(current: RecommendationsState["current"]) {
       this.current = current;
     },
   },
