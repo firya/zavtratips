@@ -109,7 +109,9 @@ export const prepareRecommendationData = (row: RecommendationsRow) => {
     type: row.type,
     title: row.title,
     link: row.link,
-    image: row.image,
+    image: row.image
+      ? row.image
+      : "https://lh3.googleusercontent.com/proxy/9x18kFTI33ntQXwjFLGyaoXRVr13wziRUrSFUNlvjJ6EF5jN8QlGSXFDJClMsZ3QzepLH9Ti_XXlegFGbfW7zxWpNiN9R1hL6iHktnIBq1rS3DI64wQTx-Pfgct5Jzy7id887McTNABuP82DAWec",
     description: description,
     platforms: row.platforms,
     rating: row.rating,
