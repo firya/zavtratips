@@ -10,12 +10,12 @@ export const Api = async <T extends object>(
   const { data } = await axios(request, {
     baseURL: `${config.public.API_BASE_URL as string}/api`,
     method: "get",
+    ...opts,
     params: {
       ...(opts?.params || {}),
       // @ts-expect-error telegram type
       initData: window.Telegram.WebApp.initData,
     },
-    ...opts,
   });
 
   return data as T;
