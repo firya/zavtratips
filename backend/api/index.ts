@@ -15,11 +15,13 @@ apiRouter.use("/", async (req, res, next) => {
   }
 
   const initData = (req.query.initData as string) || "";
+  console.log(initData);
 
   const result = await verifyTelegramWebAppData(initData);
 
   if (!result) {
     res.status(401).send("No initData");
+    return;
   }
   next();
 });
