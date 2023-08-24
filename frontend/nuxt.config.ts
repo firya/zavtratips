@@ -1,5 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  app: {
+    head: {
+      script: ["https://telegram.org/js/telegram-web-app.js"],
+    },
+  },
   modules: ["@pinia/nuxt"],
   runtimeConfig: {
     public: {

@@ -51,7 +51,7 @@ export const searchRAWG = async (query: string) => {
 
     return json.results.map((item) => ({
       title: item.name,
-      year: item.released.split("-")[0],
+      year: item.released?.split("-")[0],
       link: `https://rawg.io/games/${item.id}`,
     }));
   } catch (e) {

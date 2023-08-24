@@ -21,7 +21,6 @@ export const MainComponent = defineComponent({
         >
           🎤 Podcasts
         </Button>
-
         <Button
           severity={"primary"}
           class={styles.button}
