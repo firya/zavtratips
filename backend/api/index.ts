@@ -4,8 +4,25 @@ import { recommendationsRouter } from "./recommendations";
 import { configRouter } from "./config";
 import { imdbRouter } from "./imdb";
 import { rawgRouter } from "./rawg";
+import { verifyTelegramWebAppData } from "../libs/telegram";
 
 export const apiRouter = express.Router();
+
+apiRouter.use("/", async (req, res, next) => {
+  if (process.env.NODE_ENV !== "production") {
+    next();
+    return;
+  }
+
+  const initData = (req.query.initData as string) || "";
+
+  const result = await verifyTelegramWebAppData(initData);
+
+  if (!result) {
+    res.status(401).send("No initData");
+  }
+  next();
+});
 
 apiRouter.use("/podcasts", podcastsRouter);
 apiRouter.use("/recommendations", recommendationsRouter);
