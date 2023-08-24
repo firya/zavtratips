@@ -12,18 +12,29 @@ export const dateDifference = (date1: Date, date2: Date): string => {
   ${pluralWord(days, ["день", "дня", "дней"])}`;
 };
 
-export const strToDate = (date: string): Date | null => {
-  const dateArr = date.split(".");
-  const dateArrUs = date.split("/");
-  if (dateArr.length !== 3 && dateArrUs.length !== 3) return null;
+const dateFormatMap = {
+  us: {
+    separator: "/",
+    func: (date: number[]) => new Date(date[2], date[0] - 1, date[1]),
+  },
+  ru: {
+    separator: ".",
+    func: (date: number[]) => new Date(date[2], date[1] - 1, date[0]),
+  },
+};
 
-  if (dateArr.length === 3) {
-    const [first, second, third] = dateArr.map((item) => parseInt(item, 10));
-    return new Date(third, second - 1, first);
-  } else {
-    const [first, second, third] = dateArrUs.map((item) => parseInt(item, 10));
-    return new Date(third, first - 1, second);
-  }
+type DateType = keyof typeof dateFormatMap;
+
+export const strToDate = (date: string): Date | null => {
+  const dateType: DateType = date.indexOf("/") !== -1 ? "us" : "ru";
+  const dateArr = date
+    .split(dateFormatMap[dateType].separator)
+    .map((item) => parseInt(item.trim(), 10));
+
+  if (dateArr.length !== 3) return null;
+  if (dateArr.some(Number.isNaN)) return null;
+
+  return dateFormatMap[dateType].func(dateArr);
 };
 
 export const sumTime = (time: string[]): string => {

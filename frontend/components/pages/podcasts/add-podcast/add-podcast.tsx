@@ -8,9 +8,8 @@ import { usePodcastsStore } from "~/stores";
 export const AddPodcastComponent = defineComponent({
   name: "AddPodcastComponent",
   setup() {
+    const podcastStore = usePodcastsStore();
     const submitHandler = async (values: PodcastFormProps) => {
-      const podcastStore = usePodcastsStore();
-
       return await podcastStore.addPodcasts({
         date: values.date,
         podcast: values.show,

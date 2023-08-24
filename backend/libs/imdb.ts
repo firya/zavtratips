@@ -1,14 +1,16 @@
 import fetch from "node-fetch";
-import { ImdbSearchResults } from "./imdb.types";
+import { ImdbResponse, ImdbSearchResults } from "./imdb.types";
 
 export const getIdfromUrl = (url: string) => {
   if (url === "") return "";
   const matches = url.match(/tt\d+/g);
   return matches ? matches[0] : "";
 };
+
 export const clearIMDBurl = (url: string): string => {
   return `https://imdb.com/title/${getIdfromUrl(url)}`;
 };
+
 export const getIMDB = async (url: string) => {
   const id: string = getIdfromUrl(url);
   url = clearIMDBurl(url);
@@ -17,9 +19,9 @@ export const getIMDB = async (url: string) => {
     const response = await fetch(
       `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&i=${id}`,
     );
-    const json = await response.json();
+    const json = (await response.json()) as ImdbResponse;
 
-    if (json.Error) {
+    if ("Error" in json) {
       return false;
     }
 

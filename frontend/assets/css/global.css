@@ -12,6 +12,10 @@ body {
     width: 100%;
 }
 
+.dropdown {
+    width: 320px;
+}
+
 @media (prefers-color-scheme: dark) {
     body {
         background-color: #12171f;

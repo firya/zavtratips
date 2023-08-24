@@ -116,7 +116,6 @@ export const findInTableStrict = async <T extends object>({
     limit,
     (page - 1) * limit,
   );
-
   const res = await pool.query(query);
 
   return res.rows;

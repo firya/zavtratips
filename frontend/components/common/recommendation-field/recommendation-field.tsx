@@ -66,6 +66,7 @@ export const RecommendationField = defineComponent({
         <label>Рекомендация</label>
         <Dropdown
           class={"w-100"}
+          panelClass={"dropdown"}
           v-model={this.value}
           optionValue={"value"}
           optionLabel={"label"}

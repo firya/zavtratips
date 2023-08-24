@@ -1,24 +1,44 @@
-export const splitName = (
-  value: string,
-): { name: string; anothername: string; description: string } => {
+type splittedTitle = {
+  title: string;
+  anotherTitle?: string;
+  titleDescription?: string;
+};
+
+export const splitTitle = (value: string): splittedTitle => {
   const bracketsRegExp = new RegExp(/\((.*?)\)/);
   const brackets = value.match(bracketsRegExp);
 
-  let description: string = "";
+  let titleDescription: string = "";
   if (brackets) {
-    description = brackets[1];
+    titleDescription = brackets[1];
   }
 
   const allNames: string = value.replace(bracketsRegExp, "");
   const nameArr: string[] = allNames.split(" / ");
 
-  let anotherName: string = "";
+  let anotherTitle: string = "";
 
   if (nameArr.length > 1) {
-    anotherName = nameArr.slice(1).join(" / ").trim();
+    anotherTitle = nameArr.slice(1).join(" / ").trim();
   }
 
   const name: string = nameArr[0].trim();
 
-  return { name: name, anothername: anotherName, description: description };
+  return {
+    title: name,
+    anotherTitle: anotherTitle,
+    titleDescription: titleDescription,
+  };
+};
+
+export const combineTitle = ({
+  title,
+  anotherTitle,
+  titleDescription,
+}: splittedTitle) => {
+  let result = title;
+  if (anotherTitle) result += ` / ${anotherTitle}`;
+  if (titleDescription) result += ` (${titleDescription})`;
+
+  return result;
 };

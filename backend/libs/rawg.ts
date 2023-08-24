@@ -1,6 +1,6 @@
 import { HowLongToBeatService } from "howlongtobeat";
 import fetch from "node-fetch";
-import { RawgSearchPesponse } from "./rawg.types";
+import { RawgResponse, RawgSearchResponse } from "./rawg.types";
 
 export const getRAWG = async (url: string) => {
   const splittedUrl: string[] = url.split("/");
@@ -10,7 +10,7 @@ export const getRAWG = async (url: string) => {
     const response = await fetch(
       `https://api.rawg.io/api/games/${id}?key=${process.env.RAWG_API_KEY}`,
     );
-    let json = await response.json();
+    let json = (await response.json()) as RawgResponse;
 
     if (json.name) {
       json = { ...json, ...(await getHLTB(json.name)) };
@@ -47,7 +47,7 @@ export const searchRAWG = async (query: string) => {
       `https://api.rawg.io/api/games?search=${query}&key=${process.env.RAWG_API_KEY}`,
     );
 
-    const json = (await response.json()) as RawgSearchPesponse;
+    const json = (await response.json()) as RawgSearchResponse;
 
     return json.results.map((item) => ({
       title: item.name,

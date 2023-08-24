@@ -15,10 +15,11 @@ export type RecommendationsRow = {
   title: string;
   link: string;
   image: string;
+  description: string;
   platforms: string;
   rating: string;
   genres: string;
-  releaseDate: string;
+  releasedate: string;
   length: string;
   dima: string;
   timur: string;
@@ -39,10 +40,11 @@ export const createRecommendationsTable = async () => {
             title varchar(512),
             link varchar(512),
             image varchar(512),
+            description varchar(1024),
             platforms varchar(256),
             rating varchar(16),
             genres varchar(256),
-            releaseDate timestamp default NULL,
+            releasedate timestamp default NULL,
             length varchar(256),
             dima varchar(256),
             timur varchar(256),

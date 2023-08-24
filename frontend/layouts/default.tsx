@@ -3,6 +3,7 @@ import Toast from "primevue/toast";
 import styles from "./default.module.css";
 import { computed, useRoute, useRouter } from "#imports";
 import Button from "primevue/button";
+import { useConfigStore } from "~/stores/config/config";
 
 export default defineComponent({
   name: "DefaultLayout",
@@ -10,10 +11,16 @@ export default defineComponent({
     const $route = useRoute();
     const $router = useRouter();
 
+    const configStore = useConfigStore();
+
     const showBack = computed(() => $route.path !== "/");
     const handleBack = () => {
-      $router.back();
+      const path = $route.path.split("/").filter(Boolean);
+      $router.push("/" + path.slice(0, -1).join("/"));
     };
+
+    configStore.getConfig();
+
     return { handleBack, showBack };
   },
   render() {

@@ -35,7 +35,7 @@ export const getRecommendationInlineResults = async (
 };
 
 const generateMessage = (row: RecommendationsRow[]) => {
-  const { title, link, platforms, rating, genres, releaseDate, length } =
+  const { title, link, platforms, rating, genres, releasedate, length } =
     row[0];
 
   let message = `*${title}*\n\n`;
@@ -57,8 +57,8 @@ const generateMessage = (row: RecommendationsRow[]) => {
   if (genres) {
     message += `Жанр: ${genres}\n`;
   }
-  if (releaseDate) {
-    message += `Дата релиза: ${releaseDate}\n`;
+  if (releasedate) {
+    message += `Дата релиза: ${releasedate}\n`;
   }
   if (length !== "") {
     message += `Продолжительность: ${length}\n`;

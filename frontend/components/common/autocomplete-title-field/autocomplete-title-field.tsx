@@ -9,7 +9,7 @@ import { useConfigStore } from "~/stores/config/config";
 import { useImdbStore } from "~/stores/imdb/imdb";
 import { useRawgStore } from "~/stores/rawg/rawg";
 import { useRecommendationsStore } from "~/stores";
-import { splitName } from "~/utils/string";
+import { splitTitle } from "~/utils/string";
 
 type OptionType = {
   label: string;
@@ -63,11 +63,8 @@ export const AutocompleteTitleField = defineComponent({
     });
 
     const searchHandler = useDebounceFn(async (value: string) => {
-      if (configStore.imdb.includes(props.type)) {
-        await imdbStore.getImdb(value);
-      } else if (configStore.rawg.includes(props.type)) {
-        await rawgStore.getRawg(value);
-      }
+      if (!activeStore.value) return;
+      await activeStore.value.getList(value);
     }, 500);
 
     const inputHandler = async ({ query }: AutoCompleteCompleteEvent) => {
@@ -75,7 +72,11 @@ export const AutocompleteTitleField = defineComponent({
     };
 
     const changeHandler = async ({ value }: AutoCompleteChangeEvent) => {
+      if (!value.label) return;
+      handleChange(value.label);
       if (!activeStore.value) return;
+
+      await activeStore.value.getData(value.value);
       activeStore.value.setCurrent(value.value);
     };
 
@@ -89,11 +90,11 @@ export const AutocompleteTitleField = defineComponent({
       () => {
         if (recommendationsStore.current === null) return;
 
-        const { name } = splitName(
+        const { title } = splitTitle(
           recommendationsStore.list[recommendationsStore.current].title,
         );
 
-        handleChange(name);
+        handleChange(title);
       },
       {
         immediate: true,
@@ -117,6 +118,7 @@ export const AutocompleteTitleField = defineComponent({
         <AutoComplete
           class={"w-100"}
           inputClass={"w-100"}
+          panelClass={"dropdown"}
           suggestions={this.options}
           v-model={this.value}
           optionLabel={"label"}

@@ -1,12 +1,18 @@
-import { strToDate } from "../../utils";
+import { formatDate, getDomain, strToDate } from "../../utils";
 import { ColumnMapType } from "./index.types";
-import { getAllExcelRows } from "./common";
+import {
+  addExcelRow,
+  getAllExcelRows,
+  removeExcelRow,
+  updateExcelRow,
+} from "./common";
 import { RecommendationsRow } from "../recommendation";
 
 const RECOMMENDATIONS_COLUMN_MAP: ColumnMapType<keyof RecommendationsRow> = {
   date: {
     label: "Дата",
     transform: (val: string) => strToDate(val)?.toISOString(),
+    transformExcel: (val: string) => formatDate(new Date(val), "us"),
   },
   podcast: {
     label: "Выпуск",
@@ -23,6 +29,9 @@ const RECOMMENDATIONS_COLUMN_MAP: ColumnMapType<keyof RecommendationsRow> = {
   image: {
     label: "Изображение",
   },
+  description: {
+    label: "Описание",
+  },
   platforms: {
     label: "Платформы",
   },
@@ -32,9 +41,10 @@ const RECOMMENDATIONS_COLUMN_MAP: ColumnMapType<keyof RecommendationsRow> = {
   genres: {
     label: "Жанр",
   },
-  releaseDate: {
+  releasedate: {
     label: "Дата релиза",
     transform: (val: string) => (val ? strToDate(val)?.toISOString() : null),
+    transformExcel: (val: string) => formatDate(new Date(val), "us"),
   },
   length: {
     label: "Продолжительность",
@@ -61,4 +71,54 @@ export const getAllExcelRecommendations = async () => {
     RecommendationsRow,
     ColumnMapType<keyof RecommendationsRow>
   >(SHEET_NAME, START_ROW, RECOMMENDATIONS_COLUMN_MAP);
+};
+
+export const addExcelRecommendation = async (
+  row: Partial<RecommendationsRow>,
+) => {
+  return await addExcelRow(SHEET_NAME, row, RECOMMENDATIONS_COLUMN_MAP);
+};
+
+export const updateExcelRecommendation = async (
+  rowNumber: number,
+  row: Partial<RecommendationsRow>,
+) => {
+  return await updateExcelRow(
+    SHEET_NAME,
+    rowNumber - START_ROW + 1,
+    row,
+    RECOMMENDATIONS_COLUMN_MAP,
+  );
+};
+
+export const removeExcelRecommendation = async (rowNumber: number) => {
+  return await removeExcelRow(SHEET_NAME, rowNumber - START_ROW);
+};
+
+export const prepareRecommendationData = (row: RecommendationsRow) => {
+  let description = row.link
+    ? `<p><a href='${row.link}'>${getDomain(row.link)}</a></p>`
+    : "";
+  description += row.genres ? `<p>Жанры: Shooter</p>` : "";
+  description += row.platforms ? `<p>Платформы: PC</p>` : "";
+  description += row.releasedate ? `<p>Дата релиза: 18.07.2023</p>` : "";
+
+  return {
+    date: row.date,
+    podcast: row.podcast,
+    type: row.type,
+    title: row.title,
+    link: row.link,
+    image: row.image,
+    description: description,
+    platforms: row.platforms,
+    rating: row.rating,
+    genres: row.genres,
+    releasedate: row.releasedate,
+    length: row.length,
+    dima: row.dima,
+    timur: row.timur,
+    maksim: row.maksim,
+    guest: row.guest,
+  };
 };
