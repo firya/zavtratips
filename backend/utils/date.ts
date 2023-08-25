@@ -7,9 +7,7 @@ export const dateDifference = (date1: Date, date2: Date): string => {
   const months = diff.getMonth();
   const days = diff.getDate();
 
-  return `${pluralWord(years, ["год", "года", "лет"])} 
-  ${pluralWord(months, ["месяц", "месяца", "месяцев"])} 
-  ${pluralWord(days, ["день", "дня", "дней"])}`;
+  return `${pluralWord(years, ["год", "года", "лет"])} ${pluralWord(months, ["месяц", "месяца", "месяцев"])} ${pluralWord(days, ["день", "дня", "дней"])}`;
 };
 
 const dateFormatMap = {
