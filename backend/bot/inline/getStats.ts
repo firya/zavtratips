@@ -8,6 +8,7 @@ import {
 import { getStreamsList } from "../../db/streams";
 
 type PodcastStats = {
+  last: string;
   onAir: string;
   count: number;
   length: string;
@@ -123,21 +124,25 @@ export const getStatInlineResults = async (query: string) => {
 export async function getPodcastsStat(podcast?: string) {
   const res = await getAllPodcastList();
 
-  if (!res) return statMessage({ onAir: "", count: 0, length: "" });
+  if (!res) return statMessage({ last: "", onAir: "", count: 0, length: "" });
 
   const podcastList = podcast
     ? res.filter((row) => row["podcast"] === podcast)
     : [...res];
 
+  const lastElement = podcastList[0];
+  const firstElement = podcastList.slice(-1)[0];
+
   return statMessage({
-    onAir: dateDifference(new Date(podcastList[0].date), new Date()),
+    last: dateDifference(new Date(lastElement.date), new Date()),
+    onAir: dateDifference(new Date(firstElement.date), new Date()),
     count: podcastList.length,
     length: sumTime(podcastList.map((item) => item.length)),
   });
 }
 
 export function statMessage(stats: PodcastStats) {
-  return `🗓 В эфире: ${stats.onAir}\n🎙 Количество выпусков: ${stats.count}\n⏱ Общая длительность: ${stats.length}`;
+  return `🗓 В эфире: ${stats.onAir}\n⌚️ Последний выпуск: ${stats.last}\n🎙 Количество выпусков: ${stats.count}\n⏱ Общая длительность: ${stats.length}`;
 }
 
 export async function getTotalStat({
@@ -192,10 +197,14 @@ export function countByType(array: RecommendationsRow[]) {
 export async function getStreamsStat() {
   const res = await getStreamsList();
 
-  if (!res) return statMessage({ onAir: "", count: 0, length: "" });
+  if (!res) return statMessage({ last: "", onAir: "", count: 0, length: "" });
+
+  const lastElement = res[0];
+  const firstElement = res.slice(-1)[0];
 
   return statMessage({
-    onAir: dateDifference(new Date(res[0].date), new Date()),
+    last: dateDifference(new Date(lastElement.date), new Date()),
+    onAir: dateDifference(new Date(firstElement.date), new Date()),
     count: res.length,
     length: sumTime(res.map((item) => item.length)),
   });
