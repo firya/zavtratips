@@ -22,3 +22,7 @@
 .back {
     flex: 2em 0 0;
 }
+
+.emptyBlock {
+    flex: 2em 0 0;
+}

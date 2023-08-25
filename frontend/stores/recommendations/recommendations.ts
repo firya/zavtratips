@@ -134,5 +134,30 @@ export const useRecommendationsStore = defineStore("recommendations", {
         this.isFetching = false;
       }
     },
+    async updateTable() {
+      this.isFetching = true;
+      try {
+        const res = await Api(`/recommendations/updateTable`, {
+          method: "post",
+        });
+
+        if (!res) return;
+
+        this.$message.add({
+          severity: "success",
+          summary: "Таблица рекомендаций успешно обновлена",
+          life: 3000,
+        });
+      } catch (e) {
+        this.$message.add({
+          severity: "error",
+          summary: "Request error",
+          detail: (e as AxiosError).message,
+          life: 3000,
+        });
+      } finally {
+        this.isFetching = false;
+      }
+    },
   },
 });

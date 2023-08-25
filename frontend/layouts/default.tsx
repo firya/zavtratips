@@ -14,14 +14,19 @@ export default defineComponent({
     const configStore = useConfigStore();
 
     const showBack = computed(() => $route.path !== "/");
-    const handleBack = () => {
+    const isSettings = computed(() => $route.path === "/settings");
+
+    const backHandler = () => {
       const path = $route.path.split("/").filter(Boolean);
       $router.push("/" + path.slice(0, -1).join("/"));
+    };
+    const settingsHandler = () => {
+      $router.push("/settings");
     };
 
     configStore.getConfig();
 
-    return { handleBack, showBack };
+    return { settingsHandler, backHandler, showBack, isSettings };
   },
   render() {
     return (
@@ -32,11 +37,22 @@ export default defineComponent({
               text
               icon="pi pi-arrow-left"
               class={styles.back}
-              onClick={this.handleBack}
+              onClick={this.backHandler}
             />
-          ) : null}
+          ) : (
+            <div class={styles.emptyBlock}></div>
+          )}
           <div class={styles.title}>Zavtratips WebApp</div>
-          {this.showBack ? <div class={styles.back}></div> : null}
+          {!this.isSettings ? (
+            <Button
+              text
+              icon="pi pi-cog"
+              class={styles.back}
+              onClick={this.settingsHandler}
+            />
+          ) : (
+            <div class={styles.emptyBlock}></div>
+          )}
         </div>
         <div class={styles.content}>{this.$slots.default?.()}</div>
         <Toast />

@@ -11,6 +11,7 @@ import {
   removeExcelRecommendation,
   updateExcelRecommendation,
 } from "../db/excel";
+import { updateRecommendations } from "../cron/updateRecommendations";
 
 export const recommendationsRouter = express.Router();
 
@@ -83,6 +84,15 @@ recommendationsRouter.delete(
     }
 
     await deleteRowInRecommendationsTable(row);
+
+    res.send("Success");
+  },
+);
+
+recommendationsRouter.post(
+  "/updateTable",
+  async (req: Request, res: Response) => {
+    await updateRecommendations();
 
     res.send("Success");
   },

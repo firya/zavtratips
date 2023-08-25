@@ -11,6 +11,7 @@ import {
   removeExcelPodcast,
   updateExcelPodcast,
 } from "../db/excel";
+import { updatePodcasts } from "../cron/updatePodcasts";
 
 export const podcastsRouter = express.Router();
 
@@ -88,3 +89,9 @@ podcastsRouter.delete(
     res.send("Success");
   },
 );
+
+podcastsRouter.post("/updateTable", async (req: Request, res: Response) => {
+  await updatePodcasts();
+
+  res.send("Success");
+});

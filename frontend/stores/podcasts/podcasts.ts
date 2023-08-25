@@ -126,5 +126,30 @@ export const usePodcastsStore = defineStore("podcasts", {
         this.isFetching = false;
       }
     },
+    async updateTable() {
+      this.isFetching = true;
+      try {
+        const res = await Api(`/podcasts/updateTable`, {
+          method: "post",
+        });
+
+        if (!res) return;
+
+        this.$message.add({
+          severity: "success",
+          summary: "Таблица подкастов успешно обновлена",
+          life: 3000,
+        });
+      } catch (e) {
+        this.$message.add({
+          severity: "error",
+          summary: "Request error",
+          detail: (e as AxiosError).message,
+          life: 3000,
+        });
+      } finally {
+        this.isFetching = false;
+      }
+    },
   },
 });
