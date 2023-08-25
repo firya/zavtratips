@@ -85,7 +85,7 @@ export const updateExcelRecommendation = async (
 ) => {
   return await updateExcelRow(
     SHEET_NAME,
-    rowNumber - START_ROW + 1,
+    rowNumber - START_ROW,
     row,
     RECOMMENDATIONS_COLUMN_MAP,
   );
@@ -95,7 +95,9 @@ export const removeExcelRecommendation = async (rowNumber: number) => {
   return await removeExcelRow(SHEET_NAME, rowNumber - START_ROW);
 };
 
-export const prepareRecommendationData = (row: RecommendationsRow) => {
+export const prepareRecommendationData = (
+  row: RecommendationsRow,
+): RecommendationsRow => {
   let description = row.link
     ? `<p><a href='${row.link}'>${getDomain(row.link)}</a></p>`
     : "";

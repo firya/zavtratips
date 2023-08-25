@@ -1,9 +1,11 @@
 import {
+  deleteFromTable,
   dropTable,
   findInTableStrict,
   getAllTable,
   insertIntoTable,
   truncateTable,
+  updateInTable,
 } from "./common";
 import { DB } from "./index";
 
@@ -103,4 +105,14 @@ export const insertIntoRecommendationsTable = async (
   rows: RecommendationsRow[],
 ) => {
   return insertIntoTable(DB_NAME, rows);
+};
+
+export const updateRowInRecommendationsTable = async (
+  data: RecommendationsRow,
+) => {
+  return updateInTable(DB_NAME, data, { row: data.row });
+};
+
+export const deleteRowInRecommendationsTable = async (row: number) => {
+  return deleteFromTable(DB_NAME, { row });
 };

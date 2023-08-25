@@ -23,6 +23,61 @@ export const insertIntoTable = async <T extends object[]>(
   return await pool.query(query);
 };
 
+export const updateInTable = async <T extends object>(
+  tableName: string,
+  data: T,
+  conditions: Partial<Record<keyof T, unknown>>,
+) => {
+  const pool = DB.getInstance();
+
+  const valuesQuery = Object.keys(data).map(() => `%I=%L`);
+  const values: string[] = [];
+  Object.entries(data).map(([key, value]) => {
+    values.push(key);
+    values.push(value);
+  });
+
+  const wheresQuery = Object.keys(conditions).map(() => `%I=%L`);
+  const wheres: unknown[] = [];
+  Object.entries(conditions).map(([key, value]) => {
+    wheres.push(key);
+    wheres.push(value);
+  });
+
+  const query = PGformat(
+    `UPDATE %I SET ${valuesQuery.join(", ")} WHERE ${wheresQuery.join(
+      " AND ",
+    )}`,
+    tableName,
+    ...values,
+    ...wheres,
+  );
+
+  return await pool.query(query);
+};
+
+export const deleteFromTable = async <T extends object>(
+  tableName: string,
+  conditions: Partial<Record<keyof T, unknown>>,
+) => {
+  const pool = DB.getInstance();
+
+  const wheresQuery = Object.keys(conditions).map(() => `%I=%L`);
+  const wheres: unknown[] = [];
+  Object.entries(conditions).map(([key, value]) => {
+    wheres.push(key);
+    wheres.push(value);
+  });
+
+  const query = PGformat(
+    `DELETE FROM %I WHERE ${wheresQuery.join(" AND ")}`,
+    tableName,
+    ...wheres,
+  );
+
+  return await pool.query(query);
+};
+
 export const dropTable = async (tableName: string) => {
   const pool = DB.getInstance();
 

@@ -95,6 +95,7 @@ export const updateExcelRow = async <
     },
     {},
   );
+
   return await updateRow(sheetName, rowNumber, res);
 };
 

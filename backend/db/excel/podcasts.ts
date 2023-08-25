@@ -65,7 +65,7 @@ export const removeExcelPodcast = async (rowNumber: number) => {
   return await removeExcelRow(SHEET_NAME, rowNumber - START_ROW + 1);
 };
 
-export const preparePodcastData = (row: PodcastsRow) => {
+export const preparePodcastData = (row: PodcastsRow): PodcastsRow => {
   const podcastnumber =
     // @ts-expect-error is it number
     Number(row.number) == row.number

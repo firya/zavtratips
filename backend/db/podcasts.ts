@@ -1,10 +1,12 @@
 import {
   defaultPageSize,
+  deleteFromTable,
   dropTable,
   findInTable,
   getAllTable,
   insertIntoTable,
   truncateTable,
+  updateInTable,
 } from "./common";
 import { DB } from "./index";
 
@@ -87,4 +89,12 @@ export const findPodcasts = async (
 
 export const insertIntoPodcastsTable = async (rows: PodcastsRow[]) => {
   return insertIntoTable(DB_NAME, rows);
+};
+
+export const updateRowInPodcastTable = async (data: PodcastsRow) => {
+  return updateInTable(DB_NAME, data, { row: data.row });
+};
+
+export const deleteRowInPodcastTable = async (row: number) => {
+  return deleteFromTable(DB_NAME, { row });
 };

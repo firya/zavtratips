@@ -1,12 +1,16 @@
 import express, { Request, Response } from "express";
-import { findPodcasts } from "../db/podcasts";
+import {
+  deleteRowInPodcastTable,
+  findPodcasts,
+  insertIntoPodcastsTable,
+  updateRowInPodcastTable,
+} from "../db/podcasts";
 import {
   addExcelPodcast,
   preparePodcastData,
   removeExcelPodcast,
   updateExcelPodcast,
 } from "../db/excel";
-import { updatePodcasts } from "../cron/updatePodcasts";
 
 export const podcastsRouter = express.Router();
 
@@ -25,14 +29,16 @@ podcastsRouter.post("/add", async ({ body }: Request, res: Response) => {
     return;
   }
 
-  const result = await addExcelPodcast(preparePodcastData(body));
-
-  await updatePodcasts();
+  const podcastData = preparePodcastData(body);
+  const result = await addExcelPodcast(podcastData);
 
   if (!result) {
     res.status(500).send("Something went wrong");
     return;
   }
+
+  podcastData.row = result[0].rowNumber;
+  await insertIntoPodcastsTable([podcastData]);
 
   res.send("Success");
 });
@@ -46,14 +52,16 @@ podcastsRouter.post(
       return;
     }
 
-    const result = await updateExcelPodcast(row, preparePodcastData(body));
-
-    await updatePodcasts();
+    const podcastData = preparePodcastData(body);
+    const result = await updateExcelPodcast(row, podcastData);
 
     if (!result) {
       res.status(500).json({ error: "Something went wrong" });
       return;
     }
+
+    podcastData.row = row;
+    await updateRowInPodcastTable(podcastData);
 
     res.send("Success");
   },
@@ -70,12 +78,12 @@ podcastsRouter.delete(
 
     const result = await removeExcelPodcast(row);
 
-    await updatePodcasts();
-
     if (!result) {
       res.status(500).json({ error: "Something went wrong" });
       return;
     }
+
+    await deleteRowInPodcastTable(row);
 
     res.send("Success");
   },
