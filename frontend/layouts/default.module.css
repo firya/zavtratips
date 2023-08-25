@@ -12,11 +12,20 @@
     align-items: center;
 }
 
-.title {
-    display: block;
-    font-size: 1.5em;
+.center {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
     text-align: center;
     flex: 1;
+}
+
+.title {
+    font-size: 1.5em;
+}
+
+.subtitle {
+    font-size: 1em;
 }
 
 .back {

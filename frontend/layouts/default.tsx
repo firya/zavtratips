@@ -15,6 +15,7 @@ export default defineComponent({
 
     const showBack = computed(() => $route.path !== "/");
     const isSettings = computed(() => $route.path === "/settings");
+    const subtitle = computed(() => $route.meta.subtitle || "");
 
     const backHandler = () => {
       const path = $route.path.split("/").filter(Boolean);
@@ -26,7 +27,7 @@ export default defineComponent({
 
     configStore.getConfig();
 
-    return { settingsHandler, backHandler, showBack, isSettings };
+    return { settingsHandler, backHandler, showBack, isSettings, subtitle };
   },
   render() {
     return (
@@ -42,7 +43,12 @@ export default defineComponent({
           ) : (
             <div class={styles.emptyBlock}></div>
           )}
-          <div class={styles.title}>Zavtratips WebApp</div>
+          <div class={styles.center}>
+            <div class={styles.title}>Zavtratips WebApp</div>
+            {this.subtitle && (
+              <div class={styles.subtitle}>{this.subtitle}</div>
+            )}
+          </div>
           {!this.isSettings ? (
             <Button
               text
