@@ -2,7 +2,6 @@ import { defineComponent } from "vue";
 import Button from "primevue/button";
 import styles from "./main.module.css";
 import { useRouter } from "#imports";
-import { usePodcastsStore } from "~/stores";
 
 export const MainComponent = defineComponent({
   name: "MainComponent",

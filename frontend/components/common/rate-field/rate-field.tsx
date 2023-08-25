@@ -74,7 +74,7 @@ export const RateField = defineComponent({
   },
   render() {
     return (
-      <div>
+      <div class={styles.wrapper}>
         {this.label ? <label>{this.label}</label> : null}
         <SelectButton
           v-model={this.viewValue}
