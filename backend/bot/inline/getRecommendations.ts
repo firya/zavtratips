@@ -74,7 +74,7 @@ const generateMessage = (row: RecommendationsRow[]) => {
     message += `Жанр: ${genres}\n`;
   }
   if (releasedate) {
-    message += `Дата релиза: ${releasedate}\n`;
+    message += `Дата релиза: ${formatDate(new Date(releasedate))}\n`;
   }
   if (length !== "") {
     message += `Продолжительность: ${length}\n`;
