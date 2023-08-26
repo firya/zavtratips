@@ -5,6 +5,7 @@ import { configRouter } from "./config";
 import { imdbRouter } from "./imdb";
 import { rawgRouter } from "./rawg";
 import { verifyTelegramWebAppData } from "../libs/telegram";
+import { streamsRouter } from "./streams";
 
 export const apiRouter = express.Router();
 
@@ -30,3 +31,4 @@ apiRouter.use("/recommendations", recommendationsRouter);
 apiRouter.use("/config", configRouter);
 apiRouter.use("/imdb", imdbRouter);
 apiRouter.use("/rawg", rawgRouter);
+apiRouter.use("/streams", streamsRouter);
