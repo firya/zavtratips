@@ -122,7 +122,7 @@ export const getStatInlineResults = async (query: string) => {
 };
 
 export async function getPodcastsStat(podcast?: string) {
-  const res = await getAllPodcastList(["date", "length"]);
+  const res = await getAllPodcastList(["date", "podcast", "length"]);
 
   if (!res) return statMessage({ last: "", onAir: "", count: 0, length: "" });
 
