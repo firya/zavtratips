@@ -8,7 +8,23 @@ import { formatDate, typedObjectKeys } from "../../utils";
 export const getRecommendationInlineResults = async (
   query: string,
 ): Promise<InlineReplyMessage[]> => {
-  const res = await getRecommendationList();
+  const res = await getRecommendationList([
+    "date",
+    "podcast",
+    "type",
+    "title",
+    "link",
+    "image",
+    "platforms",
+    "rating",
+    "genres",
+    "releasedate",
+    "length",
+    "dima",
+    "timur",
+    "maksim",
+    "guest",
+  ]);
 
   if (!res) return [];
 

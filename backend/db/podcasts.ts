@@ -58,11 +58,11 @@ export const clearPodcastsTable = async () => {
   }
 };
 
-export const getAllPodcastList = async (): Promise<
-  PodcastsRow[] | undefined
-> => {
+export const getAllPodcastList = async (
+  fields: string[] = [],
+): Promise<PodcastsRow[] | undefined> => {
   try {
-    return await getAllTable(DB_NAME, "date");
+    return await getAllTable(DB_NAME, "date", "DESC", fields);
   } catch (e) {
     console.log(e);
   }

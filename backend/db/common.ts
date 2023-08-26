@@ -98,14 +98,18 @@ export const getAllTable = async <T extends object>(
   tableName: string,
   sortBy: keyof T,
   sort: "DESC" | "ASC" = "DESC",
+  fields: string[] = [],
 ): Promise<T[]> => {
   const pool = DB.getInstance();
 
+  const selectQuery = fields.length ? "%I" : "*";
+  const selectParams = fields.length
+    ? [fields, tableName, sortBy, sort]
+    : [tableName, sortBy, sort];
+
   const query = PGformat(
-    `SELECT * FROM %I ORDER BY %I %s`,
-    tableName,
-    sortBy,
-    sort,
+    `SELECT ${selectQuery} FROM %I ORDER BY %I %s`,
+    ...selectParams,
   );
 
   const res = await pool.query(query);
@@ -121,6 +125,7 @@ export type FindInTableParams<T> = {
   sort?: "DESC" | "ASC";
   page?: number;
   limit?: number;
+  fields?: string[];
 };
 
 export const findInTable = async <T extends object>({
@@ -131,11 +136,12 @@ export const findInTable = async <T extends object>({
   sort = "DESC",
   page = 1,
   limit = defaultPageSize,
+  fields = [],
 }: FindInTableParams<T>): Promise<T[]> => {
   const pool = DB.getInstance();
 
-  const query = PGformat(
-    `SELECT * FROM %I WHERE %I ILIKE '%' || %L || '%' ORDER BY %I %s LIMIT %L OFFSET %L`,
+  const selectQuery = fields.length ? "%I" : "*";
+  const defaultStreamParams = [
     tableName,
     queryParam,
     queryString,
@@ -143,6 +149,14 @@ export const findInTable = async <T extends object>({
     sort,
     limit,
     (page - 1) * limit,
+  ];
+  const selectParams = fields.length
+    ? [fields, ...defaultStreamParams]
+    : [...defaultStreamParams];
+
+  const query = PGformat(
+    `SELECT ${selectQuery} FROM %I WHERE %I ILIKE '%' || %L || '%' ORDER BY %I %s LIMIT %L OFFSET %L`,
+    ...selectParams,
   );
 
   const res = await pool.query(query);
@@ -158,11 +172,12 @@ export const findInTableStrict = async <T extends object>({
   sort = "DESC",
   page = 1,
   limit = defaultPageSize,
+  fields = [],
 }: FindInTableParams<T>): Promise<T[]> => {
   const pool = DB.getInstance();
 
-  const query = PGformat(
-    `SELECT * FROM %I WHERE %I=%L ORDER BY %I %s LIMIT %L OFFSET %L`,
+  const selectQuery = fields.length ? "%I" : "*";
+  const defaultStreamParams = [
     tableName,
     queryParam,
     queryString,
@@ -170,6 +185,14 @@ export const findInTableStrict = async <T extends object>({
     sort,
     limit,
     (page - 1) * limit,
+  ];
+  const selectParams = fields.length
+    ? [fields, ...defaultStreamParams]
+    : [...defaultStreamParams];
+
+  const query = PGformat(
+    `SELECT ${selectQuery} FROM %I WHERE %I=%L ORDER BY %I %s LIMIT %L OFFSET %L`,
+    ...selectParams,
   );
   const res = await pool.query(query);
 

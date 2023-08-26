@@ -48,9 +48,11 @@ export const clearStreamsTable = async () => {
   }
 };
 
-export const getStreamsList = async (): Promise<StreamsRow[] | undefined> => {
+export const getStreamsList = async (
+  fields: string[] = [],
+): Promise<StreamsRow[] | undefined> => {
   try {
-    return await getAllTable(DB_NAME, "date");
+    return await getAllTable(DB_NAME, "date", "DESC", fields);
   } catch (e) {
     console.log(e);
   }

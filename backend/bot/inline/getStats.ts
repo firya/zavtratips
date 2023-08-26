@@ -122,7 +122,7 @@ export const getStatInlineResults = async (query: string) => {
 };
 
 export async function getPodcastsStat(podcast?: string) {
-  const res = await getAllPodcastList();
+  const res = await getAllPodcastList(["date", "length"]);
 
   if (!res) return statMessage({ last: "", onAir: "", count: 0, length: "" });
 
@@ -152,7 +152,15 @@ export async function getTotalStat({
   podcast?: string;
   host?: "dima" | "timur" | "maksim";
 }) {
-  const res = await getRecommendationList();
+  const res = await getRecommendationList([
+    "podcast",
+    "title",
+    "dima",
+    "timur",
+    "maksim",
+    "type",
+    "guest",
+  ]);
 
   if (!res) return recommendationStatMessage({ total: 0, byType: {} });
 
@@ -195,7 +203,7 @@ export function countByType(array: RecommendationsRow[]) {
 }
 
 export async function getStreamsStat() {
-  const res = await getStreamsList();
+  const res = await getStreamsList(["date", "length"]);
 
   if (!res) return statMessage({ last: "", onAir: "", count: 0, length: "" });
 

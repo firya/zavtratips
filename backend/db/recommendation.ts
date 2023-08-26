@@ -74,11 +74,11 @@ export const clearRecommendationsTable = async () => {
   }
 };
 
-export const getRecommendationList = async (): Promise<
-  RecommendationsRow[] | undefined
-> => {
+export const getRecommendationList = async (
+  fields: string[] = [],
+): Promise<RecommendationsRow[] | undefined> => {
   try {
-    return await getAllTable(DB_NAME, "date");
+    return await getAllTable(DB_NAME, "date", "DESC", fields);
   } catch (e) {
     console.log(e);
   }
