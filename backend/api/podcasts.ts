@@ -10,8 +10,13 @@ import {
   preparePodcastData,
   removeExcelPodcast,
   updateExcelPodcast,
+  updateExcelRecommendation,
 } from "../db/excel";
 import { updatePodcasts } from "../cron/updatePodcasts";
+import {
+  getRecommendationByPodcast,
+  updateRowInRecommendationsTable,
+} from "../db/recommendation";
 
 export const podcastsRouter = express.Router();
 
@@ -55,6 +60,20 @@ podcastsRouter.post(
 
     const podcastData = preparePodcastData(body);
     const result = await updateExcelPodcast(row, podcastData);
+
+    if (podcastData.date) {
+      const recommendationList = await getRecommendationByPodcast(
+        podcastData.podcastnumber,
+      );
+      if (recommendationList?.length) {
+        for (const recommendation of recommendationList) {
+          if (!recommendation.row || recommendation.date) continue;
+          recommendation.date = podcastData.date;
+          await updateExcelRecommendation(recommendation.row, recommendation);
+          await updateRowInRecommendationsTable(recommendation);
+        }
+      }
+    }
 
     if (!result) {
       res.status(500).json({ error: "Something went wrong" });
