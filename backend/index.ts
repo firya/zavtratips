@@ -23,3 +23,5 @@ app.listen(port, async () => {
 
   await createAllTables();
 });
+
+app.setTimeout(30000);
