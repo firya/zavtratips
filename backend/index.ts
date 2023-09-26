@@ -18,8 +18,10 @@ app.use(bodyParser.json());
 router(app);
 cronJobs();
 
-app.listen(port, async () => {
+const server = app.listen(port, async () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 
   await createAllTables();
 });
+
+server.setTimeout(30000);
