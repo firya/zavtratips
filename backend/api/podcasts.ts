@@ -66,12 +66,16 @@ podcastsRouter.post(
         podcastData.podcastnumber,
       );
       if (recommendationList?.length) {
+        const promises = [];
         for (const recommendation of recommendationList) {
           if (!recommendation.row || recommendation.date) continue;
           recommendation.date = podcastData.date;
-          await updateExcelRecommendation(recommendation.row, recommendation);
-          await updateRowInRecommendationsTable(recommendation);
+          promises.push(
+            updateExcelRecommendation(recommendation.row, recommendation),
+            updateRowInRecommendationsTable(recommendation),
+          );
         }
+        await Promise.all(promises);
       }
     }
 
