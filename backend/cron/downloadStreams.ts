@@ -5,7 +5,9 @@ import { getPlaylistVideos } from "../libs/youtube";
 export const downloadStreamList = async () => {
   const rowData = await getRowList("Стримы", 3);
 
-  let allVideos = await getPlaylistVideos("PLRd7kI_0sLY4wThdB1QQcLEvE5HwdZ_mR");
+  let allVideos = await getPlaylistVideos({
+    playlistId: "PLRd7kI_0sLY4wThdB1QQcLEvE5HwdZ_mR",
+  });
 
   if (!allVideos || !rowData) return;
 

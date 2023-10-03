@@ -2,11 +2,19 @@ import { google } from "googleapis";
 import { YoutubeVideoProps } from "./youtube.types";
 import { convertYoutubeDuration } from "../utils";
 
-export const getPlaylistVideos = async (
-  playlistId: string = "",
-  nextPageToken: string = "",
-  videoList: YoutubeVideoProps[] = [],
-): Promise<YoutubeVideoProps[] | undefined> => {
+type GetPlaylistVideosType = {
+  playlistId: string;
+  nextPageToken?: string;
+  videoList?: YoutubeVideoProps[];
+  all?: boolean;
+};
+
+export const getPlaylistVideos = async ({
+  playlistId = "",
+  nextPageToken = "",
+  videoList = [],
+  all = false,
+}: GetPlaylistVideosType): Promise<YoutubeVideoProps[] | undefined> => {
   if (playlistId === "") return;
 
   const youtube = google.youtube({
@@ -50,12 +58,13 @@ export const getPlaylistVideos = async (
     });
   });
 
-  if (playlistData.data.nextPageToken) {
-    await getPlaylistVideos(
+  if (all && playlistData.data.nextPageToken) {
+    await getPlaylistVideos({
       playlistId,
-      playlistData.data.nextPageToken,
+      nextPageToken: playlistData.data.nextPageToken,
       videoList,
-    );
+      all,
+    });
   }
 
   return videoList.reverse();

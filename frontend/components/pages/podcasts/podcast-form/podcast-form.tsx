@@ -65,6 +65,12 @@ export const PodcastFormComponent = defineComponent({
           ? podcastStore.list[podcastStore.current].row
           : undefined;
 
+      values.date = values.date
+        ? new Date(
+            values.date.getTime() - values.date.getTimezoneOffset() * 60000,
+          )
+        : null;
+
       const res = await whenSubmit({
         ...values,
         row: row,
