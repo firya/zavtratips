@@ -10,5 +10,5 @@ export const cronJobs = () => {
   cron.schedule("0 0 * * *", updateStreams);
   cron.schedule("0 0 * * *", updatePodcasts);
   cron.schedule("0 0 * * *", updateRecommendations);
-  cron.schedule("0 23 * * *", downloadStreamList);
+  cron.schedule("0 6 * * *", downloadStreamList);
 };
