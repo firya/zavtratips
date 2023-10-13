@@ -33,5 +33,30 @@ export const useStreamsStore = defineStore("streams", {
         this.isFetching = false;
       }
     },
+    async updateStreamList() {
+      this.isFetching = true;
+      try {
+        const res = await Api(`/streams/updateStreamList`, {
+          method: "post",
+        });
+
+        if (!res) return;
+
+        this.$message.add({
+          severity: "success",
+          summary: "Список стримов успешно загружен",
+          life: 3000,
+        });
+      } catch (e) {
+        this.$message.add({
+          severity: "error",
+          summary: "Request error",
+          detail: (e as AxiosError).message,
+          life: 3000,
+        });
+      } finally {
+        this.isFetching = false;
+      }
+    },
   },
 });

@@ -25,6 +25,9 @@ export const SettingsComponent = defineComponent({
     const updateStreamsTable = async () => {
       await streamsStore.updateTable();
     };
+    const updateStreamList = async () => {
+      await streamsStore.updateStreamList();
+    };
 
     return () => (
       <div class={styles.wrapper}>
@@ -59,6 +62,16 @@ export const SettingsComponent = defineComponent({
           onClick={updateConfigTable}
         >
           ⚙️ Sync Config Table
+        </Button>
+        <br />
+        <br />
+        <Button
+          severity={"primary"}
+          class={styles.button}
+          loading={streamsStore.isFetching}
+          onClick={updateStreamList}
+        >
+          📺 Update Stream List
         </Button>
       </div>
     );
