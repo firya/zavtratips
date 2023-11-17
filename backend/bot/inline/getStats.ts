@@ -127,7 +127,7 @@ export async function getPodcastsStat(podcast?: string) {
   if (!res) return statMessage({ last: "", onAir: "", count: 0, length: "" });
 
   const podcastList = podcast
-    ? res.filter((row) => row["podcast"] === podcast)
+    ? res.filter((row) => row["podcast"] === podcast && row["date"])
     : [...res];
 
   const lastElement = podcastList[0];
@@ -207,8 +207,10 @@ export async function getStreamsStat() {
 
   if (!res) return statMessage({ last: "", onAir: "", count: 0, length: "" });
 
-  const lastElement = res[0];
-  const firstElement = res.slice(-1)[0];
+  const streamList = res.filter((row) => row["date"]);
+
+  const lastElement = streamList[0];
+  const firstElement = streamList.slice(-1)[0];
 
   return statMessage({
     last: dateDifference(new Date(lastElement.date), new Date()),
