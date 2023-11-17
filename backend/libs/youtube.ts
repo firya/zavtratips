@@ -25,7 +25,7 @@ export const getPlaylistVideos = async ({
   const playlistData = await youtube.playlistItems.list({
     part: ["contentDetails"],
     playlistId: playlistId,
-    maxResults: 50,
+    maxResults: 5,
     pageToken: nextPageToken,
   });
 
