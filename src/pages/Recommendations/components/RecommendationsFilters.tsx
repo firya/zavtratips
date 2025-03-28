@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Check, Search, RotateCcw, Mic, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useDebounce } from '@/hooks/useDebounce'
 import { useRecommendationsStore } from '@/store/recommendationsStore'
 import { hostNameMap, isMainHost } from '@/lib/hostNames'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
@@ -15,33 +13,16 @@ interface Podcast {
   number: string
 }
 
-interface Filters {
-  search: string
-  type: string
-  podcastShowType: string
-  podcastNumber: string
-  hosts: string[]
-  page: number
-  limit: number
-  dateRange?: DateRange
-}
-
 interface RecommendationsFiltersProps {
-  filters: Filters
   availableTypes: string[]
   availablePodcasts: Podcast[]
   availableHosts: string[]
-  setFilter: (key: keyof Filters, value: any) => void
-  onPodcastSearch: (search: string) => void
 }
 
 export function RecommendationsFilters({
-  filters,
   availableTypes,
   availablePodcasts,
   availableHosts,
-  setFilter,
-  onPodcastSearch
 }: RecommendationsFiltersProps) {
   const { podcastSearch, setPodcastSearch, localFilters, setLocalFilter, resetFilters, applyFilters } = useRecommendationsStore()
   const [selectedIndex, setSelectedIndex] = useState(-1)
@@ -97,6 +78,12 @@ export function RecommendationsFilters({
               placeholder="Search..."
               value={localFilters.search}
               onChange={(e) => setLocalFilter('search', e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  applyFilters()
+                }
+              }}
             />
           </div>
 

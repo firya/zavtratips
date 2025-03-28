@@ -61,11 +61,11 @@ export const RecommendationCard = ({
     <Card className="flex flex-col h-full p-0 overflow-hidden">
       {/* Image section - fixed 1:1 ratio */}
       <div className="w-full aspect-square overflow-hidden">
-        {/* <img
+        <img
           src={image || defaultImage}
           alt={name}
           className="w-full h-full object-cover"
-        /> */}
+        />
       </div>
       
       {/* Content section - takes remaining height */}
