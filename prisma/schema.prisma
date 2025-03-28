@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+model Config {
+  id             Int             @id @default(autoincrement())
+  type           String
+  value          String
+  rowNumber      Int?
+  recommendations Recommendation[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Podcast {
+  id             Int             @id @default(autoincrement())
+  date           DateTime
+  showType       String
+  number         String
+  name           String
+  length         Int
+  rowNumber      Int?
+  recommendations Recommendation[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Recommendation {
+  id          Int       @id @default(autoincrement())
+  podcast     Podcast   @relation(fields: [podcastId], references: [id])
+  podcastId   Int
+  type        Config    @relation(fields: [typeId], references: [id])
+  typeId      Int
+  name        String
+  link        String
+  image       String?
+  platforms   String?
+  rate        Float?
+  genre       String?
+  releaseDate DateTime?
+  length      String?
+  dima        Boolean?
+  timur       Boolean?
+  maksim      Boolean?
+  guest       String?
+  rowNumber   Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([podcastId])
+  @@index([typeId])
+}
+
+model Stream {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  title     String
+  link      String
+  length    Int
+  rowNumber Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

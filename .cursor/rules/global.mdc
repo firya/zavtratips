@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+This project contain:
+- Backend server (`server` folder) on nodejs that provoide:
+ - API for frontend part
+ - Code for telegram bot that must work in inline mode to access get requests from `Recommendations` table
+ - Scripts that sync postgress sql with data in google spreadsheet
+- Postgress database that contain synced data from google spreadsheet
+- Frontend part (`src` folder) that uses react, radix as component library
+ - Page that shows recommendations as cards or table with pagination and filters
+ - Page that shows global statistic using db data
+ - Page for show as webapp in telegram bot. Access to this page checked by telegram permission. On this page user with access can create, edit and remove lines in google spreadsheet and in postgress database simultaneously
+
+You should use radix for all components on pages
+You should name files and folders in camelCase
+You shold avoid `any` in types
+You should avoid type `as unknown as` in type assignment
+You should place every component in new folder
+If component has many helper functions you should create `%filename%.helpers.ts` with all helper functions in the same folder
+If component has many types you should create `%filename%.types.ts` with all types in the same folder
