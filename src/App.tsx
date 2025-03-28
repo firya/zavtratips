@@ -1,9 +1,15 @@
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate, Outlet } from "react-router-dom"
 import { Recommendations } from "@/pages/Recommendations"
 import { Stats } from "@/pages/Stats"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { Theme } from '@radix-ui/themes'
 import { cn } from "@/lib/utils"
+import AppLayout from "@/pages/App/layout"
+import { CreatePodcast } from "@/pages/App/podcasts/CreatePodcast"
+import { EditPodcast } from "@/pages/App/podcasts/EditPodcast"
+import { CreateRecommendation } from "@/pages/App/recommendations/CreateRecommendation"
+import { EditRecommendation } from "@/pages/App/recommendations/EditRecommendation"
+import { AppPage } from '@/pages/App/AppPage'
 
 function Navigation() {
   const location = useLocation()
@@ -46,20 +52,38 @@ function Navigation() {
   )
 }
 
+function MainLayout() {
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <main className="w-full max-w-7xl mx-auto px-1 sm:px-4 py-4 sm:py-6">
+        <Outlet />
+      </main>
+    </div>
+  )
+}
+
 function App() {
   return (
     <Router>
       <Theme>
-        <div className="min-h-screen bg-background">
-          <Navigation />
-          <main className="w-full max-w-7xl mx-auto px-1 sm:px-4 py-4 sm:py-6">
-            <Routes>
-              <Route path="/" element={<Navigate to="/recommendations" replace />} />
-              <Route path="/recommendations" element={<Recommendations />} />
-              <Route path="/stats" element={<Stats />} />
-            </Routes>
-          </main>
-        </div>
+        <Routes>
+          {/* Public routes with navigation */}
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Navigate to="/recommendations" replace />} />
+            <Route path="/recommendations" element={<Recommendations />} />
+            <Route path="/stats" element={<Stats />} />
+          </Route>
+          
+          {/* Admin routes without navigation */}
+          <Route element={<AppLayout><Outlet /></AppLayout>}>
+            <Route path="/app" element={<AppPage />} />
+            <Route path="/app/podcasts/create" element={<CreatePodcast />} />
+            <Route path="/app/podcasts/edit" element={<EditPodcast />} />
+            <Route path="/app/recommendations/create" element={<CreateRecommendation />} />
+            <Route path="/app/recommendations/edit" element={<EditRecommendation />} />
+          </Route>
+        </Routes>
       </Theme>
     </Router>
   )

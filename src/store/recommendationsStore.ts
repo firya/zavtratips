@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { api } from '@/lib/api'
-import { DateRange } from 'react-day-picker'
+import { DateRange } from '@/components/ui/calendar'
+
+interface Type {
+  id: number
+  value: string
+}
 
 interface Podcast {
   showType: string
@@ -16,9 +21,7 @@ interface Recommendation {
   platforms?: string
   rate?: number
   length?: string
-  type?: {
-    value: string
-  }
+  type?: Type
   podcast?: Podcast
   dima?: boolean
   timur?: boolean
@@ -44,7 +47,7 @@ interface RecommendationsStore {
   filters: Filters
   localFilters: Filters
   totalCount: number
-  availableTypes: string[]
+  availableTypes: Type[]
   availablePodcasts: Podcast[]
   availableHosts: string[]
   isPodcastSearchLoading: boolean

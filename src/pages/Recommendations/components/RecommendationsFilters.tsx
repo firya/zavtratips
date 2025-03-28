@@ -8,13 +8,18 @@ import { useRecommendationsStore } from '@/store/recommendationsStore'
 import { hostNameMap, isMainHost } from '@/lib/hostNames'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 
+interface Type {
+  id: number
+  value: string
+}
+
 interface Podcast {
   showType: string
   number: string
 }
 
 interface RecommendationsFiltersProps {
-  availableTypes: string[]
+  availableTypes: Type[]
   availablePodcasts: Podcast[]
   availableHosts: string[]
 }
@@ -93,12 +98,14 @@ export function RecommendationsFilters({
               onValueChange={(value) => setLocalFilter('type', value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select type" />
+                <SelectValue placeholder="Select type">
+                  {localFilters.type}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {availableTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
+                  <SelectItem key={type.id} value={type.value}>
+                    {type.value}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -184,7 +191,9 @@ export function RecommendationsFilters({
               onValueChange={(value) => setLocalFilter('hosts', value.split(','))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select hosts" />
+                <SelectValue placeholder="Select hosts">
+                  {localFilters.hosts.map(host => hostNameMap[host] || host).join(', ')}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {mainHosts.map((host) => (

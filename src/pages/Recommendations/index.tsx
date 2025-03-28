@@ -1,6 +1,4 @@
-import { useEffect, useRef } from 'react'
 import { useRecommendationsStore } from '@/store/recommendationsStore'
-import { Skeleton } from '@/components/ui/skeleton'
 import { RecommendationsFilters } from './components/RecommendationsFilters'
 import { Pagination } from '@/components/ui/pagination'
 import { RecommendationCard } from '@/pages/Recommendations/components/RecommendationCard'

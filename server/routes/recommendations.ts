@@ -12,10 +12,11 @@ router.get('/types', async (req, res) => {
         type: 'typeList'
       },
       select: {
+        id: true,
         value: true,
       },
     });
-    res.json(types.map(t => t.value));
+    res.json(types);
   } catch (error) {
     console.error('Error fetching types:', error);
     res.status(500).json({ error: 'Failed to fetch types' });
@@ -30,8 +31,10 @@ router.get('/podcasts', async (req, res) => {
 
     const podcasts = await prisma.podcast.findMany({
       select: {
+        id: true,
         showType: true,
         number: true,
+        name: true,
       },
       where: search ? {
         OR: [
@@ -80,6 +83,7 @@ router.get('/hosts', async (req, res) => {
   }
 });
 
+// Get all recommendations with pagination and filters
 router.get('/', async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
@@ -138,30 +142,9 @@ router.get('/', async (req, res) => {
     const [recommendations, total] = await Promise.all([
       prisma.recommendation.findMany({
         where,
-        select: {
-          id: true,
-          name: true,
-          link: true,
-          image: true,
-          platforms: true,
-          rate: true,
-          length: true,
-          podcast: {
-            select: {
-              showType: true,
-              number: true,
-              date: true,
-            },
-          },
-          type: {
-            select: {
-              value: true,
-            },
-          },
-          dima: true,
-          timur: true,
-          maksim: true,
-          guest: true,
+        include: {
+          podcast: true,
+          type: true,
         },
         orderBy: {
           podcast: {
@@ -181,6 +164,56 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching recommendations:', error);
     res.status(500).json({ error: 'Failed to fetch recommendations' });
+  }
+});
+
+// Create new recommendation
+router.post('/', async (req, res) => {
+  try {
+    const recommendation = await prisma.recommendation.create({
+      data: req.body,
+      include: {
+        podcast: true,
+        type: true,
+      },
+    });
+    res.json(recommendation);
+  } catch (error) {
+    console.error('Error creating recommendation:', error);
+    res.status(500).json({ error: 'Failed to create recommendation' });
+  }
+});
+
+// Update recommendation
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const recommendation = await prisma.recommendation.update({
+      where: { id: Number(id) },
+      data: req.body,
+      include: {
+        podcast: true,
+        type: true,
+      },
+    });
+    res.json(recommendation);
+  } catch (error) {
+    console.error('Error updating recommendation:', error);
+    res.status(500).json({ error: 'Failed to update recommendation' });
+  }
+});
+
+// Delete recommendation
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.recommendation.delete({
+      where: { id: Number(id) },
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting recommendation:', error);
+    res.status(500).json({ error: 'Failed to delete recommendation' });
   }
 });
 
