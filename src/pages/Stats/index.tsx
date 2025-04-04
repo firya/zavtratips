@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDuration } from '@/lib/utils'
-import { useStatsStore } from '@/store/statsStore'
+import { useStatsStore } from '@/stores/statsStore'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { Link } from 'react-router-dom'
 

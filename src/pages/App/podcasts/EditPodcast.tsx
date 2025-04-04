@@ -1,14 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
-import { format } from 'date-fns'
-import { CalendarIcon, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { useDebounce } from '@/hooks/useDebounce'
 
 interface Podcast {
   id: number
@@ -19,51 +24,50 @@ interface Podcast {
   length: number
 }
 
+function millisecondsToHHMMSS(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+}
+
 export function EditPodcast() {
+  const navigate = useNavigate()
   const [podcasts, setPodcasts] = useState<Podcast[]>([])
-  const [selectedPodcast, setSelectedPodcast] = useState<Podcast | null>(null)
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const debouncedSearch = useDebounce(search, 300)
 
-  useEffect(() => {
-    fetchPodcasts()
-  }, [])
-
-  const fetchPodcasts = async () => {
+  const fetchPodcasts = useCallback(async (signal?: AbortSignal) => {
     try {
-      const response = await api.get('/api/podcasts')
-      setPodcasts(response.data.podcasts)
-    } catch (error) {
-      console.error('Error fetching podcasts:', error)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!selectedPodcast) return
-
-    setIsLoading(true)
-    try {
-      const formData = new FormData(e.currentTarget)
-      const data = {
-        date: new Date(formData.get('date') as string),
-        showType: formData.get('showType') as string,
-        number: formData.get('number') as string,
-        name: formData.get('name') as string,
-        length: Number(formData.get('length')),
+      setIsLoading(true)
+      const params = new URLSearchParams()
+      if (debouncedSearch) {
+        params.append('search', debouncedSearch)
       }
-
-      await api.put(`/api/podcasts/${selectedPodcast.id}`, data)
-      toast.success('Podcast updated successfully')
-      setSelectedPodcast(null)
-      fetchPodcasts()
-    } catch (error) {
-      toast.error('Failed to update podcast')
-      console.error('Error updating podcast:', error)
+      const response = await api.get(`/api/podcasts?${params}`, { signal })
+      setPodcasts(response.data.podcasts)
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
+      console.error('Error fetching podcasts:', error)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [debouncedSearch])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const signal = controller.signal
+
+    fetchPodcasts(signal)
+
+    return () => {
+      controller.abort()
+    }
+  }, [fetchPodcasts])
 
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this podcast?')) return
@@ -78,138 +82,78 @@ export function EditPodcast() {
     }
   }
 
-  const filteredPodcasts = podcasts.filter(podcast => {
-    const searchLower = search.toLowerCase()
-    return (
-      podcast.showType.toLowerCase().includes(searchLower) ||
-      podcast.number.toLowerCase().includes(searchLower) ||
-      podcast.name.toLowerCase().includes(searchLower)
-    )
-  })
-
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Edit Podcasts</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Podcasts</h1>
+        <Button onClick={() => navigate('/app/podcasts/create')}>
+          Create Podcast
+        </Button>
+      </div>
 
-      {selectedPodcast ? (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Editing: {selectedPodcast.showType} #{selectedPodcast.number}</h2>
-            <Button
-              variant="ghost"
-              onClick={() => setSelectedPodcast(null)}
-            >
-              Cancel
-            </Button>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
-              <Input
-                id="date"
-                name="date"
-                type="date"
-                required
-                defaultValue={format(new Date(selectedPodcast.date), 'yyyy-MM-dd')}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="showType">Show Type</Label>
-              <Input
-                id="showType"
-                name="showType"
-                required
-                defaultValue={selectedPodcast.showType}
-                placeholder="Enter show type"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="number">Number</Label>
-              <Input
-                id="number"
-                name="number"
-                required
-                defaultValue={selectedPodcast.number}
-                placeholder="Enter episode number"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                name="name"
-                required
-                defaultValue={selectedPodcast.name}
-                placeholder="Enter episode name"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="length">Length (minutes)</Label>
-              <Input
-                id="length"
-                name="length"
-                type="number"
-                required
-                min="1"
-                defaultValue={selectedPodcast.length}
-                placeholder="Enter episode length in minutes"
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </form>
-        </div>
-      ) : (
-        <div className="space-y-4">
+      <div className="space-y-4">
+        <div className="relative">
           <Input
             placeholder="Search podcasts..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="max-w-sm"
           />
-
-          <div className="border rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-              {filteredPodcasts.map((podcast) => (
-                <div
-                  key={podcast.id}
-                  className="border rounded-lg p-4 space-y-2"
-                >
-                  <div className="font-medium">
-                    {podcast.showType} #{podcast.number}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {podcast.name}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedPodcast(podcast)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(podcast.id)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+          {isLoading && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             </div>
-          </div>
+          )}
         </div>
-      )}
+
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Podcast</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {podcasts.map((podcast) => (
+                <TableRow key={podcast.id}>
+                  <TableCell>
+                    <div className="font-medium">
+                      {podcast.showType} #{podcast.number}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(podcast.date).toLocaleDateString('ru-RU', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      })}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/app/podcasts/${podcast.id}`)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(podcast.id)}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   )
 } 

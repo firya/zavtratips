@@ -4,9 +4,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSe
 import { Button } from '@/components/ui/button'
 import { Check, Search, RotateCcw, Mic, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useRecommendationsStore } from '@/store/recommendationsStore'
+import { useRecommendationsStore } from '@/stores/recommendationsStore'
+import { useConfigStore } from '@/stores/config'
+import { usePodcastStore } from '@/stores/podcasts'
 import { hostNameMap, isMainHost } from '@/lib/hostNames'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { DateRange } from '@/components/ui/calendar'
 
 interface Type {
   id: number
@@ -18,18 +21,33 @@ interface Podcast {
   number: string
 }
 
+interface Filters {
+  search: string
+  type: string
+  podcastShowType: string
+  podcastNumber: string
+  hosts: string[]
+  page: number
+  limit: number
+  dateRange?: DateRange
+}
+
 interface RecommendationsFiltersProps {
+  filters: Filters
   availableTypes: Type[]
   availablePodcasts: Podcast[]
   availableHosts: string[]
+  onPodcastSearch: (search: string) => void
 }
 
 export function RecommendationsFilters({
   availableTypes,
   availablePodcasts,
   availableHosts,
+  onPodcastSearch
 }: RecommendationsFiltersProps) {
-  const { podcastSearch, setPodcastSearch, localFilters, setLocalFilter, resetFilters, applyFilters } = useRecommendationsStore()
+  const { localFilters, setLocalFilter, resetFilters, applyFilters } = useRecommendationsStore()
+  const { podcastSearch, setPodcastSearch } = usePodcastStore()
   const [selectedIndex, setSelectedIndex] = useState(-1)
 
   const mainHosts = availableHosts.filter(isMainHost)
@@ -119,6 +137,7 @@ export function RecommendationsFilters({
                 value={localFilters.podcastShowType ? `${localFilters.podcastShowType} - ${localFilters.podcastNumber}` : podcastSearch}
                 onChange={(e) => {
                   setPodcastSearch(e.target.value)
+                  onPodcastSearch(e.target.value)
                   setSelectedIndex(-1)
                 }}
                 onKeyDown={handleKeyDown}

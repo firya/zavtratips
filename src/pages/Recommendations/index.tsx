@@ -1,8 +1,11 @@
-import { useRecommendationsStore } from '@/store/recommendationsStore'
+import { useRecommendationsStore } from '@/stores/recommendationsStore'
+import { useConfigStore } from '@/stores/config'
+import { usePodcastStore } from '@/stores/podcasts'
 import { RecommendationsFilters } from './components/RecommendationsFilters'
 import { Pagination } from '@/components/ui/pagination'
 import { RecommendationCard } from '@/pages/Recommendations/components/RecommendationCard'
 import { useUrlParams } from '@/hooks/useUrlParams'
+import { useEffect } from 'react'
 
 export function Recommendations() {
   const { 
@@ -11,20 +14,24 @@ export function Recommendations() {
     error, 
     filters,
     totalCount,
-    availableTypes,
-    availablePodcasts,
-    availableHosts,
     setFilter,
     setLocalFilter,
-    applyFilters,
-    fetchPodcasts
+    applyFilters
   } = useRecommendationsStore()
+
+  const { types, hosts, fetchConfigs } = useConfigStore()
+  const { availablePodcasts, setPodcastSearch } = usePodcastStore()
 
   // Initialize URL parameters
   useUrlParams()
 
+  // Fetch config data on mount
+  useEffect(() => {
+    fetchConfigs()
+  }, [fetchConfigs])
+
   const handlePodcastSearch = (search: string) => {
-    fetchPodcasts(search)
+    setPodcastSearch(search)
   }
 
   const handlePageChange = async (page: number) => {
@@ -40,14 +47,15 @@ export function Recommendations() {
 
   return (
     <div>
-      <RecommendationsFilters
-        filters={filters}
-        availableTypes={availableTypes}
-        availablePodcasts={availablePodcasts}
-        availableHosts={availableHosts}
-        setFilter={setFilter}
-        onPodcastSearch={handlePodcastSearch}
-      />
+      <div className="space-y-4">
+        <RecommendationsFilters
+          filters={filters}
+          availableTypes={types}
+          availablePodcasts={availablePodcasts}
+          availableHosts={hosts}
+          onPodcastSearch={handlePodcastSearch}
+        />
+      </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
         {isLoading ? (

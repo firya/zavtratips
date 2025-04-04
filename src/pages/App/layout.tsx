@@ -1,15 +1,32 @@
 import { ReactNode } from 'react'
 import { AppHeader } from './components/AppHeader'
+import { BackButton } from './components/BackButton'
+import { useLocation } from 'react-router-dom'
 
 interface AppLayoutProps {
   children: ReactNode
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
+  const location = useLocation()
+  const isMainDashboard = location.pathname === '/app'
+
+  // Determine if we should show back button and where it should navigate to
+  const showBackButton = !isMainDashboard
+  const getBackPath = () => {
+    if (location.pathname.startsWith('/app/podcasts/')) {
+      return '/app/podcasts'
+    }
+    if (location.pathname.startsWith('/app/recommendations/')) {
+      return '/app/recommendations/edit'
+    }
+    return '/app'
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto px-4 py-6">
+      <AppHeader backPath={showBackButton ? getBackPath() : undefined} />
+      <main className="mx-auto px-4 py-6">
         {children}
       </main>
     </div>

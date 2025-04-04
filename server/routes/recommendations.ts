@@ -1,27 +1,9 @@
 import { Router } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { addRecommendationToSpreadsheet, updateRowInSpreadsheet, deleteRowFromSpreadsheet } from '../sheets';
 
 const router = Router();
 const prisma = new PrismaClient();
-
-// Get available types
-router.get('/types', async (req, res) => {
-  try {
-    const types = await prisma.config.findMany({
-      where: {
-        type: 'typeList'
-      },
-      select: {
-        id: true,
-        value: true,
-      },
-    });
-    res.json(types);
-  } catch (error) {
-    console.error('Error fetching types:', error);
-    res.status(500).json({ error: 'Failed to fetch types' });
-  }
-});
 
 // Get available podcasts
 router.get('/podcasts', async (req, res) => {
@@ -56,85 +38,54 @@ router.get('/podcasts', async (req, res) => {
   }
 });
 
-// Get available hosts
-router.get('/hosts', async (req, res) => {
-  try {
-    const hosts = await prisma.recommendation.findMany({
-      select: {
-        dima: true,
-        timur: true,
-        maksim: true,
-        guest: true,
-      },
-    });
-    
-    const uniqueHosts = new Set<string>();
-    hosts.forEach(host => {
-      if (host.dima) uniqueHosts.add('dima');
-      if (host.timur) uniqueHosts.add('timur');
-      if (host.maksim) uniqueHosts.add('maksim');
-      if (host.guest) uniqueHosts.add(host.guest);
-    });
-    
-    res.json(Array.from(uniqueHosts));
-  } catch (error) {
-    console.error('Error fetching hosts:', error);
-    res.status(500).json({ error: 'Failed to fetch hosts' });
-  }
-});
-
-// Get all recommendations with pagination and filters
+// Get recommendations with filters
 router.get('/', async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const limit = Number(req.query.limit) || 24;
     const skip = (page - 1) * limit;
-    
-    // Parse filters from query
-    const search = req.query.search as string;
-    const podcastShowType = req.query.podcastShowType as string;
-    const podcastNumber = req.query.podcastNumber as string;
-    const type = req.query.type as string;
-    const dateFrom = req.query.dateFrom ? new Date(req.query.dateFrom as string) : null;
-    const dateTo = req.query.dateTo ? new Date(req.query.dateTo as string) : null;
-    const hosts = (req.query.hosts as string)?.split(',') || [];
 
-    // Build where clause
-    const where: any = {};
-    
-    if (search) {
-      where.name = { contains: search, mode: 'insensitive' };
+    const where: Prisma.RecommendationWhereInput = {};
+
+    if (req.query.search) {
+      where.OR = [
+        { name: { contains: req.query.search as string, mode: 'insensitive' } },
+        { link: { contains: req.query.search as string, mode: 'insensitive' } },
+        { platforms: { contains: req.query.search as string, mode: 'insensitive' } },
+      ];
     }
-    
-    if (podcastShowType && podcastNumber) {
-      where.podcast = {
-        showType: podcastShowType,
-        number: podcastNumber,
+
+    if (req.query.type) {
+      where.typeId = Number(req.query.type);
+    }
+
+    const podcastWhere: Prisma.PodcastWhereInput = {};
+
+    if (req.query.podcastShowType) {
+      podcastWhere.showType = req.query.podcastShowType as string;
+    }
+
+    if (req.query.podcastNumber) {
+      podcastWhere.number = req.query.podcastNumber as string;
+    }
+
+    if (req.query.dateFrom || req.query.dateTo) {
+      podcastWhere.date = {
+        ...(req.query.dateFrom ? { gte: new Date(req.query.dateFrom as string) } : {}),
+        ...(req.query.dateTo ? { lte: new Date(req.query.dateTo as string) } : {})
       };
     }
-    
-    if (type) {
-      where.type = {
-        value: type,
-      };
+
+    if (Object.keys(podcastWhere).length > 0) {
+      where.podcast = podcastWhere;
     }
-    
-    if (dateFrom || dateTo) {
-      where.podcast = {
-        ...where.podcast,
-        date: {
-          ...(dateFrom && { gte: dateFrom }),
-          ...(dateTo && { lte: dateTo }),
-        },
-      };
-    }
-    
-    if (hosts.length > 0) {
+
+    if (req.query.hosts) {
+      const hosts = (req.query.hosts as string).split(',');
       where.OR = hosts.map(host => {
-        if (host === 'dima' || host === 'timur' || host === 'maksim') {
-          return { [host]: true };
-        }
-        // For guests, we check if the guest field matches the host name
+        if (host === 'dima') return { dima: true };
+        if (host === 'timur') return { timur: true };
+        if (host === 'maksim') return { maksim: true };
         return { guest: host };
       });
     }
@@ -143,13 +94,13 @@ router.get('/', async (req, res) => {
       prisma.recommendation.findMany({
         where,
         include: {
-          podcast: true,
           type: true,
+          podcast: true
         },
         orderBy: {
           podcast: {
-            date: 'desc',
-          },
+            date: 'desc'
+          }
         },
         skip,
         take: limit,
@@ -173,10 +124,50 @@ router.post('/', async (req, res) => {
     const recommendation = await prisma.recommendation.create({
       data: req.body,
       include: {
-        podcast: true,
-        type: true,
-      },
+        podcast: {
+          select: {
+            id: true,
+            date: true,
+            showType: true,
+            number: true,
+            name: true,
+            length: true
+          }
+        },
+        type: {
+          select: {
+            id: true,
+            value: true
+          }
+        }
+      }
     });
+
+    // Add to Google Spreadsheet
+    const rowNumber = await addRecommendationToSpreadsheet([
+      recommendation.podcast.date.toLocaleDateString(),
+      `${recommendation.podcast.showType} #${recommendation.podcast.number}`,
+      recommendation.type.value,
+      recommendation.name,
+      recommendation.link || '',
+      recommendation.image || '',
+      recommendation.platforms || '',
+      recommendation.rate?.toString() || '',
+      recommendation.genre || '',
+      recommendation.releaseDate?.toLocaleDateString() || '',
+      recommendation.length || '',
+      recommendation.dima ? '👍' : '❌',
+      recommendation.timur ? '👍' : '❌',
+      recommendation.maksim ? '👍' : '❌',
+      recommendation.guest || ''
+    ]);
+
+    // Update the rowNumber in the database
+    await prisma.recommendation.update({
+      where: { id: recommendation.id },
+      data: { rowNumber }
+    });
+
     res.json(recommendation);
   } catch (error) {
     console.error('Error creating recommendation:', error);
@@ -192,10 +183,46 @@ router.put('/:id', async (req, res) => {
       where: { id: Number(id) },
       data: req.body,
       include: {
-        podcast: true,
-        type: true,
-      },
+        podcast: {
+          select: {
+            id: true,
+            date: true,
+            showType: true,
+            number: true,
+            name: true,
+            length: true
+          }
+        },
+        type: {
+          select: {
+            id: true,
+            value: true
+          }
+        }
+      }
     });
+
+    // Update in Google Spreadsheet
+    if (recommendation.rowNumber) {
+      await updateRowInSpreadsheet('Рекомендации', recommendation.rowNumber, [
+        recommendation.podcast.date.toLocaleDateString(),
+        `${recommendation.podcast.showType} #${recommendation.podcast.number}`,
+        recommendation.type.value,
+        recommendation.name,
+        recommendation.link || '',
+        recommendation.image || '',
+        recommendation.platforms || '',
+        recommendation.rate?.toString() || '',
+        recommendation.genre || '',
+        recommendation.releaseDate?.toLocaleDateString() || '',
+        recommendation.length || '',
+        recommendation.dima ? '👍' : '❌',
+        recommendation.timur ? '👍' : '❌',
+        recommendation.maksim ? '👍' : '❌',
+        recommendation.guest || ''
+      ]);
+    }
+
     res.json(recommendation);
   } catch (error) {
     console.error('Error updating recommendation:', error);
@@ -207,9 +234,23 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Get the recommendation first to get the row number
+    const recommendation = await prisma.recommendation.findUnique({
+      where: { id: Number(id) },
+      select: { rowNumber: true }
+    });
+
+    // Delete from database
     await prisma.recommendation.delete({
       where: { id: Number(id) },
     });
+
+    // Delete from Google Spreadsheet
+    if (recommendation?.rowNumber) {
+      await deleteRowFromSpreadsheet('Рекомендации', recommendation.rowNumber);
+    }
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting recommendation:', error);

@@ -47,19 +47,10 @@ interface RecommendationsStore {
   filters: Filters
   localFilters: Filters
   totalCount: number
-  availableTypes: Type[]
-  availablePodcasts: Podcast[]
-  availableHosts: string[]
-  isPodcastSearchLoading: boolean
-  podcastSearch: string
-  setPodcastSearch: (search: string) => void
   setFilter: (key: keyof Filters, value: any) => void
   setLocalFilter: (key: keyof Filters, value: any) => void
   resetFilters: () => void
   applyFilters: () => Promise<void>
-  fetchTypes: () => Promise<void>
-  fetchPodcasts: (search?: string) => Promise<void>
-  fetchHosts: () => Promise<void>
   fetchRecommendations: () => Promise<void>
   setFiltersFromUrl: (filters: Partial<Filters>) => Promise<void>
 }
@@ -81,20 +72,6 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
   filters: defaultFilters,
   localFilters: defaultFilters,
   totalCount: 0,
-  availableTypes: [],
-  availablePodcasts: [],
-  availableHosts: [],
-  isPodcastSearchLoading: false,
-  podcastSearch: '',
-
-  setPodcastSearch: (search: string) => {
-    set({ podcastSearch: search })
-    if (search.trim()) {
-      get().fetchPodcasts(search.trim())
-    } else {
-      set({ availablePodcasts: [] })
-    }
-  },
 
   setFilter: (key, value) => {
     set((state) => ({
@@ -168,56 +145,6 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch recommendations',
         isLoading: false,
-      })
-    }
-  },
-
-  fetchTypes: async () => {
-    try {
-      const response = await api.get('/api/recommendations/types')
-      set({ availableTypes: response.data })
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to fetch types',
-      })
-    }
-  },
-
-  fetchPodcasts: async (search?: string) => {
-    if (!search?.trim()) {
-      set({ availablePodcasts: [] })
-      return
-    }
-
-    if (get().isPodcastSearchLoading) {
-      return
-    }
-
-    set({ isPodcastSearchLoading: true })
-    try {
-      const params = new URLSearchParams()
-      if (search) {
-        params.append('search', search)
-      }
-      const response = await api.get(`/api/recommendations/podcasts?${params}`)
-      set({ availablePodcasts: response.data })
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to fetch podcasts',
-        availablePodcasts: []
-      })
-    } finally {
-      set({ isPodcastSearchLoading: false })
-    }
-  },
-
-  fetchHosts: async () => {
-    try {
-      const response = await api.get('/api/recommendations/hosts')
-      set({ availableHosts: response.data })
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to fetch hosts',
       })
     }
   },

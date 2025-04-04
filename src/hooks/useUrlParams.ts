@@ -1,6 +1,8 @@
 import { useSearchParams, useLocation } from 'react-router-dom'
 import { useEffect, useRef } from 'react'
-import { useRecommendationsStore } from '@/store/recommendationsStore'
+import { useRecommendationsStore } from '@/stores/recommendationsStore'
+import { useConfigStore } from '@/stores/config'
+import { usePodcastStore } from '@/stores/podcasts'
 
 export function useUrlParams() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -8,11 +10,10 @@ export function useUrlParams() {
   const { 
     filters, 
     setFiltersFromUrl, 
-    fetchRecommendations,
-    fetchTypes,
-    fetchPodcasts,
-    fetchHosts
+    fetchRecommendations
   } = useRecommendationsStore()
+  const { fetchConfigs } = useConfigStore()
+  const { fetchPodcasts } = usePodcastStore()
   const isInitialMount = useRef(true)
   const hasUrlParams = useRef(false)
 
@@ -44,9 +45,8 @@ export function useUrlParams() {
     if (!isInitialMount.current) return
 
     // Fetch initial data
-    fetchTypes()
+    fetchConfigs()
     fetchPodcasts()
-    fetchHosts()
 
     const search = searchParams.get('search')
     const type = searchParams.get('type')
@@ -82,5 +82,5 @@ export function useUrlParams() {
     }
 
     isInitialMount.current = false
-  }, [location.pathname, searchParams, setFiltersFromUrl, fetchRecommendations, fetchTypes, fetchPodcasts, fetchHosts])
+  }, [location.pathname, searchParams, setFiltersFromUrl, fetchRecommendations, fetchConfigs, fetchPodcasts])
 } 

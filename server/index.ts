@@ -7,6 +7,8 @@ import podcastsRouter from './routes/podcasts'
 import streamsRouter from './routes/streams'
 import statsRouter from './routes/stats'
 import bot from './bot'
+import configRouter from './routes/config'
+import { syncWithDatabase } from './sheets'
 
 dotenv.config()
 
@@ -25,6 +27,17 @@ app.use('/api/recommendations', recommendationsRouter)
 app.use('/api/podcasts', podcastsRouter)
 app.use('/api/streams', streamsRouter)
 app.use('/api/stats', statsRouter)
+app.use('/api/config', configRouter)
+
+app.post('/sync', async (req, res) => {
+  try {
+    const result = await syncWithDatabase()
+    res.json(result)
+  } catch (error) {
+    console.error('Failed to sync database:', error)
+    res.status(500).json({ error: 'Failed to sync database' })
+  }
+})
 
 const PORT = process.env.NODE_PORT || 3001
 app.listen(PORT, () => {
