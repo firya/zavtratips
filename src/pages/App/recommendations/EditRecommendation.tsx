@@ -1,357 +1,272 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Calendar, DateRange } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Search, Pencil, Trash2, X, Check } from 'lucide-react'
+import debounce from 'lodash/debounce'
 import { cn } from '@/lib/utils'
-import { format } from 'date-fns'
-import { CalendarIcon, Search } from 'lucide-react'
-
-interface Podcast {
-  id: number
-  showType: string
-  number: string
-  name: string
-}
-
-interface Type {
-  id: number
-  value: string
-}
-
-interface Recommendation {
-  id: number
-  podcastId: number
-  typeId: number
-  name: string
-  link: string
-  image?: string
-  platforms?: string
-  rate?: number
-  genre?: string
-  releaseDate?: Date
-  length?: string
-  dima: boolean
-  timur: boolean
-  maksim: boolean
-  guest?: string
-}
+import { usePodcastStore, Podcast } from '@/stores/podcasts'
+import { useRecommendationsStore } from '@/stores/recommendationsStore'
 
 export function EditRecommendation() {
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([])
-  const [podcasts, setPodcasts] = useState<Podcast[]>([])
-  const [types, setTypes] = useState<Type[]>([])
-  const [selectedRecommendation, setSelectedRecommendation] = useState<Recommendation | null>(null)
+  const { 
+    recommendations, 
+    setFiltersFromUrl,
+    deleteRecommendation 
+  } = useRecommendationsStore()
   const [searchInput, setSearchInput] = useState('')
-  const [releaseDate, setReleaseDate] = useState<Date | undefined>()
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate()
+  
+  const { 
+    availablePodcasts, 
+    podcastSearch, 
+    setPodcastSearch,
+    fetchPodcasts 
+  } = usePodcastStore()
+
+  const [selectedPodcast, setSelectedPodcast] = useState<Podcast | null>(null)
 
   useEffect(() => {
     fetchData()
+    return () => {
+      // Cleanup when leaving the page
+      setPodcastSearch('')
+      setSelectedPodcast(null)
+    }
   }, [])
 
-  const fetchData = async () => {
-    try {
-      const [recommendationsResponse, podcastsResponse, typesResponse] = await Promise.all([
-        api.get('/api/recommendations'),
-        api.get('/api/podcasts'),
-        api.get('/api/recommendations/types')
-      ])
-      setRecommendations(recommendationsResponse.data.recommendations)
-      setPodcasts(podcastsResponse.data.podcasts)
-      setTypes(typesResponse.data)
-    } catch (error) {
-      console.error('Error fetching data:', error)
+  const handlePodcastSelect = (podcast: Podcast) => {
+    // First update the selected podcast
+    setSelectedPodcast(podcast)
+    // Then clear the search input to hide dropdown
+    setPodcastSearch('')
+    setSelectedIndex(-1)
+    // Make request with the new podcast number
+    const params: Record<string, string> = {
+      podcastNumber: podcast.number
     }
+    if (searchInput) {
+      params.search = searchInput
+    }
+    fetchDataWithParams(params)
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!selectedRecommendation) return
-
-    setIsLoading(true)
-
+  const fetchDataWithParams = async (params: Record<string, string>) => {
     try {
-      const formData = new FormData(e.currentTarget)
-      const data = {
-        podcastId: Number(formData.get('podcastId')),
-        typeId: Number(formData.get('typeId')),
-        name: formData.get('name') as string,
-        link: formData.get('link') as string,
-        image: formData.get('image') as string || undefined,
-        platforms: formData.get('platforms') as string || undefined,
-        rate: formData.get('rate') ? Number(formData.get('rate')) : undefined,
-        genre: formData.get('genre') as string || undefined,
-        releaseDate: releaseDate,
-        length: formData.get('length') as string || undefined,
-        dima: formData.get('dima') === 'on',
-        timur: formData.get('timur') === 'on',
-        maksim: formData.get('maksim') === 'on',
-        guest: formData.get('guest') as string || undefined,
-      }
-
-      await api.put(`/api/recommendations/${selectedRecommendation.id}`, data)
-      toast.success('Recommendation updated successfully')
-      fetchData()
-      setSelectedRecommendation(null)
+      setIsLoading(true)
+      await setFiltersFromUrl(params)
     } catch (error) {
-      toast.error('Failed to update recommendation')
-      console.error('Error updating recommendation:', error)
+      console.error('Error fetching data:', error)
+      toast.error('Failed to fetch recommendations')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleDelete = async (id: number) => {
+  const fetchData = async (search = '') => {
+    const params: Record<string, string> = {}
+
+    if (search) {
+      params.search = search
+    }
+
+    // Only add podcastNumber if we have a selected podcast
+    if (selectedPodcast?.number) {
+      params.podcastNumber = selectedPodcast.number
+    }
+
+    await fetchDataWithParams(params)
+  }
+
+  const handlePodcastSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setPodcastSearch(value)
+    setSelectedIndex(-1)
+    if (!value) {
+      setSelectedPodcast(null)
+      fetchData(searchInput)
+    } else {
+      // Only search for numbers in the input
+      const numberMatch = value.match(/\d+/)
+      if (numberMatch) {
+        fetchPodcasts(numberMatch[0])
+      }
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!podcastSearch) return
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setSelectedIndex(prev => 
+          prev < availablePodcasts.length - 1 ? prev + 1 : prev
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : prev)
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (selectedIndex >= 0 && selectedIndex < availablePodcasts.length) {
+          handlePodcastSelect(availablePodcasts[selectedIndex])
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setPodcastSearch('')
+        setSelectedPodcast(null)
+        setSelectedIndex(-1)
+        fetchData(searchInput)
+        break
+    }
+  }
+
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this recommendation?')) return
 
     try {
-      await api.delete(`/api/recommendations/${id}`)
+      await deleteRecommendation(id)
       toast.success('Recommendation deleted successfully')
-      fetchData()
-      setSelectedRecommendation(null)
     } catch (error) {
       toast.error('Failed to delete recommendation')
       console.error('Error deleting recommendation:', error)
     }
   }
 
-  const filteredRecommendations = recommendations.filter((recommendation) =>
-    recommendation.name.toLowerCase().includes(searchInput.toLowerCase())
-  )
+  const handleClearPodcast = () => {
+    setPodcastSearch('')
+    setSelectedPodcast(null)
+    setSelectedIndex(-1)
+    // Make request without podcastNumber
+    const params: Record<string, string> = {}
+    if (searchInput) {
+      params.search = searchInput
+    }
+    // Immediately fetch data with cleared podcast
+    fetchDataWithParams(params)
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Edit Recommendation</h1>
-
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-        <Input
-          type="text"
-          placeholder="Search recommendations..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="pl-10"
-        />
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Recommendations</h1>
+        <Button onClick={() => navigate('/app/recommendations/create')}>
+          Create New
+        </Button>
       </div>
 
-      {selectedRecommendation ? (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="podcastId">Podcast</Label>
-            <Select name="podcastId" defaultValue={selectedRecommendation.podcastId.toString()} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select podcast" />
-              </SelectTrigger>
-              <SelectContent>
-                {podcasts.map((podcast) => (
-                  <SelectItem key={podcast.id} value={podcast.id.toString()}>
-                    {podcast.showType} #{podcast.number} - {podcast.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="typeId">Type</Label>
-            <Select name="typeId" defaultValue={selectedRecommendation.typeId.toString()} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                {types.map((type) => (
-                  <SelectItem key={type.id} value={type.id.toString()}>
-                    {type.value}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Search recommendations..."
+            value={searchInput}
+            onChange={(e) => {
+              const value = e.target.value
+              setSearchInput(value)
+              if (value) {
+                fetchData(value)
+              } else {
+                fetchData('')
+              }
+            }}
+            className="pl-10"
+          />
+        </div>
+        <div className="relative">
+          <div className="relative">
             <Input
-              id="name"
-              name="name"
-              required
-              defaultValue={selectedRecommendation.name}
-              placeholder="Enter recommendation name"
+              placeholder="Search podcast..."
+              value={selectedPodcast ? `${selectedPodcast.showType} - ${selectedPodcast.number}` : podcastSearch}
+              onChange={handlePodcastSearchChange}
+              onKeyDown={handleKeyDown}
+              className="h-10"
+              disabled={!!selectedPodcast}
             />
+            {(podcastSearch || selectedPodcast) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                onClick={handleClearPodcast}
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="link">Link</Label>
-            <Input
-              id="link"
-              name="link"
-              required
-              type="url"
-              defaultValue={selectedRecommendation.link}
-              placeholder="Enter recommendation link"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="image">Image URL (optional)</Label>
-            <Input
-              id="image"
-              name="image"
-              type="url"
-              defaultValue={selectedRecommendation.image}
-              placeholder="Enter image URL"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="platforms">Platforms (optional)</Label>
-            <Input
-              id="platforms"
-              name="platforms"
-              defaultValue={selectedRecommendation.platforms}
-              placeholder="Enter platforms"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="rate">Rate (0-10, optional)</Label>
-            <Input
-              id="rate"
-              name="rate"
-              type="number"
-              min="0"
-              max="10"
-              step="0.1"
-              defaultValue={selectedRecommendation.rate}
-              placeholder="Enter rate"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="genre">Genre (optional)</Label>
-            <Input
-              id="genre"
-              name="genre"
-              defaultValue={selectedRecommendation.genre}
-              placeholder="Enter genre"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="releaseDate">Release Date (optional)</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !releaseDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {releaseDate ? format(releaseDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={releaseDate}
-                  onSelect={(date: Date | DateRange | undefined) => {
-                    if (date instanceof Date) {
-                      setReleaseDate(date)
-                    }
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="length">Length (optional)</Label>
-            <Input
-              id="length"
-              name="length"
-              defaultValue={selectedRecommendation.length}
-              placeholder="Enter length"
-            />
-          </div>
-
-          <div className="space-y-4">
-            <Label>Hosts</Label>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="dima"
-                  name="dima"
-                  defaultChecked={selectedRecommendation.dima}
-                />
-                <Label htmlFor="dima">Dima</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="timur"
-                  name="timur"
-                  defaultChecked={selectedRecommendation.timur}
-                />
-                <Label htmlFor="timur">Timur</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="maksim"
-                  name="maksim"
-                  defaultChecked={selectedRecommendation.maksim}
-                />
-                <Label htmlFor="maksim">Maksim</Label>
+          {podcastSearch && !selectedPodcast && (
+            <div className="absolute top-full left-0 right-0 bg-popover border rounded-md shadow-md mt-1 z-50">
+              <div className="max-h-[300px] overflow-y-auto">
+                {availablePodcasts.length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    No podcast found.
+                  </div>
+                ) : (
+                  availablePodcasts.map((podcast: Podcast, index) => (
+                    <div
+                      key={`${podcast.showType}-${podcast.number}`}
+                      onClick={() => handlePodcastSelect(podcast)}
+                      className={cn(
+                        "flex items-center px-2 py-1.5 cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                        index === selectedIndex && "bg-accent text-accent-foreground"
+                      )}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedPodcast?.showType === podcast.showType && 
+                          selectedPodcast?.number === podcast.number ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {podcast.showType} - {podcast.number}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-          </div>
+          )}
+        </div>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="guest">Guest (optional)</Label>
-            <Input
-              id="guest"
-              name="guest"
-              defaultValue={selectedRecommendation.guest}
-              placeholder="Enter guest name"
-            />
-          </div>
-
-          <div className="flex gap-4">
-            <Button type="submit" className="flex-1" disabled={isLoading}>
-              {isLoading ? 'Saving...' : 'Save Changes'}
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => handleDelete(selectedRecommendation.id)}
-            >
-              Delete
-            </Button>
-          </div>
-        </form>
+      {isLoading ? (
+        <div className="text-center py-4">Loading...</div>
       ) : (
         <div className="space-y-4">
-          {filteredRecommendations.map((recommendation) => (
+          {recommendations.map((recommendation) => (
             <div
               key={recommendation.id}
-              className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-              onClick={() => {
-                setSelectedRecommendation(recommendation)
-                setReleaseDate(recommendation.releaseDate)
-              }}
+              className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
             >
               <div>
                 <h3 className="font-medium">{recommendation.name}</h3>
                 <p className="text-sm text-gray-500">{recommendation.link}</p>
               </div>
-              <Button variant="outline" size="sm">
-                Edit
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => navigate(`/app/recommendations/${recommendation.id}`)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => handleDelete(recommendation.id)}
+                  className="text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>

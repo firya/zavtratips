@@ -1,13 +1,13 @@
 import { create } from 'zustand'
 import { api } from '@/lib/api'
 
-interface Podcast {
+export interface Podcast {
   showType: string
   number: string
   date: string
 }
 
-interface PodcastState {
+export interface PodcastState {
   availablePodcasts: Podcast[]
   isPodcastSearchLoading: boolean
   podcastSearch: string
@@ -16,7 +16,7 @@ interface PodcastState {
   fetchPodcasts: (search?: string) => Promise<void>
 }
 
-export const usePodcastStore = create<PodcastState>((set, get) => ({
+export const usePodcastStore = create<PodcastState>()((set, get) => ({
   availablePodcasts: [],
   isPodcastSearchLoading: false,
   podcastSearch: '',
@@ -56,8 +56,8 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
       if (search) {
         params.append('search', search)
       }
-      const response = await api.get(`/api/recommendations/podcasts?${params}`)
-      set({ availablePodcasts: response.data })
+      const response = await api.get(`/api/podcasts?${params}`)
+      set({ availablePodcasts: response.data.podcasts })
     } catch (error) {
       console.error('Failed to fetch podcasts:', error)
       set({ availablePodcasts: [] })

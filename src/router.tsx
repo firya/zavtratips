@@ -8,9 +8,10 @@ import { EditPodcastPage } from '@/pages/App/podcasts/EditPodcastPage'
 import { Recommendations } from '@/pages/Recommendations'
 import { Stats } from '@/pages/Stats'
 import { AppPage } from '@/pages/App/AppPage'
-import { Settings } from '@/pages/App/Settings/Settings'
+import { Settings } from '@/pages/App/settings/Settings'
 import { CreateRecommendation } from '@/pages/App/recommendations/CreateRecommendation'
 import { EditRecommendation } from '@/pages/App/recommendations/EditRecommendation'
+import { EditRecommendationPage } from '@/pages/App/recommendations/EditRecommendationPage'
 import { Link, useLocation } from 'react-router-dom'
 
 function Navigation() {
@@ -152,12 +153,16 @@ export const router = createBrowserRouter([
         path: 'recommendations',
         children: [
           {
+            path: '',
+            element: <EditRecommendation />,
+          },
+          {
             path: 'create',
             element: <CreateRecommendation />,
           },
           {
-            path: 'edit',
-            element: <EditRecommendation />,
+            path: ':id',
+            element: <EditRecommendationPage />,
           },
         ],
       },

@@ -1,6 +1,5 @@
 import { ReactNode } from 'react'
 import { AppHeader } from './components/AppHeader'
-import { BackButton } from './components/BackButton'
 import { useLocation } from 'react-router-dom'
 
 interface AppLayoutProps {
@@ -14,11 +13,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Determine if we should show back button and where it should navigate to
   const showBackButton = !isMainDashboard
   const getBackPath = () => {
+    if (location.pathname.startsWith('/app/podcasts/create')) {
+      return '/app/podcasts'
+    }
     if (location.pathname.startsWith('/app/podcasts/')) {
       return '/app/podcasts'
     }
+    if (location.pathname.startsWith('/app/recommendations/create')) {
+      return '/app/recommendations'
+    }
     if (location.pathname.startsWith('/app/recommendations/')) {
-      return '/app/recommendations/edit'
+      return '/app/recommendations'
     }
     return '/app'
   }

@@ -14,19 +14,26 @@ interface Podcast {
 }
 
 interface Recommendation {
-  id: string
+  id: number
+  podcastId: number
+  typeId: number
   name: string
   link: string
   image?: string
   platforms?: string
   rate?: number
+  genre?: string
+  releaseDate?: Date
   length?: string
+  dima: boolean | null
+  timur: boolean | null
+  maksim: boolean | null
+  guest?: string
   type?: Type
   podcast?: Podcast
-  dima?: boolean
-  timur?: boolean
-  maksim?: boolean
-  guest?: string
+  rowNumber?: number
+  showType?: string
+  number?: string
 }
 
 interface Filters {
@@ -47,12 +54,15 @@ interface RecommendationsStore {
   filters: Filters
   localFilters: Filters
   totalCount: number
+  currentRecommendation: Recommendation | null
   setFilter: (key: keyof Filters, value: any) => void
   setLocalFilter: (key: keyof Filters, value: any) => void
   resetFilters: () => void
   applyFilters: () => Promise<void>
   fetchRecommendations: () => Promise<void>
   setFiltersFromUrl: (filters: Partial<Filters>) => Promise<void>
+  deleteRecommendation: (id: string) => Promise<void>
+  fetchRecommendation: (id: string) => Promise<void>
 }
 
 const defaultFilters: Filters = {
@@ -72,6 +82,7 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
   filters: defaultFilters,
   localFilters: defaultFilters,
   totalCount: 0,
+  currentRecommendation: null,
 
   setFilter: (key, value) => {
     set((state) => ({
@@ -105,16 +116,16 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
   },
 
   setFiltersFromUrl: async (newFilters) => {
-    set((state) => ({
-      filters: {
-        ...state.filters,
-        ...newFilters,
-      },
-      localFilters: {
-        ...state.localFilters,
-        ...newFilters,
-      },
-    }))
+    // Create a new filters object with default values for any fields not in newFilters
+    const updatedFilters = {
+      ...defaultFilters,
+      ...newFilters,
+    }
+
+    set({
+      filters: updatedFilters,
+      localFilters: updatedFilters,
+    })
     await get().fetchRecommendations()
   },
 
@@ -146,6 +157,34 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
         error: error instanceof Error ? error.message : 'Failed to fetch recommendations',
         isLoading: false,
       })
+    }
+  },
+
+  deleteRecommendation: async (id: string) => {
+    try {
+      await api.delete(`/api/recommendations/${id}`)
+      await get().fetchRecommendations()
+    } catch (error) {
+      console.error('Error deleting recommendation:', error)
+      throw error
+    }
+  },
+
+  fetchRecommendation: async (id: string) => {
+    set({ isLoading: true, error: null })
+    try {
+      const response = await api.get(`/api/recommendations/${id}`)
+      set({
+        currentRecommendation: response.data,
+        isLoading: false,
+      })
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to fetch recommendation',
+        isLoading: false,
+        currentRecommendation: null,
+      })
+      throw error
     }
   },
 })) 

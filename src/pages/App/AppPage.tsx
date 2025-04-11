@@ -11,7 +11,7 @@ const navigation = [
   },
   { 
     name: 'Recommendations', 
-    href: '/app/recommendations/edit', 
+    href: '/app/recommendations', 
     icon: BookOpen
   },
 ]

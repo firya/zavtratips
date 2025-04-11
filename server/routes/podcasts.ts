@@ -14,23 +14,50 @@ router.get('/', async (req, res) => {
     const skip = (page - 1) * limit;
     const search = req.query.search as string;
 
-    const where = search ? {
-      number: {
-        contains: search
-      }
-    } : undefined;
+    let podcasts = [];
+    let total = 0;
 
-    const [podcasts, total] = await Promise.all([
-      prisma.podcast.findMany({
-        where,
-        orderBy: {
-          date: 'desc'
-        },
-        skip,
-        take: limit
-      }),
-      prisma.podcast.count({ where })
-    ]);
+    if (search) {
+      // First get exact matches
+      const [exactMatches, exactCount] = await Promise.all([
+        prisma.podcast.findMany({
+          where: { number: search },
+          orderBy: { date: 'desc' }
+        }),
+        prisma.podcast.count({ where: { number: search } })
+      ]);
+
+      // Then get contains matches, excluding exact matches
+      const [containsMatches, containsCount] = await Promise.all([
+        prisma.podcast.findMany({
+          where: {
+            number: { contains: search },
+            NOT: { number: search }
+          },
+          orderBy: { date: 'desc' },
+          skip: Math.max(0, skip - exactCount),
+          take: limit - exactMatches.length
+        }),
+        prisma.podcast.count({
+          where: {
+            number: { contains: search },
+            NOT: { number: search }
+          }
+        })
+      ]);
+
+      podcasts = [...exactMatches, ...containsMatches];
+      total = exactCount + containsCount;
+    } else {
+      [podcasts, total] = await Promise.all([
+        prisma.podcast.findMany({
+          orderBy: { date: 'desc' },
+          skip,
+          take: limit
+        }),
+        prisma.podcast.count()
+      ]);
+    }
 
     res.json({
       podcasts,
