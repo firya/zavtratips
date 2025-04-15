@@ -29,13 +29,32 @@ export const useThemeStore = create<ThemeStore>((set) => ({
 }))
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { theme } = useThemeStore()
+  const { theme, setTheme } = useThemeStore()
 
   useEffect(() => {
     const root = window.document.documentElement
     root.classList.remove('light', 'dark')
     root.classList.add(theme)
   }, [theme])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const handleChange = () => {
+      setTheme(mediaQuery.matches ? 'dark' : 'light')
+    }
+
+    // Initial check
+    handleChange()
+
+    // Listen for changes
+    mediaQuery.addEventListener('change', handleChange)
+
+    // Cleanup listener on unmount
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange)
+    }
+  }, [setTheme]) // Dependency on setTheme ensures the listener uses the correct setter
 
   return <>{children}</>
 } 
