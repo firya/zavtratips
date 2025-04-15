@@ -13,6 +13,17 @@ interface Podcast {
   date: string
 }
 
+export interface MediaItem {
+  name: string
+  link: string
+  image: string
+  platforms: string
+  rate: number
+  genre: string
+  releaseDate: string
+  length: string | { gameplayMain: number; gameplayMainExtra: number; gameplayCompletionist: number }
+}
+
 interface Recommendation {
   id: number
   podcastId: number
@@ -49,7 +60,9 @@ interface Filters {
 
 interface RecommendationsStore {
   recommendations: Recommendation[]
+  mediaItems: MediaItem[]
   isLoading: boolean
+  isMediaSearchLoading: boolean
   error: string | null
   filters: Filters
   localFilters: Filters
@@ -63,6 +76,9 @@ interface RecommendationsStore {
   setFiltersFromUrl: (filters: Partial<Filters>) => Promise<void>
   deleteRecommendation: (id: string) => Promise<void>
   fetchRecommendation: (id: string) => Promise<void>
+  searchMedia: (search: string, typeId: string) => Promise<void>
+  createRecommendation: (data: Partial<Recommendation>) => Promise<void>
+  updateRecommendation: (id: number, data: Partial<Recommendation>) => Promise<void>
 }
 
 const defaultFilters: Filters = {
@@ -77,7 +93,9 @@ const defaultFilters: Filters = {
 
 export const useRecommendationsStore = create<RecommendationsStore>((set, get) => ({
   recommendations: [],
+  mediaItems: [],
   isLoading: false,
+  isMediaSearchLoading: false,
   error: null,
   filters: defaultFilters,
   localFilters: defaultFilters,
@@ -146,7 +164,7 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
         ...(filters.dateRange?.to && { dateTo: filters.dateRange.to.toISOString() }),
       })
 
-      const response = await api.get(`/api/recommendations?${params}`)
+      const response = await api.get(`/recommendations?${params}`)
       set({
         recommendations: response.data.recommendations,
         totalCount: response.data.total,
@@ -162,7 +180,7 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
 
   deleteRecommendation: async (id: string) => {
     try {
-      await api.delete(`/api/recommendations/${id}`)
+      await api.delete(`/recommendations/${id}`)
       await get().fetchRecommendations()
     } catch (error) {
       console.error('Error deleting recommendation:', error)
@@ -173,7 +191,7 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
   fetchRecommendation: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await api.get(`/api/recommendations/${id}`)
+      const response = await api.get(`/recommendations/${id}`)
       set({
         currentRecommendation: response.data,
         isLoading: false,
@@ -187,4 +205,54 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
       throw error
     }
   },
+
+  searchMedia: async (search: string, typeId: string) => {
+    if (!search || !typeId) {
+      set({ mediaItems: [] })
+      return
+    }
+
+    set({ isMediaSearchLoading: true })
+    try {
+      const response = await api.get(`/recommendations/search-media?search=${search}&typeId=${typeId}`)
+      set({ 
+        mediaItems: response.data,
+        isMediaSearchLoading: false
+      })
+    } catch (error) {
+      console.error('Error fetching media:', error)
+      set({ 
+        mediaItems: [],
+        isMediaSearchLoading: false
+      })
+    }
+  },
+
+  createRecommendation: async (data: Partial<Recommendation>) => {
+    set({ isLoading: true, error: null })
+    try {
+      await api.post('/recommendations', data)
+      set({ isLoading: false })
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to create recommendation',
+        isLoading: false
+      })
+      throw error
+    }
+  },
+
+  updateRecommendation: async (id: number, data: Partial<Recommendation>) => {
+    set({ isLoading: true, error: null })
+    try {
+      await api.put(`/recommendations/${id}`, data)
+      set({ isLoading: false })
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to update recommendation',
+        isLoading: false
+      })
+      throw error
+    }
+  }
 })) 

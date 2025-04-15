@@ -438,8 +438,14 @@ export async function updateRowInSpreadsheet(sheetName: string, rowNumber: numbe
 
 export async function deleteRowFromSpreadsheet(sheetName: string, rowNumber: number) {
   try {
+    console.log(`Attempting to delete row ${rowNumber} from sheet ${sheetName}`);
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_URL?.split('/')[5];
-    if (!spreadsheetId) return;
+    if (!spreadsheetId) {
+      console.error('No spreadsheetId found in environment variables');
+      return;
+    }
+
+    console.log(`Using spreadsheetId: ${spreadsheetId}`);
 
     // Get the sheet ID first
     const sheet = await sheets.spreadsheets.get({
@@ -447,7 +453,13 @@ export async function deleteRowFromSpreadsheet(sheetName: string, rowNumber: num
     });
 
     const sheetId = sheet.data.sheets?.find(s => s.properties?.title === sheetName)?.properties?.sheetId;
-    if (!sheetId) return;
+    if (!sheetId) {
+      console.error(`Sheet with name "${sheetName}" not found`);
+      return;
+    }
+
+    console.log(`Found sheetId: ${sheetId} for sheet "${sheetName}"`);
+    console.log(`Deleting row with startIndex: ${rowNumber - 1}, endIndex: ${rowNumber}`);
 
     // Delete the row
     await sheets.spreadsheets.batchUpdate({
@@ -465,6 +477,8 @@ export async function deleteRowFromSpreadsheet(sheetName: string, rowNumber: num
         }]
       }
     });
+
+    console.log(`Successfully deleted row ${rowNumber} from sheet "${sheetName}"`);
   } catch (error) {
     console.error(`Failed to delete row from ${sheetName}:`, error);
     throw error;

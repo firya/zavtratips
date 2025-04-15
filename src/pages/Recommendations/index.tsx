@@ -1,4 +1,4 @@
-import { useRecommendationsStore } from '@/stores/recommendationsStore'
+import { useRecommendationsStore } from '@/stores/recommendations'
 import { useConfigStore } from '@/stores/config'
 import { usePodcastStore } from '@/stores/podcasts'
 import { RecommendationsFilters } from './components/RecommendationsFilters'

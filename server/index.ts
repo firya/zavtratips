@@ -29,13 +29,28 @@ app.use('/api/streams', streamsRouter)
 app.use('/api/stats', statsRouter)
 app.use('/api/config', configRouter)
 
-app.post('/sync', async (req, res) => {
+app.post('/api/sync', async (req, res) => {
   try {
+    // Send initial response
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Transfer-Encoding': 'chunked'
+    })
+
+    // Use the syncWithDatabase function with progress callbacks
     const result = await syncWithDatabase()
-    res.json(result)
+    
+    // Send final result
+    res.write(JSON.stringify(result))
+    res.end()
   } catch (error) {
     console.error('Failed to sync database:', error)
-    res.status(500).json({ error: 'Failed to sync database' })
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to sync database' })
+    } else {
+      res.write(JSON.stringify({ error: 'Failed to sync database' }))
+      res.end()
+    }
   }
 })
 

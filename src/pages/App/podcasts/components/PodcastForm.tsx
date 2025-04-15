@@ -27,18 +27,7 @@ interface PodcastFormProps {
   initialData?: Podcast
   onSuccess?: () => void
   onCancel?: () => void
-}
-
-function minutesToHHMMSS(minutes: number): string {
-  const hours = Math.floor(minutes / 60)
-  const remainingMinutes = minutes % 60
-  const seconds = 0
-  return `${hours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-}
-
-function HHMMSSToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number)
-  return hours * 60 + minutes
+  isLoading?: boolean
 }
 
 function HHMMSSToMilliseconds(time: string): number {
@@ -46,7 +35,7 @@ function HHMMSSToMilliseconds(time: string): number {
   return (hours * 3600 + minutes * 60 + seconds) * 1000
 }
 
-export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormProps) {
+export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: parentIsLoading }: PodcastFormProps) {
   const [date, setDate] = useState<Date | undefined>(initialData?.date || new Date())
   const [isLoading, setIsLoading] = useState(false)
   const [length, setLength] = useState(initialData?.length || '')
@@ -54,6 +43,9 @@ export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormPro
   const [episodeNumber, setEpisodeNumber] = useState(initialData?.number || '')
   const { showTypes, isLoading: isConfigLoading, error: configError, fetchConfigs } = useConfigStore()
   const { getLastEpisodeNumber } = usePodcastStore()
+  
+  // Combined loading state from parent and local state
+  const isFormLoading = parentIsLoading || isLoading || isConfigLoading
 
   useEffect(() => {
     fetchConfigs()
@@ -93,6 +85,8 @@ export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormPro
     }
 
     setIsLoading(true)
+    const toastId = toast.loading(initialData?.id ? 'Updating podcast...' : 'Creating podcast...')
+    
     try {
       const formData = new FormData(e.currentTarget)
       const data: Podcast = {
@@ -104,17 +98,17 @@ export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormPro
       }
 
       if (initialData?.id) {
-        await api.put(`/api/podcasts/${initialData.id}`, data)
-        toast.success('Podcast updated successfully')
+        await api.put(`/podcasts/${initialData.id}`, data)
+        toast.success('Podcast updated successfully', { id: toastId })
       } else {
-        await api.post('/api/podcasts', data)
-        toast.success('Podcast created successfully')
+        await api.post('/podcasts', data)
+        toast.success('Podcast created successfully', { id: toastId })
       }
       
       onSuccess?.()
     } catch (error) {
-      toast.error(initialData?.id ? 'Failed to update podcast' : 'Failed to create podcast')
       console.error('Error saving podcast:', error)
+      toast.error(initialData?.id ? 'Failed to update podcast' : 'Failed to create podcast', { id: toastId })
     } finally {
       setIsLoading(false)
     }
@@ -132,6 +126,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormPro
                 "w-full justify-start text-left font-normal",
                 !date && "text-muted-foreground"
               )}
+              disabled={isFormLoading}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -141,7 +136,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormPro
             <Calendar
               mode="single"
               selected={date}
-              onSelect={(newDate) => setDate(newDate as Date)}
+              onSelect={(newDate) => !isFormLoading && setDate(newDate as Date)}
               defaultMonth={date}
             />
           </PopoverContent>
@@ -150,7 +145,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormPro
 
       <div className="space-y-2">
         <Label htmlFor="showType">Show Type</Label>
-        <Select value={selectedShowType} onValueChange={setSelectedShowType} disabled={isConfigLoading}>
+        <Select value={selectedShowType} onValueChange={setSelectedShowType} disabled={isFormLoading || isConfigLoading}>
           <SelectTrigger>
             <SelectValue placeholder={isConfigLoading ? "Loading..." : "Select show type"} />
           </SelectTrigger>
@@ -173,6 +168,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormPro
           value={episodeNumber}
           onChange={(e) => setEpisodeNumber(e.target.value)}
           placeholder="Enter episode number"
+          disabled={isFormLoading}
         />
       </div>
 
@@ -183,6 +179,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormPro
           name="name"
           defaultValue={initialData?.name}
           placeholder="Enter episode name"
+          disabled={isFormLoading}
         />
       </div>
 
@@ -193,12 +190,14 @@ export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormPro
           value={length}
           onChange={(e) => setLength(e.target.value)}
           placeholder="00:00:00"
+          disabled={isFormLoading}
         >
           {(inputProps: any) => (
             <Input
               {...inputProps}
               id="length"
               name="length"
+              disabled={isFormLoading}
             />
           )}
         </InputMask>
@@ -210,8 +209,8 @@ export function PodcastForm({ initialData, onSuccess, onCancel }: PodcastFormPro
             Cancel
           </Button>
         )}
-        <Button type="submit" className="flex-1" disabled={isLoading}>
-          {isLoading ? (
+        <Button type="submit" className="flex-1" disabled={isFormLoading}>
+          {isFormLoading ? (
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               <span>Saving...</span>

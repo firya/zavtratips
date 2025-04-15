@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
-import { api } from '@/lib/api'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,35 +6,21 @@ import { Label } from '@/components/ui/label'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
-import { CalendarIcon, Search, ExternalLink, X } from 'lucide-react'
+import { CalendarIcon, Search, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
 import { useConfigStore } from '@/stores/config'
+import { usePodcastStore, Podcast as StorePodcast } from '@/stores/podcasts'
+import { useRecommendationsStore, MediaItem } from '@/stores/recommendations'
 import { useDebounce } from '@/hooks/useDebounce'
-import { MediaDetailsCard } from './MediaDetailsCard/MediaDetailsCard'
+import { PodcastField, Podcast as PodcastFieldPodcast } from '@/components/common/PodcastField'
 
-interface Podcast {
-  id: number
+// Define our internal podcast interface matching what we need
+interface PodcastInfo {
+  id?: number
   showType: string
   number: string
-  name: string
-}
-
-interface Type {
-  id: number
-  value: string
-}
-
-interface MediaItem {
-  name: string
-  link: string
-  image: string
-  platforms: string
-  rate: number
-  genre: string
-  releaseDate: string
-  length: string | { gameplayMain: number; gameplayMainExtra: number; gameplayCompletionist: number }
 }
 
 interface Recommendation {
@@ -60,48 +45,144 @@ interface RecommendationFormProps {
   initialData?: Recommendation
   onSuccess?: () => void
   onCancel?: () => void
+  isLoading?: boolean
 }
 
-export function RecommendationForm({ initialData, onSuccess, onCancel }: RecommendationFormProps) {
-  const [podcasts, setPodcasts] = useState<Podcast[]>([])
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
-  const [podcastSearch, setPodcastSearch] = useState('')
-  const [nameSearch, setNameSearch] = useState('')
-  const [isPodcastDropdownOpen, setIsPodcastDropdownOpen] = useState(false)
-  const [releaseDate, setReleaseDate] = useState<Date | undefined>(initialData?.releaseDate)
-  const [isLoading, setIsLoading] = useState(false)
-  const { types, isLoading: isConfigLoading, error: configError, fetchConfigs } = useConfigStore()
+// Function to parse name from format: "{original name} / {other names} ({description})"
+const parseRecommendationName = (fullName: string) => {
+  let originalName = fullName;
+  let otherNames = '';
+  let description = '';
 
-  const debouncedPodcastSearch = useDebounce(podcastSearch, 300)
-  const debouncedNameSearch = useDebounce(nameSearch, 300)
-
-  useEffect(() => {
-    fetchData()
-    fetchConfigs()
-  }, [fetchConfigs])
-
-  const fetchData = async () => {
-    try {
-      const podcastsResponse = await api.get('/api/podcasts')
-      setPodcasts(podcastsResponse.data.podcasts)
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    }
+  // Extract description from parentheses at the end if it exists
+  const descriptionMatch = fullName.match(/\s*\((.*?)\)\s*$/);
+  if (descriptionMatch) {
+    description = descriptionMatch[1];
+    fullName = fullName.replace(/\s*\((.*?)\)\s*$/, '').trim();
   }
 
-  const fetchMedia = useCallback(async (search: string, typeId: string) => {
-    if (!search || !typeId) {
-      setMediaItems([])
-      return
+  // Split by " / " to separate original name and other names
+  const nameParts = fullName.split(' / ');
+  if (nameParts.length > 1) {
+    originalName = nameParts[0].trim();
+    // Take only the first other name to avoid duplicates
+    otherNames = nameParts[1].trim();
+  } else {
+    originalName = fullName.trim();
+  }
+
+  return { originalName, otherNames, description };
+};
+
+// Function to compose name back to format: "{original name} / {other names} ({description})"
+const composeRecommendationName = (originalName: string, otherNames: string, description: string) => {
+  let fullName = originalName.trim();
+  
+  // Only add other names if they exist and are different from the original name
+  if (otherNames.trim() && otherNames.trim() !== originalName.trim()) {
+    fullName += ` / ${otherNames.trim()}`;
+  }
+  
+  if (description.trim()) {
+    fullName += ` (${description.trim()})`;
+  }
+  
+  return fullName;
+};
+
+export function RecommendationForm({ initialData, onSuccess, onCancel, isLoading: parentIsLoading }: RecommendationFormProps) {
+  const [selectedPodcast, setSelectedPodcast] = useState<PodcastInfo | null>(null)
+  
+  // Parse the initial name into components
+  const initialParsedName = initialData?.name ? parseRecommendationName(initialData.name) : { originalName: '', otherNames: '', description: '' };
+  
+  // State for name components - each is independent
+  const [originalName, setOriginalName] = useState(initialParsedName.originalName);
+  const [otherNames, setOtherNames] = useState(initialParsedName.otherNames);
+  const [nameDescription, setNameDescription] = useState(initialParsedName.description);
+  
+  const [releaseDate, setReleaseDate] = useState<Date | undefined>(initialData?.releaseDate)
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
+  const [selectedTypeId, setSelectedTypeId] = useState<string>(initialData?.typeId?.toString() || '')
+  const [isSearching, setIsSearching] = useState(false)
+  const [lastSearched, setLastSearched] = useState({ query: '', typeId: '' })
+  const [linkValue, setLinkValue] = useState(initialData?.link || '')
+  const [imageValue, setImageValue] = useState(initialData?.image || '')
+  const [platformsValue, setPlatformsValue] = useState(initialData?.platforms || '')
+  const [rateValue, setRateValue] = useState(initialData?.rate?.toString() || '')
+  const [genreValue, setGenreValue] = useState(initialData?.genre || '')
+  const [isMediaDetailsOpen, setIsMediaDetailsOpen] = useState(false)
+  const searchContainerRef = useRef<HTMLDivElement>(null)
+  
+  const { types, isLoading: isConfigLoading, error: configError, fetchConfigs } = useConfigStore()
+  const { 
+    availablePodcasts, 
+    currentPodcast,
+    fetchPodcasts, 
+    fetchPodcast 
+  } = usePodcastStore()
+  
+  const { 
+    mediaItems, 
+    isLoading: isRecommendationLoading,
+    searchMedia,
+    createRecommendation,
+    updateRecommendation
+  } = useRecommendationsStore()
+
+  // Combined loading state from parent and local states
+  const isFormLoading = parentIsLoading || isRecommendationLoading || isConfigLoading;
+
+  const debouncedOriginalName = useDebounce(originalName, 300)
+
+  // Update form state when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      // Parse the name into components
+      const parsedName = initialData.name ? parseRecommendationName(initialData.name) : { originalName: '', otherNames: '', description: '' };
+      setOriginalName(parsedName.originalName);
+      setOtherNames(parsedName.otherNames);
+      setNameDescription(parsedName.description);
+      
+      // Update all other form fields
+      setReleaseDate(initialData.releaseDate);
+      setSelectedTypeId(initialData.typeId?.toString() || '');
+      setLinkValue(initialData.link || '');
+      setImageValue(initialData.image || '');
+      setPlatformsValue(initialData.platforms || '');
+      setRateValue(initialData.rate?.toString() || '');
+      setGenreValue(initialData.genre || '');
     }
-    try {
-      const response = await api.get(`/recommendations/search-media?search=${search}&typeId=${typeId}`)
-      setMediaItems(response.data)
-    } catch (error) {
-      console.error('Error fetching media:', error)
+  }, [initialData]);
+
+  useEffect(() => {
+    fetchConfigs()
+    
+    // If we have initialData, fetch the selected podcast
+    if (initialData?.podcastId) {
+      fetchPodcast(initialData.podcastId)
     }
-  }, [])
+  }, [fetchConfigs, initialData?.podcastId, fetchPodcast])
+
+  useEffect(() => {
+    if (currentPodcast) {
+      setSelectedPodcast(currentPodcast)
+    }
+  }, [currentPodcast])
+
+  const handlePodcastChange = (podcast: PodcastFieldPodcast | null) => {
+    setSelectedPodcast(podcast)
+  }
+
+  const handlePodcastSearch = (search: string) => {
+    if (!search) return
+    
+    // Only search for numbers in the input
+    const numberMatch = search.match(/\d+/)
+    if (numberMatch) {
+      fetchPodcasts(numberMatch[0])
+    }
+  }
 
   useEffect(() => {
     if (configError) {
@@ -110,156 +191,156 @@ export function RecommendationForm({ initialData, onSuccess, onCancel }: Recomme
   }, [configError])
 
   useEffect(() => {
-    if (debouncedPodcastSearch) {
-      const filteredPodcasts = podcasts.filter(podcast => 
-        podcast.showType.toLowerCase().includes(debouncedPodcastSearch.toLowerCase()) ||
-        podcast.number.toLowerCase().includes(debouncedPodcastSearch.toLowerCase()) ||
-        podcast.name.toLowerCase().includes(debouncedPodcastSearch.toLowerCase())
-      )
-      setPodcasts(filteredPodcasts)
-    } else {
-      fetchData()
+    if (debouncedOriginalName && selectedTypeId && isSearching) {
+      // Only search if query or typeId has changed since last search
+      if (debouncedOriginalName !== lastSearched.query || selectedTypeId !== lastSearched.typeId) {
+        searchMedia(debouncedOriginalName, selectedTypeId)
+        setLastSearched({ query: debouncedOriginalName, typeId: selectedTypeId })
+      }
     }
-  }, [debouncedPodcastSearch])
-
-  useEffect(() => {
-    if (debouncedNameSearch && initialData?.typeId) {
-      fetchMedia(debouncedNameSearch, initialData.typeId.toString())
-    }
-  }, [debouncedNameSearch, initialData?.typeId, fetchMedia])
+  }, [debouncedOriginalName, selectedTypeId, searchMedia, isSearching, lastSearched])
 
   const handleMediaSelect = (media: MediaItem) => {
     setSelectedMedia(media)
-    // Update form values with media data
-    const form = document.querySelector('form')
-    if (form) {
-      const nameInput = form.querySelector('[name="name"]') as HTMLInputElement
-      const linkInput = form.querySelector('[name="link"]') as HTMLInputElement
-      const imageInput = form.querySelector('[name="image"]') as HTMLInputElement
-      const platformsInput = form.querySelector('[name="platforms"]') as HTMLInputElement
-      const rateInput = form.querySelector('[name="rate"]') as HTMLInputElement
-      const genreInput = form.querySelector('[name="genre"]') as HTMLInputElement
-      const releaseDateInput = form.querySelector('[name="releaseDate"]') as HTMLInputElement
-      const lengthInput = form.querySelector('[name="length"]') as HTMLInputElement
-
-      if (nameInput) nameInput.value = media.name
-      if (linkInput) linkInput.value = media.link
-      if (imageInput) imageInput.value = media.image
-      if (platformsInput) platformsInput.value = media.platforms
-      if (rateInput) rateInput.value = media.rate?.toString() || ''
-      if (genreInput) genreInput.value = media.genre || ''
-      if (releaseDateInput) releaseDateInput.value = media.releaseDate || ''
-      if (lengthInput) lengthInput.value = typeof media.length === 'string' ? media.length : JSON.stringify(media.length)
+    
+    // Parse the name into components
+    if (media.name) {
+      const parsed = parseRecommendationName(media.name);
+      setOriginalName(parsed.originalName);
+      setOtherNames(parsed.otherNames);
+      setNameDescription(parsed.description);
     }
+    
+    setLinkValue(media.link || '')
+    setImageValue(media.image || '')
+    setPlatformsValue(media.platforms || '')
+    setRateValue(media.rate?.toString() || '')
+    setGenreValue(media.genre || '')
+    
+    // Set release date if available
+    if (media.releaseDate) {
+      try {
+        const date = new Date(media.releaseDate)
+        setReleaseDate(date)
+      } catch (e) {
+        console.error('Invalid date format:', e)
+      }
+    }
+    
+    setIsSearching(false)
+    // Close the dropdown by clearing the search results
+    searchMedia('', '')
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      const formData = new FormData(e.currentTarget)
-      const data: Recommendation = {
-        podcastId: Number(formData.get('podcastId')),
-        typeId: Number(formData.get('typeId')),
-        name: formData.get('name') as string,
-        link: formData.get('link') as string,
-        image: formData.get('image') as string || undefined,
-        platforms: formData.get('platforms') as string || undefined,
-        rate: formData.get('rate') ? Number(formData.get('rate')) : undefined,
-        genre: formData.get('genre') as string || undefined,
-        releaseDate: releaseDate,
-        length: formData.get('length') as string || undefined,
-        dima: formData.get('dima') === 'true' ? true : formData.get('dima') === 'false' ? false : null,
-        timur: formData.get('timur') === 'true' ? true : formData.get('timur') === 'false' ? false : null,
-        maksim: formData.get('maksim') === 'true' ? true : formData.get('maksim') === 'false' ? false : null,
-        guest: formData.get('guest') as string || undefined,
-      }
-
-      if (initialData?.id) {
-        await api.put(`/api/recommendations/${initialData.id}`, data)
-        toast.success('Recommendation updated successfully')
-      } else {
-        await api.post('/api/recommendations', data)
-        toast.success('Recommendation created successfully')
+    
+    const formData = new FormData(e.currentTarget)
+    const data: Record<string, any> = {}
+    
+    formData.forEach((value, key) => {
+      // Skip the individual name component fields, as we'll compose them into a single name field
+      if (key === 'originalName' || key === 'otherNames' || key === 'nameDescription') {
+        return;
       }
       
-      onSuccess?.()
-    } catch (error) {
-      toast.error(initialData?.id ? 'Failed to update recommendation' : 'Failed to create recommendation')
-      console.error('Error saving recommendation:', error)
-    } finally {
-      setIsLoading(false)
+      // Handle hosts fields from Select components
+      if (key === 'dima' || key === 'timur' || key === 'maksim') {
+        if (value === 'true') {
+          data[key] = true;
+        } else if (value === 'false') {
+          data[key] = false;
+        } else {
+          data[key] = null;
+        }
+      } else if (key === 'rate' && value) {
+        // Convert rate to number
+        data[key] = parseFloat(value as string)
+      } else if (key === 'podcastId' && value) {
+        // If podcastId was submitted through the form
+        data[key] = parseInt(value as string, 10)
+      } else {
+        data[key] = value === '' ? null : value
+      }
+    })
+    
+    // Compose the name from the three separate fields
+    data.name = composeRecommendationName(
+      formData.get('originalName') as string || '',
+      formData.get('otherNames') as string || '',
+      formData.get('nameDescription') as string || ''
+    );
+    
+    // Add typeId from state
+    if (selectedTypeId) {
+      data.typeId = parseInt(selectedTypeId, 10)
+    }
+    
+    // Handle release date explicitly (which is controlled by our state)
+    // If undefined or null, explicitly set to null to clear it
+    data.releaseDate = releaseDate || null;
+    
+    const toastId = toast.loading(initialData?.id ? 'Updating recommendation...' : 'Creating recommendation...');
+    
+    try {
+      if (initialData?.id) {
+        // Update
+        await updateRecommendation(initialData.id, data)
+        toast.success('Recommendation updated successfully', { id: toastId })
+      } else {
+        // Create
+        await createRecommendation(data)
+        toast.success('Recommendation created successfully', { id: toastId })
+      }
+      
+      if (onSuccess) {
+        onSuccess()
+      }
+    } catch (error: any) {
+      console.error('Form submission error:', error)
+      toast.error(error.response?.data?.message || 'Failed to save recommendation', { id: toastId })
     }
   }
+
+  // Handle clicks outside of the dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearching(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="podcastId">Podcast</Label>
+        <Label htmlFor="podcast">Podcast *</Label>
         <div className="relative">
-          <Input
-            placeholder="Search podcast..."
-            value={podcastSearch}
-            onChange={(e) => {
-              setPodcastSearch(e.target.value)
-              setIsPodcastDropdownOpen(true)
-              const filteredPodcasts = podcasts.filter(podcast => 
-                podcast.showType.toLowerCase().includes(e.target.value.toLowerCase()) ||
-                podcast.number.toLowerCase().includes(e.target.value.toLowerCase()) ||
-                podcast.name.toLowerCase().includes(e.target.value.toLowerCase())
-              )
-              setPodcasts(filteredPodcasts)
-            }}
-            onFocus={() => setIsPodcastDropdownOpen(true)}
-            onBlur={() => setTimeout(() => setIsPodcastDropdownOpen(false), 200)}
-            className="h-10"
+          <PodcastField
+            value={selectedPodcast}
+            onChange={handlePodcastChange}
+            availablePodcasts={availablePodcasts}
+            onSearch={handlePodcastSearch}
+            disabled={isFormLoading}
           />
-          {podcastSearch && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-              onClick={() => {
-                setPodcastSearch('')
-                fetchData()
-                setIsPodcastDropdownOpen(false)
-              }}
-            >
-              <X className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          )}
-          {isPodcastDropdownOpen && podcasts.length > 0 && (
-            <div className="absolute w-full mt-1 bg-white border rounded-md shadow-lg z-10">
-              {podcasts.map((podcast) => (
-                <button
-                  key={podcast.id}
-                  type="button"
-                  className="w-full p-2 text-left hover:bg-gray-100"
-                  onClick={() => {
-                    const form = document.querySelector('form')
-                    if (form) {
-                      const podcastIdInput = form.querySelector('[name="podcastId"]') as HTMLInputElement
-                      if (podcastIdInput) {
-                        podcastIdInput.value = podcast.id.toString()
-                        setPodcastSearch(`${podcast.showType} #${podcast.number} - ${podcast.name}`)
-                        setIsPodcastDropdownOpen(false)
-                      }
-                    }
-                  }}
-                >
-                  {podcast.showType} #{podcast.number} - {podcast.name}
-                </button>
-              ))}
-            </div>
-          )}
-          <input type="hidden" name="podcastId" value={initialData?.podcastId} />
+          <input type="hidden" name="podcastId" value={selectedPodcast?.id ?? initialData?.podcastId ?? ''} />
         </div>
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="typeId">Type</Label>
-        <Select name="typeId" defaultValue={initialData?.typeId.toString()} required>
+        <Select 
+          name="typeId" 
+          value={selectedTypeId}
+          onValueChange={setSelectedTypeId}
+          required
+          disabled={isFormLoading}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select type" />
           </SelectTrigger>
@@ -273,29 +354,44 @@ export function RecommendationForm({ initialData, onSuccess, onCancel }: Recomme
         </Select>
       </div>
 
+      {/* Original Name field that also serves as search field */}
       <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
-        <div className="relative">
+        <Label htmlFor="originalName">Original Name *</Label>
+        <div className="relative" ref={searchContainerRef}>
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
           <Input
-            id="name"
-            name="name"
+            id="originalName"
+            name="originalName"
             required
-            placeholder="Search name..."
-            value={nameSearch}
-            onChange={(e) => setNameSearch(e.target.value)}
+            placeholder="Enter or search for original name..."
+            value={originalName}
+            onChange={(e) => {
+              setOriginalName(e.target.value);
+              setIsSearching(true);
+            }}
+            onFocus={() => setIsSearching(true)}
             className="pl-10"
+            disabled={isFormLoading}
           />
-          {mediaItems.length > 0 && (
-            <div className="absolute w-full mt-1 bg-white border rounded-md shadow-lg">
+          {mediaItems.length > 0 && isSearching && !isFormLoading && (
+            <div className="absolute w-full mt-1 bg-background border rounded-md shadow-lg z-10">
               {mediaItems.map((media, index) => (
                 <button
                   key={index}
                   type="button"
-                  className="w-full p-2 text-left hover:bg-gray-100"
+                  className="w-full p-2 text-left text-foreground hover:bg-accent hover:text-accent-foreground"
                   onClick={() => handleMediaSelect(media)}
                 >
                   {media.name}
+                  {media.releaseDate && (() => {
+                    try {
+                      const date = new Date(media.releaseDate);
+                      const year = date.getFullYear();
+                      return !isNaN(year) ? ` (${year})` : '';
+                    } catch (e) {
+                      return '';
+                    }
+                  })()}
                 </button>
               ))}
             </div>
@@ -304,117 +400,188 @@ export function RecommendationForm({ initialData, onSuccess, onCancel }: Recomme
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="otherNames">Other Names</Label>
+        <Input
+          id="otherNames"
+          name="otherNames"
+          placeholder="Enter other names/translations"
+          value={otherNames}
+          onChange={(e) => setOtherNames(e.target.value)}
+          disabled={isFormLoading}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="nameDescription">Description</Label>
+        <Input
+          id="nameDescription"
+          name="nameDescription"
+          placeholder="Enter description (e.g. 2-й сезон)"
+          value={nameDescription}
+          onChange={(e) => setNameDescription(e.target.value)}
+          disabled={isFormLoading}
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="link">Link</Label>
         <div className="flex gap-2">
           <Input
             id="link"
             name="link"
-            required
             type="url"
-            defaultValue={initialData?.link}
+            value={linkValue}
+            onChange={(e) => setLinkValue(e.target.value)}
             placeholder="Enter recommendation link"
+            disabled={isFormLoading}
           />
           <Button
             type="button"
             variant="outline"
             size="icon"
-            onClick={() => window.open(initialData?.link, '_blank')}
-            disabled={!initialData?.link}
+            onClick={() => window.open(linkValue, '_blank')}
+            disabled={!linkValue || isFormLoading}
           >
             <ExternalLink className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <MediaDetailsCard
-        imageUrl={initialData?.image}
-        platforms={initialData?.platforms}
-        rate={initialData?.rate}
-        genre={initialData?.genre}
-        releaseDate={initialData?.releaseDate}
-        length={initialData?.length}
-      />
+      <Card>
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full justify-between"
+          onClick={() => setIsMediaDetailsOpen(!isMediaDetailsOpen)}
+          disabled={isFormLoading}
+        >
+          <span>Media Details</span>
+          {isMediaDetailsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+        {isMediaDetailsOpen && (
+          <CardContent className="pt-4">
+            <div className="flex flex-col gap-4">
+              <div className="mx-auto">
+                <div style={{ height: "256px" }} className="flex items-center justify-center bg-black/5 rounded-md overflow-hidden">
+                  {imageValue ? (
+                    <img
+                      src={imageValue}
+                      alt="Media"
+                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="text-muted-foreground text-sm">No image</div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="image"></Label>
+                <Input
+                  id="image"
+                  name="image"
+                  type="url"
+                  value={imageValue}
+                  onChange={(e) => setImageValue(e.target.value)}
+                  placeholder="Enter image URL"
+                  disabled={isFormLoading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="platforms"></Label>
+                <Input
+                  id="platforms"
+                  name="platforms"
+                  value={platformsValue}
+                  onChange={(e) => setPlatformsValue(e.target.value)}
+                  placeholder="Enter platforms"
+                  disabled={isFormLoading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="rate"></Label>
+                <Input
+                  id="rate"
+                  name="rate"
+                  type="number"
+                  value={rateValue}
+                  onChange={(e) => setRateValue(e.target.value)}
+                  placeholder="Enter rate"
+                  disabled={isFormLoading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="genre"></Label>
+                <Input
+                  id="genre"
+                  name="genre"
+                  value={genreValue}
+                  onChange={(e) => setGenreValue(e.target.value)}
+                  placeholder="Enter genre"
+                  disabled={isFormLoading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="releaseDate"></Label>
+                <div className="flex gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "flex-1 justify-start text-left font-normal",
+                          !releaseDate && "text-muted-foreground"
+                        )}
+                        disabled={isFormLoading}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {releaseDate ? format(releaseDate, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={releaseDate}
+                        onSelect={(date) => !isFormLoading && setReleaseDate(date as Date)}
+                        defaultMonth={releaseDate}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {releaseDate && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => setReleaseDate(undefined)}
+                      disabled={isFormLoading}
+                    >
+                      ✕
+                    </Button>
+                  )}
+                </div>
+              </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="image">Image URL (optional)</Label>
-        <Input
-          id="image"
-          name="image"
-          type="url"
-          defaultValue={initialData?.image}
-          placeholder="Enter image URL"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="platforms">Platforms (optional)</Label>
-        <Input
-          id="platforms"
-          name="platforms"
-          defaultValue={initialData?.platforms}
-          placeholder="Enter platforms"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="rate">Rate (0-10, optional)</Label>
-        <Input
-          id="rate"
-          name="rate"
-          type="number"
-          min="0"
-          max="10"
-          step="0.1"
-          defaultValue={initialData?.rate}
-          placeholder="Enter rate"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="genre">Genre (optional)</Label>
-        <Input
-          id="genre"
-          name="genre"
-          defaultValue={initialData?.genre}
-          placeholder="Enter genre"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="releaseDate">Release Date (optional)</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !releaseDate && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {releaseDate ? format(releaseDate, "PPP") : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={releaseDate}
-              onSelect={(date) => setReleaseDate(date as Date)}
-              defaultMonth={releaseDate}
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="length">Length (optional)</Label>
-        <Input
-          id="length"
-          name="length"
-          defaultValue={initialData?.length}
-          placeholder="Enter length"
-        />
-      </div>
+              <div className="space-y-2">
+                <Label htmlFor="length"></Label>
+                <Input
+                  id="length"
+                  name="length"
+                  defaultValue={initialData?.length}
+                  placeholder="Enter length"
+                  disabled={isFormLoading}
+                />
+              </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
 
       <div className="space-y-4">
         <Label>Hosts</Label>
@@ -425,6 +592,7 @@ export function RecommendationForm({ initialData, onSuccess, onCancel }: Recomme
               <Select
                 name={host}
                 defaultValue={initialData?.[host as keyof Recommendation]?.toString() || 'null'}
+                disabled={isFormLoading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
@@ -447,6 +615,7 @@ export function RecommendationForm({ initialData, onSuccess, onCancel }: Recomme
           name="guest"
           defaultValue={initialData?.guest}
           placeholder="Enter guest name"
+          disabled={isFormLoading}
         />
       </div>
 
@@ -456,8 +625,8 @@ export function RecommendationForm({ initialData, onSuccess, onCancel }: Recomme
             Cancel
           </Button>
         )}
-        <Button type="submit" className="flex-1" disabled={isLoading || isConfigLoading}>
-          {isLoading ? (
+        <Button type="submit" className="flex-1" disabled={isFormLoading}>
+          {isFormLoading ? (
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               <span>Saving...</span>

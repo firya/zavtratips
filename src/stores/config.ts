@@ -38,7 +38,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
 
     set({ isLoading: true, error: null })
     try {
-      const response = await api.get('/api/config')
+      const response = await api.get('/config')
       
       set({ 
         showTypes: response.data.showTypes || [],

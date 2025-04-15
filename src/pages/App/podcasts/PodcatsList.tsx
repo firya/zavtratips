@@ -32,53 +32,74 @@ function millisecondsToHHMMSS(ms: number): string {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 }
 
-export function EditPodcast() {
+export function PodcastList() {
   const navigate = useNavigate()
   const [podcasts, setPodcasts] = useState<Podcast[]>([])
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [totalItems, setTotalItems] = useState(0)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [showTypeFilter, setShowTypeFilter] = useState('')
+  const [dateFilter, setDateFilter] = useState('')
+  const [isDeleting, setIsDeleting] = useState<number | null>(null)
+
   const debouncedSearch = useDebounce(search, 300)
 
-  const fetchPodcasts = useCallback(async (signal?: AbortSignal) => {
+  const fetchPodcasts = async () => {
     try {
       setIsLoading(true)
+      setErrorMessage(null)
       const params = new URLSearchParams()
-      if (debouncedSearch) {
-        params.append('search', debouncedSearch)
+      params.append('page', page.toString())
+      params.append('limit', limit.toString())
+      
+      if (search) {
+        params.append('search', search)
       }
-      const response = await api.get(`/api/podcasts?${params}`, { signal })
+      
+      if (showTypeFilter) {
+        params.append('showType', showTypeFilter)
+      }
+      
+      if (dateFilter) {
+        params.append('date', dateFilter)
+      }
+
+      const controller = new AbortController()
+      const signal = controller.signal
+      
+      const response = await api.get(`/podcasts?${params}`, { signal })
       setPodcasts(response.data.podcasts)
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        return
-      }
+      setTotalItems(response.data.total)
+      setIsLoading(false)
+      
+      return () => controller.abort()
+    } catch (error) {
       console.error('Error fetching podcasts:', error)
-    } finally {
+      setErrorMessage('Failed to fetch podcasts')
       setIsLoading(false)
     }
-  }, [debouncedSearch])
+  }
 
   useEffect(() => {
-    const controller = new AbortController()
-    const signal = controller.signal
-
-    fetchPodcasts(signal)
-
-    return () => {
-      controller.abort()
-    }
+    fetchPodcasts()
   }, [fetchPodcasts])
 
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this podcast?')) return
-
+    
     try {
-      await api.delete(`/api/podcasts/${id}`)
+      setIsDeleting(id)
+      await api.delete(`/podcasts/${id}`)
       toast.success('Podcast deleted successfully')
       fetchPodcasts()
     } catch (error) {
-      toast.error('Failed to delete podcast')
       console.error('Error deleting podcast:', error)
+      toast.error('Failed to delete podcast')
+    } finally {
+      setIsDeleting(null)
     }
   }
 

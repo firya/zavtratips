@@ -41,7 +41,7 @@ export const useStatsStore = create<StatsStore>((set) => ({
   fetchStats: async () => {
     set({ isLoading: true, error: null })
     try {
-      const response = await api.get('/api/stats')
+      const response = await api.get('/stats')
       set({ stats: response.data, isLoading: false })
     } catch (error) {
       set({

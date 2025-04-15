@@ -29,49 +29,53 @@ export function EditPodcastPage() {
 
   useEffect(() => {
     const fetchPodcast = async () => {
+      if (!id) return
+      
       try {
-        const response = await api.get(`/api/podcasts/${id}`)
+        setIsLoading(true)
+        const response = await api.get(`/podcasts/${id}`)
         setPodcast(response.data)
       } catch (error) {
-        toast.error('Failed to fetch podcast')
         console.error('Error fetching podcast:', error)
+        toast.error('Failed to fetch podcast')
         navigate('/app/podcasts')
       } finally {
         setIsLoading(false)
       }
     }
-
+    
     fetchPodcast()
   }, [id, navigate])
-
-  if (isLoading) {
-    return <div>Loading...</div>
-  }
-
-  if (!podcast) {
-    return null
-  }
 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Edit Podcast</h1>
-        <h2 className="text-xl font-semibold">
-          {podcast.showType} #{podcast.number}
-        </h2>
+        {podcast && (
+          <h2 className="text-xl font-semibold">
+            {podcast.showType} #{podcast.number}
+          </h2>
+        )}
+        {isLoading && (
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            <span>Loading podcast data...</span>
+          </div>
+        )}
       </div>
 
       <PodcastForm
-        initialData={{
+        initialData={podcast ? {
           id: podcast.id,
           date: new Date(podcast.date),
           showType: podcast.showType,
           number: podcast.number,
           name: podcast.name,
           length: millisecondsToHHMMSS(podcast.length)
-        }}
+        } : undefined}
         onSuccess={() => navigate('/app/podcasts')}
         onCancel={() => navigate('/app/podcasts')}
+        isLoading={isLoading}
       />
     </div>
   )

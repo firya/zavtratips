@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { cn } from '@/lib/utils'
 import AppLayout from '@/pages/App/layout'
-import { EditPodcast } from '@/pages/App/podcasts/EditPodcast'
+import { PodcastList } from '@/pages/App/podcasts/PodcatsList'
 import { CreatePodcast } from '@/pages/App/podcasts/CreatePodcast'
 import { EditPodcastPage } from '@/pages/App/podcasts/EditPodcastPage'
 import { Recommendations } from '@/pages/Recommendations'
@@ -10,7 +10,7 @@ import { Stats } from '@/pages/Stats'
 import { AppPage } from '@/pages/App/AppPage'
 import { Settings } from '@/pages/App/settings/Settings'
 import { CreateRecommendation } from '@/pages/App/recommendations/CreateRecommendation'
-import { EditRecommendation } from '@/pages/App/recommendations/EditRecommendation'
+import { RecommendationList } from '@/pages/App/recommendations/RecommendationList'
 import { EditRecommendationPage } from '@/pages/App/recommendations/EditRecommendationPage'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -137,7 +137,7 @@ export const router = createBrowserRouter([
         children: [
           {
             path: '',
-            element: <EditPodcast />,
+            element: <PodcastList />,
           },
           {
             path: 'create',
@@ -154,7 +154,7 @@ export const router = createBrowserRouter([
         children: [
           {
             path: '',
-            element: <EditRecommendation />,
+            element: <RecommendationList />,
           },
           {
             path: 'create',

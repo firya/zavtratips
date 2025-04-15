@@ -4,20 +4,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSe
 import { Button } from '@/components/ui/button'
 import { Check, Search, RotateCcw, Mic, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useRecommendationsStore } from '@/stores/recommendationsStore'
+import { useRecommendationsStore } from '@/stores/recommendations'
 import { usePodcastStore } from '@/stores/podcasts'
 import { hostNameMap, isMainHost } from '@/lib/hostNames'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 import { DateRange } from '@/components/ui/calendar'
+import { PodcastField, Podcast } from '@/components/common/PodcastField'
 
 interface Type {
   id: number
   value: string
-}
-
-interface Podcast {
-  showType: string
-  number: string
 }
 
 interface Filters {
@@ -46,48 +42,25 @@ export function RecommendationsFilters({
   onPodcastSearch
 }: RecommendationsFiltersProps) {
   const { localFilters, setLocalFilter, resetFilters, applyFilters } = useRecommendationsStore()
-  const { podcastSearch, setPodcastSearch } = usePodcastStore()
-  const [selectedIndex, setSelectedIndex] = useState(-1)
+  const { setPodcastSearch } = usePodcastStore()
 
   const mainHosts = availableHosts.filter(isMainHost)
   const otherHosts = availableHosts.filter(host => !isMainHost(host))
 
-  const filteredPodcasts = availablePodcasts.filter(podcast => {
-    const searchValue = podcastSearch.toLowerCase()
-    const podcastValue = `${podcast.showType} - ${podcast.number}`.toLowerCase()
-    return podcastValue.includes(searchValue)
-  })
+  const selectedPodcast = localFilters.podcastShowType ? {
+    showType: localFilters.podcastShowType,
+    number: localFilters.podcastNumber
+  } : null
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!podcastSearch || localFilters.podcastShowType) return
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault()
-        setSelectedIndex(prev => 
-          prev < filteredPodcasts.length - 1 ? prev + 1 : prev
-        )
-        break
-      case 'ArrowUp':
-        e.preventDefault()
-        setSelectedIndex(prev => prev > 0 ? prev - 1 : prev)
-        break
-      case 'Enter':
-        e.preventDefault()
-        if (selectedIndex >= 0 && selectedIndex < filteredPodcasts.length) {
-          const podcast = filteredPodcasts[selectedIndex]
-          setLocalFilter('podcastShowType', podcast.showType)
-          setLocalFilter('podcastNumber', podcast.number)
-          setPodcastSearch('')
-          setSelectedIndex(-1)
-        }
-        break
-      case 'Escape':
-        e.preventDefault()
-        setPodcastSearch('')
-        setSelectedIndex(-1)
-        break
+  const handlePodcastChange = (podcast: Podcast | null) => {
+    if (podcast) {
+      setLocalFilter('podcastShowType', podcast.showType)
+      setLocalFilter('podcastNumber', podcast.number)
+    } else {
+      setLocalFilter('podcastShowType', '')
+      setLocalFilter('podcastNumber', '')
     }
+    setPodcastSearch('')
   }
 
   return (
@@ -130,77 +103,12 @@ export function RecommendationsFilters({
           </div>
 
           <div className="relative sm:col-span-1">
-            <div className="relative">
-              <Input
-                placeholder="Search podcast..."
-                value={localFilters.podcastShowType ? `${localFilters.podcastShowType} - ${localFilters.podcastNumber}` : podcastSearch}
-                onChange={(e) => {
-                  setPodcastSearch(e.target.value)
-                  onPodcastSearch(e.target.value)
-                  setSelectedIndex(-1)
-                }}
-                onKeyDown={handleKeyDown}
-                className="h-10"
-                disabled={!!localFilters.podcastShowType}
-              />
-              {(podcastSearch || localFilters.podcastShowType) && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                  onClick={() => {
-                    setPodcastSearch('')
-                    setLocalFilter('podcastShowType', '')
-                    setLocalFilter('podcastNumber', '')
-                    setSelectedIndex(-1)
-                  }}
-                >
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              )}
-            </div>
-
-            {podcastSearch && !localFilters.podcastShowType && (
-              <div className="absolute top-full left-0 right-0 bg-popover border rounded-md shadow-md mt-1 z-50">
-                <div className="max-h-[300px] overflow-y-auto">
-                  {filteredPodcasts.length === 0 ? (
-                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                      No podcast found.
-                    </div>
-                  ) : (
-                    filteredPodcasts.map((podcast, index) => (
-                      <div
-                        key={`${podcast.showType}-${podcast.number}`}
-                        onClick={() => {
-                          setLocalFilter('podcastShowType', podcast.showType)
-                          setLocalFilter('podcastNumber', podcast.number)
-                          setPodcastSearch('')
-                          setSelectedIndex(-1)
-                        }}
-                        className={cn(
-                          "flex items-center px-2 py-1.5 cursor-pointer hover:bg-accent hover:text-accent-foreground",
-                          index === selectedIndex && "bg-accent text-accent-foreground"
-                        )}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            localFilters.podcastShowType === podcast.showType ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {podcast.showType} - {podcast.number}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-
-            {localFilters.podcastShowType && (
-              <div className="absolute -top-2 left-2 px-1 text-xs bg-background text-muted-foreground">
-                Selected podcast
-              </div>
-            )}
+            <PodcastField
+              value={selectedPodcast}
+              onChange={handlePodcastChange}
+              availablePodcasts={availablePodcasts}
+              onSearch={onPodcastSearch}
+            />
           </div>
 
           <div className="sm:col-span-1">
