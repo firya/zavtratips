@@ -6,6 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Pencil, Trash2 } from 'lucide-react'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription
+} from '@/components/ui/dialog'
+import {
   Table,
   TableBody,
   TableCell,
@@ -44,10 +52,11 @@ export function PodcastList() {
   const [showTypeFilter, setShowTypeFilter] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [isDeleting, setIsDeleting] = useState<number | null>(null)
+  const [deleteDialogId, setDeleteDialogId] = useState<number | null>(null)
 
   const debouncedSearch = useDebounce(search, 300)
 
-  const fetchPodcasts = async () => {
+  const fetchPodcasts = useCallback(async () => {
     try {
       setIsLoading(true)
       setErrorMessage(null)
@@ -55,8 +64,8 @@ export function PodcastList() {
       params.append('page', page.toString())
       params.append('limit', limit.toString())
       
-      if (search) {
-        params.append('search', search)
+      if (debouncedSearch) {
+        params.append('search', debouncedSearch)
       }
       
       if (showTypeFilter) {
@@ -81,26 +90,37 @@ export function PodcastList() {
       setErrorMessage('Failed to fetch podcasts')
       setIsLoading(false)
     }
-  }
+  }, [page, limit, debouncedSearch, showTypeFilter, dateFilter])
 
   useEffect(() => {
     fetchPodcasts()
   }, [fetchPodcasts])
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this podcast?')) return
+  const handleDeleteClick = (id: number) => {
+    setDeleteDialogId(id);
+  }
+
+  const handleDelete = async () => {
+    if (!deleteDialogId) return
+    
+    const toastId = toast.loading('Deleting podcast...');
     
     try {
-      setIsDeleting(id)
-      await api.delete(`/podcasts/${id}`)
-      toast.success('Podcast deleted successfully')
+      setIsDeleting(deleteDialogId)
+      await api.delete(`/podcasts/${deleteDialogId}`)
+      toast.success('Podcast deleted successfully', { id: toastId })
       fetchPodcasts()
     } catch (error) {
       console.error('Error deleting podcast:', error)
-      toast.error('Failed to delete podcast')
+      toast.error('Failed to delete podcast', { id: toastId })
     } finally {
       setIsDeleting(null)
+      setDeleteDialogId(null)
     }
+  }
+
+  const handleRowClick = (id: number) => {
+    navigate(`/app/podcasts/${id}`)
   }
 
   return (
@@ -137,7 +157,11 @@ export function PodcastList() {
             </TableHeader>
             <TableBody>
               {podcasts.map((podcast) => (
-                <TableRow key={podcast.id}>
+                <TableRow 
+                  key={podcast.id} 
+                  onClick={() => handleRowClick(podcast.id)}
+                  className="cursor-pointer hover:bg-muted/50"
+                >
                   <TableCell>
                     <div className="font-medium">
                       {podcast.showType} #{podcast.number}
@@ -155,14 +179,20 @@ export function PodcastList() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => navigate(`/app/podcasts/${podcast.id}`)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/app/podcasts/${podcast.id}`);
+                        }}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(podcast.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(podcast.id);
+                        }}
                         className="text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -175,6 +205,43 @@ export function PodcastList() {
           </Table>
         </div>
       </div>
+
+      <Dialog 
+        open={deleteDialogId !== null} 
+        onOpenChange={(open: boolean) => !open && setDeleteDialogId(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Podcast</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this podcast? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setDeleteDialogId(null)}
+              disabled={isDeleting !== null}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={handleDelete}
+              disabled={isDeleting !== null}
+            >
+              {isDeleting !== null ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  Deleting...
+                </>
+              ) : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 

@@ -1,13 +1,17 @@
 import { Theme } from '@radix-ui/themes'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
-import { Toaster } from 'sonner'
+import { CustomToaster } from './components/CustomToaster'
 
 export function App() {
   return (
     <Theme>
       <RouterProvider router={router} />
-      <Toaster position="top-right" richColors />
+      <CustomToaster 
+        position="top-right"
+        richColors
+        closeButton
+      />
     </Theme>
   )
 }

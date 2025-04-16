@@ -20,7 +20,10 @@ interface Podcast {
   showType: string
   number: string
   name: string
-  length: string
+  length?: string
+  data?: {
+    length?: string
+  }
 }
 
 interface PodcastFormProps {
@@ -28,6 +31,7 @@ interface PodcastFormProps {
   onSuccess?: () => void
   onCancel?: () => void
   isLoading?: boolean
+  mode?: 'create' | 'edit'
 }
 
 function HHMMSSToMilliseconds(time: string): number {
@@ -35,10 +39,35 @@ function HHMMSSToMilliseconds(time: string): number {
   return (hours * 3600 + minutes * 60 + seconds) * 1000
 }
 
-export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: parentIsLoading }: PodcastFormProps) {
-  const [date, setDate] = useState<Date | undefined>(initialData?.date || new Date())
+function millisecondsToHHMMSS(ms: number | string): string {
+  if (!ms) return ''
+  
+  // Check if the input is already in HH:MM:SS format (contains colons)
+  if (typeof ms === 'string' && ms.includes(':')) {
+    return ms
+  }
+  
+  const milliseconds = typeof ms === 'string' ? parseInt(ms, 10) : ms
+  
+  if (isNaN(milliseconds)) return ''
+  
+  const totalSeconds = Math.floor(milliseconds / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  
+  return [
+    hours.toString().padStart(2, '0'),
+    minutes.toString().padStart(2, '0'),
+    seconds.toString().padStart(2, '0')
+  ].join(':')
+}
+
+export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: parentIsLoading, mode = 'create' }: PodcastFormProps) {
+  const [date, setDate] = useState<Date | undefined>(initialData?.date ? new Date(initialData.date) : new Date())
   const [isLoading, setIsLoading] = useState(false)
-  const [length, setLength] = useState(initialData?.length || '')
+  const initialLength = initialData?.length ? millisecondsToHHMMSS(initialData.length) : ''
+  const [length, setLength] = useState(initialLength)
   const [selectedShowType, setSelectedShowType] = useState(initialData?.showType || '')
   const [episodeNumber, setEpisodeNumber] = useState(initialData?.number || '')
   const { showTypes, isLoading: isConfigLoading, error: configError, fetchConfigs } = useConfigStore()
@@ -63,9 +92,27 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
     }
   }, [showTypes, selectedShowType])
 
+  // Custom handler for show type changes to update episode number in create mode
+  const handleShowTypeChange = async (newShowType: string) => {
+    setSelectedShowType(newShowType);
+    
+    // Only auto-increment episode number in create mode
+    if (mode === 'create') {
+      const lastNumber = await getLastEpisodeNumber(newShowType);
+      if (lastNumber !== null) {
+        setEpisodeNumber((lastNumber + 1).toString());
+      } else {
+        setEpisodeNumber('');
+      }
+    }
+  };
+
   useEffect(() => {
     const fetchNextNumber = async () => {
-      if (selectedShowType && !initialData?.id) {
+      // Only run this when in create mode, not edit mode, and when no episode number is set
+      const isCreateMode = mode === 'create';
+      
+      if (selectedShowType && isCreateMode && !episodeNumber) {
         const lastNumber = await getLastEpisodeNumber(selectedShowType)
         if (lastNumber !== null) {
           setEpisodeNumber((lastNumber + 1).toString())
@@ -75,7 +122,37 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
       }
     }
     fetchNextNumber()
-  }, [selectedShowType, getLastEpisodeNumber, initialData?.id])
+  }, [selectedShowType, getLastEpisodeNumber, episodeNumber, mode])
+
+  // Handle initialData changes when navigating between different podcasts
+  useEffect(() => {
+    if (initialData) {
+      if (initialData.date) {
+        setDate(new Date(initialData.date))
+      }
+      
+      // Try to access length property, accounting for different possible data structures
+      let lengthValue = initialData.length
+      
+      // Check for nested length in data property if present
+      if (initialData.data?.length) {
+        lengthValue = initialData.data.length
+      }
+      
+      if (lengthValue) {
+        const formattedLength = millisecondsToHHMMSS(lengthValue)
+        setLength(formattedLength)
+      }
+      
+      if (initialData.showType) {
+        setSelectedShowType(initialData.showType)
+      }
+      
+      if (initialData.number) {
+        setEpisodeNumber(initialData.number)
+      }
+    }
+  }, [initialData])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -89,12 +166,22 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
     
     try {
       const formData = new FormData(e.currentTarget)
+      
+      // Convert length to milliseconds or preserve format as needed
+      let lengthValue = ''
+      if (length && length.trim() !== '') {
+        // Always send in HH:MM:SS format for the API
+        lengthValue = length
+      } else {
+        lengthValue = '00:00:00' // Default to zero length if empty
+      }
+      
       const data: Podcast = {
         date,
         showType: selectedShowType,
         number: episodeNumber,
         name: formData.get('name') as string || '',
-        length: HHMMSSToMilliseconds(length).toString(),
+        length: lengthValue,
       }
 
       if (initialData?.id) {
@@ -145,7 +232,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
 
       <div className="space-y-2">
         <Label htmlFor="showType">Show Type</Label>
-        <Select value={selectedShowType} onValueChange={setSelectedShowType} disabled={isFormLoading || isConfigLoading}>
+        <Select value={selectedShowType} onValueChange={handleShowTypeChange} disabled={isFormLoading || isConfigLoading}>
           <SelectTrigger>
             <SelectValue placeholder={isConfigLoading ? "Loading..." : "Select show type"} />
           </SelectTrigger>

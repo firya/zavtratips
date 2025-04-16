@@ -14,7 +14,7 @@ import { useConfigStore } from '@/stores/config'
 import { usePodcastStore, Podcast as StorePodcast } from '@/stores/podcasts'
 import { useRecommendationsStore, MediaItem } from '@/stores/recommendations'
 import { useDebounce } from '@/hooks/useDebounce'
-import { PodcastField, Podcast as PodcastFieldPodcast } from '@/components/common/PodcastField'
+import { PodcastField, Podcast as PodcastFieldPodcast, ClearableSelect } from '@/components/common'
 
 // Define our internal podcast interface matching what we need
 interface PodcastInfo {
@@ -43,6 +43,7 @@ interface Recommendation {
 
 interface RecommendationFormProps {
   initialData?: Recommendation
+  initialLatestPodcast?: PodcastInfo | null
   onSuccess?: () => void
   onCancel?: () => void
   isLoading?: boolean
@@ -90,7 +91,13 @@ const composeRecommendationName = (originalName: string, otherNames: string, des
   return fullName;
 };
 
-export function RecommendationForm({ initialData, onSuccess, onCancel, isLoading: parentIsLoading }: RecommendationFormProps) {
+export function RecommendationForm({ 
+  initialData, 
+  initialLatestPodcast, 
+  onSuccess, 
+  onCancel, 
+  isLoading: parentIsLoading 
+}: RecommendationFormProps) {
   const [selectedPodcast, setSelectedPodcast] = useState<PodcastInfo | null>(null)
   
   // Parse the initial name into components
@@ -154,6 +161,13 @@ export function RecommendationForm({ initialData, onSuccess, onCancel, isLoading
       setGenreValue(initialData.genre || '');
     }
   }, [initialData]);
+
+  // Set the initial latest podcast if provided
+  useEffect(() => {
+    if (!initialData && initialLatestPodcast && !selectedPodcast) {
+      setSelectedPodcast(initialLatestPodcast);
+    }
+  }, [initialLatestPodcast, initialData, selectedPodcast]);
 
   useEffect(() => {
     fetchConfigs()
@@ -334,24 +348,21 @@ export function RecommendationForm({ initialData, onSuccess, onCancel, isLoading
 
       <div className="space-y-2">
         <Label htmlFor="typeId">Type</Label>
-        <Select 
+        <ClearableSelect 
           name="typeId" 
           value={selectedTypeId}
           onValueChange={setSelectedTypeId}
-          required
+          placeholder="Select type"
           disabled={isFormLoading}
+          clearable={false}
+          required
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Select type" />
-          </SelectTrigger>
-          <SelectContent>
-            {types.map((type) => (
-              <SelectItem key={type.id} value={type.id.toString()}>
-                {type.value}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {types.map((type) => (
+            <SelectItem key={type.id} value={type.id.toString()}>
+              {type.value}
+            </SelectItem>
+          ))}
+        </ClearableSelect>
       </div>
 
       {/* Original Name field that also serves as search field */}

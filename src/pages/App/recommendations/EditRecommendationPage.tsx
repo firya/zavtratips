@@ -2,10 +2,17 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import * as Dialog from '@radix-ui/react-dialog'
 import { RecommendationForm } from './components/RecommendationForm'
 import { useRecommendationsStore } from '@/stores/recommendations'
 import { X } from 'lucide-react'
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
 export function EditRecommendationPage() {
@@ -17,7 +24,8 @@ export function EditRecommendationPage() {
     isLoading, 
     error,
     fetchRecommendation,
-    deleteRecommendation
+    deleteRecommendation,
+    clearCurrentRecommendation
   } = useRecommendationsStore()
 
   useEffect(() => {
@@ -26,7 +34,12 @@ export function EditRecommendationPage() {
         toast.error('Failed to load recommendation')
       })
     }
-  }, [id, fetchRecommendation])
+    
+    // Clear current recommendation when unmounting
+    return () => {
+      clearCurrentRecommendation()
+    }
+  }, [id, fetchRecommendation, clearCurrentRecommendation])
 
   const handleDelete = async () => {
     if (!id) return
@@ -75,47 +88,33 @@ export function EditRecommendationPage() {
               Delete Recommendation
             </Button>
 
-            <Dialog.Root open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <Dialog.Portal>
-                <Dialog.Overlay className={cn(
-                  "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
-                )} />
-                <Dialog.Content className={cn(
-                  "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full"
-                )}>
-                  <div className="flex flex-col space-y-1.5 text-center sm:text-left">
-                    <Dialog.Title className="text-lg font-semibold leading-none tracking-tight">
-                      Delete Recommendation
-                    </Dialog.Title>
-                    <Dialog.Description className="text-sm text-muted-foreground">
-                      Are you sure you want to delete this recommendation? This action cannot be undone.
-                    </Dialog.Description>
-                  </div>
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Recommendation</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this recommendation? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
 
-                  <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setIsDeleteDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="destructive" 
-                      onClick={handleDelete}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-
-                  <Dialog.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Close</span>
-                  </Dialog.Close>
-                </Dialog.Content>
-              </Dialog.Portal>
-            </Dialog.Root>
+                <DialogFooter>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsDeleteDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    onClick={handleDelete}
+                  >
+                    Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </>
         )}
       </div>

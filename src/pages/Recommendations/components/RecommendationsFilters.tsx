@@ -1,15 +1,13 @@
-import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Check, Search, RotateCcw, Mic, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Search, RotateCcw, Mic, X } from 'lucide-react'
 import { useRecommendationsStore } from '@/stores/recommendations'
 import { usePodcastStore } from '@/stores/podcasts'
 import { hostNameMap, isMainHost } from '@/lib/hostNames'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 import { DateRange } from '@/components/ui/calendar'
-import { PodcastField, Podcast } from '@/components/common/PodcastField'
+import { PodcastField, Podcast, ClearableSelect } from '@/components/common'
 
 interface Type {
   id: number
@@ -63,6 +61,22 @@ export function RecommendationsFilters({
     setPodcastSearch('')
   }
 
+  const clearSearch = () => {
+    setLocalFilter('search', '')
+  }
+
+  const clearType = () => {
+    setLocalFilter('type', '')
+  }
+
+  const clearHosts = () => {
+    setLocalFilter('hosts', [])
+  }
+
+  const clearDateRange = () => {
+    setLocalFilter('dateRange', undefined)
+  }
+
   return (
     <div className="rounded-lg border bg-card p-4">
       <h3 className="text-sm font-medium mb-4">Filters</h3>
@@ -79,27 +93,34 @@ export function RecommendationsFilters({
                   applyFilters()
                 }
               }}
+              className={localFilters.search ? "pr-8" : ""}
             />
+            {localFilters.search && (
+              <button 
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           <div className="sm:col-span-1">
-            <Select
+            <ClearableSelect
               value={localFilters.type}
               onValueChange={(value) => setLocalFilter('type', value)}
+              clearable={true}
+              onClear={clearType}
+              placeholder="Select type"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select type">
-                  {localFilters.type}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {availableTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.value}>
-                    {type.value}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {availableTypes.map((type) => (
+                <SelectItem key={type.id} value={type.id.toString()}>
+                  {type.value}
+                </SelectItem>
+              ))}
+            </ClearableSelect>
           </div>
 
           <div className="relative sm:col-span-1">
@@ -112,44 +133,40 @@ export function RecommendationsFilters({
           </div>
 
           <div className="sm:col-span-1">
-            <Select
+            <ClearableSelect
               value={localFilters.hosts.join(',')}
               onValueChange={(value) => setLocalFilter('hosts', value.split(','))}
+              clearable={localFilters.hosts.length > 0}
+              onClear={clearHosts}
+              placeholder="Select hosts"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select hosts">
-                  {localFilters.hosts.map(host => hostNameMap[host] || host).join(', ')}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {mainHosts.map((host) => (
-                  <SelectItem key={host} value={host} className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <Mic className="h-4 w-4 text-muted-foreground" />
-                      <span>{hostNameMap[host]}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-                {otherHosts.length > 0 && (
-                  <>
-                    <SelectSeparator />
-                    {otherHosts.map((host) => (
-                      <SelectItem key={host} value={host}>
-                        {host}
-                      </SelectItem>
-                    ))}
-                  </>
-                )}
-              </SelectContent>
-            </Select>
+              {mainHosts.map((host) => (
+                <SelectItem key={host} value={host} className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Mic className="h-4 w-4 text-muted-foreground" />
+                    <span>{hostNameMap[host]}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </ClearableSelect>
           </div>
 
-          <div className="w-full min-w-0 sm:col-span-1">
+          <div className="w-full min-w-0 sm:col-span-1 relative">
             <DateRangePicker
               dateRange={localFilters.dateRange}
               onSelect={(range) => setLocalFilter('dateRange', range)}
               className="w-full"
             />
+            {localFilters.dateRange && (
+              <button 
+                type="button"
+                onClick={clearDateRange}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear date range"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 sm:col-span-1">
@@ -167,7 +184,10 @@ export function RecommendationsFilters({
             </Button>
             <Button
               size="sm"
-              onClick={applyFilters}
+              onClick={() => {
+                setLocalFilter('page', 1);
+                applyFilters();
+              }}
               className="flex items-center gap-2"
             >
               <Search className="h-4 w-4" />

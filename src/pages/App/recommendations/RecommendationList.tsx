@@ -7,6 +7,14 @@ import { Search, Pencil, Trash2 } from 'lucide-react'
 import { usePodcastStore } from '@/stores/podcasts'
 import { useRecommendationsStore } from '@/stores/recommendations'
 import { PodcastField, Podcast as PodcastFieldPodcast } from '@/components/common/PodcastField'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 
 export function RecommendationList() {
   const { 
@@ -16,6 +24,8 @@ export function RecommendationList() {
   } = useRecommendationsStore()
   const [searchInput, setSearchInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [recommendationToDelete, setRecommendationToDelete] = useState<number | null>(null)
   const navigate = useNavigate()
   
   const { 
@@ -90,12 +100,18 @@ export function RecommendationList() {
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this recommendation?')) return
+  const handleDeleteClick = (id: number) => {
+    setRecommendationToDelete(id)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleDelete = async () => {
+    if (!recommendationToDelete) return
 
     try {
-      await deleteRecommendation(id.toString())
+      await deleteRecommendation(recommendationToDelete.toString())
       toast.success('Recommendation deleted successfully')
+      setIsDeleteDialogOpen(false)
     } catch (error) {
       toast.error('Failed to delete recommendation')
       console.error('Error deleting recommendation:', error)
@@ -176,7 +192,7 @@ export function RecommendationList() {
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDelete(recommendation.id);
+                    handleDeleteClick(recommendation.id);
                   }}
                   className="text-destructive"
                 >
@@ -187,6 +203,34 @@ export function RecommendationList() {
           ))}
         </div>
       )}
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Recommendation</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this recommendation? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={handleDelete}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 

@@ -19,6 +19,11 @@ interface RecommendationCardProps {
   guest?: string;
 }
 
+interface Host {
+  name: string;
+  recommended: boolean;
+}
+
 const getDomainFromUrl = (url: string): string => {
   try {
     const urlObj = new URL(url);
@@ -50,12 +55,11 @@ export const RecommendationCard = ({
     day: 'numeric'
   });
 
-  const hosts = [
-    dima !== null && { name: 'dima', recommended: dima },
-    timur !== null && { name: 'timur', recommended: timur },
-    maksim !== null && { name: 'maksim', recommended: maksim },
-    guest && { name: guest, recommended: true }
-  ].filter(Boolean);
+  const hosts: Host[] = [];
+  if (dima !== null) hosts.push({ name: 'dima', recommended: dima });
+  if (timur !== null) hosts.push({ name: 'timur', recommended: timur });
+  if (maksim !== null) hosts.push({ name: 'maksim', recommended: maksim });
+  if (guest) hosts.push({ name: guest, recommended: true });
 
   return (
     <Card className="flex flex-col h-full p-0 overflow-hidden">

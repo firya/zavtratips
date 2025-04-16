@@ -13,11 +13,21 @@ router.get('/', async (req, res) => {
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     const search = req.query.search as string;
+    const latest = req.query.latest === 'true';
 
     let podcasts = [];
     let total = 0;
 
-    if (search) {
+    if (latest) {
+      // Get the most recent podcast
+      const latestPodcast = await prisma.podcast.findFirst({
+        orderBy: { date: 'desc' }
+      });
+      
+      podcasts = latestPodcast ? [latestPodcast] : [];
+      total = latestPodcast ? 1 : 0;
+    }
+    else if (search) {
       // First get exact matches
       const [exactMatches, exactCount] = await Promise.all([
         prisma.podcast.findMany({

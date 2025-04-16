@@ -6,6 +6,7 @@ import { Pagination } from '@/components/ui/pagination'
 import { RecommendationCard } from '@/pages/Recommendations/components/RecommendationCard'
 import { useUrlParams } from '@/hooks/useUrlParams'
 import { useEffect } from 'react'
+import { toast } from 'sonner'
 
 export function Recommendations() {
   const { 
@@ -30,20 +31,32 @@ export function Recommendations() {
     fetchConfigs()
   }, [fetchConfigs])
 
+  // Show error in toast if there is one
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+    }
+  }, [error])
+
   const handlePodcastSearch = (search: string) => {
     setPodcastSearch(search)
   }
 
   const handlePageChange = async (page: number) => {
     setLocalFilter('page', page)
-    await applyFilters()
+    try {
+      await applyFilters()
+      // Scroll to top of the page after changing page
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
+    } catch (err) {
+      // Error is already handled in the store
+    }
   }
 
   const totalPages = Math.ceil(totalCount / filters.limit)
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>
-  }
 
   return (
     <div>
@@ -69,7 +82,7 @@ export function Recommendations() {
               </div>
             </div>
           ))
-        ) : (
+        ) : recommendations.length > 0 ? (
           recommendations.map((recommendation) => {
             return (
               <RecommendationCard
@@ -84,13 +97,17 @@ export function Recommendations() {
                 platforms={recommendation.platforms || undefined}
                 rate={recommendation.rate || undefined}
                 length={recommendation.length || undefined}
-                dima={recommendation.dima || null}
-                timur={recommendation.timur || null}
-                maksim={recommendation.maksim || null}
+                dima={recommendation.dima}
+                timur={recommendation.timur}
+                maksim={recommendation.maksim}
                 guest={recommendation.guest}
               />
             )
           })
+        ) : (
+          <div className="col-span-full text-center py-12">
+            <p className="text-muted-foreground">No recommendations found</p>
+          </div>
         )}
       </div>
 

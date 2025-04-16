@@ -76,6 +76,7 @@ interface RecommendationsStore {
   setFiltersFromUrl: (filters: Partial<Filters>) => Promise<void>
   deleteRecommendation: (id: string) => Promise<void>
   fetchRecommendation: (id: string) => Promise<void>
+  clearCurrentRecommendation: () => void
   searchMedia: (search: string, typeId: string) => Promise<void>
   createRecommendation: (data: Partial<Recommendation>) => Promise<void>
   updateRecommendation: (id: number, data: Partial<Recommendation>) => Promise<void>
@@ -170,11 +171,15 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
         totalCount: response.data.total,
         isLoading: false,
       })
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error fetching recommendations:', error)
       set({
-        error: error instanceof Error ? error.message : 'Failed to fetch recommendations',
+        error: error.response?.data?.message || error.message || 'Failed to fetch recommendations',
         isLoading: false,
+        recommendations: [], // Clear out existing recommendations on error
+        totalCount: 0,
       })
+      throw error
     }
   },
 
@@ -204,6 +209,10 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
       })
       throw error
     }
+  },
+
+  clearCurrentRecommendation: () => {
+    set({ currentRecommendation: null })
   },
 
   searchMedia: async (search: string, typeId: string) => {

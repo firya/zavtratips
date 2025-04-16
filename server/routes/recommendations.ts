@@ -51,12 +51,29 @@ router.get('/', async (req: Request, res: Response) => {
 
     if (req.query.hosts) {
       const hosts = (req.query.hosts as string).split(',');
-      where.OR = hosts.map(host => {
-        if (host === 'dima') return { dima: true };
-        if (host === 'timur') return { timur: true };
-        if (host === 'maksim') return { maksim: true };
-        return { guest: host };
+      const conditions = hosts.map(host => {
+        if (host === 'dima') return { 
+          OR: [
+            { dima: true },
+            { dima: false }
+          ]
+        };
+        if (host === 'timur') return { 
+          OR: [
+            { timur: true },
+            { timur: false }
+          ]
+        };
+        if (host === 'maksim') return { 
+          OR: [
+            { maksim: true },
+            { maksim: false }
+          ]
+        };
+        return { guest: { not: null } };
       });
+      
+      where.OR = conditions;
     }
 
     const [recommendations, total] = await Promise.all([

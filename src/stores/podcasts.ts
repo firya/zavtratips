@@ -49,7 +49,7 @@ export const usePodcastStore = create<PodcastState>()((set, get) => ({
   },
 
   fetchPodcasts: async (search?: string) => {
-    if (!search?.trim()) {
+    if (!search?.trim() && search !== 'latest') {
       set({ availablePodcasts: [] })
       return
     }
@@ -61,9 +61,14 @@ export const usePodcastStore = create<PodcastState>()((set, get) => ({
     set({ isPodcastSearchLoading: true })
     try {
       const params = new URLSearchParams()
-      if (search) {
+      
+      // Special case for fetching latest podcast
+      if (search === 'latest') {
+        params.append('latest', 'true')
+      } else if (search) {
         params.append('search', search)
       }
+      
       const response = await api.get(`/podcasts?${params}`)
       set({ 
         availablePodcasts: response.data.podcasts,
