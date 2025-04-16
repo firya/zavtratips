@@ -2,9 +2,10 @@ import express from 'express'
 import cors from 'cors'
 import { PrismaClient } from '@prisma/client'
 import dotenv from 'dotenv'
+import cron from 'node-cron'
 import recommendationsRouter from './routes/recommendations'
 import podcastsRouter from './routes/podcasts'
-import streamsRouter from './routes/streams'
+import streamsRouter, { syncYouTubePlaylist } from './routes/streams'
 import statsRouter from './routes/stats'
 import bot from './bot'
 import configRouter from './routes/config'
@@ -54,7 +55,26 @@ app.post('/api/sync', async (req, res) => {
   }
 })
 
+// Schedule YouTube playlist sync daily at midnight
+cron.schedule('0 0 * * *', async () => {
+  console.log('Running daily sync tasks')
+  try {
+    // First sync YouTube playlist
+    console.log('Starting YouTube playlist sync...')
+    await syncYouTubePlaylist()
+    console.log('YouTube playlist sync completed successfully')
+    
+    // Then sync spreadsheet data with database
+    console.log('Starting database sync with spreadsheet...')
+    await syncWithDatabase()
+    console.log('Database sync with spreadsheet completed successfully')
+  } catch (error) {
+    console.error('Error in daily sync tasks:', error)
+  }
+})
+
 const PORT = process.env.NODE_PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
+  console.log('Daily sync tasks scheduled for midnight')
 })

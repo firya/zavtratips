@@ -532,4 +532,35 @@ export async function updateConfigInSpreadsheet(rowNumber: number, row: string[]
 
 export async function deleteConfigFromSpreadsheet(rowNumber: number) {
   return deleteRowFromSpreadsheet('Config', rowNumber);
+}
+
+export async function addRowsToSpreadsheet(sheetName: string, rows: string[][]) {
+  try {
+    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_URL?.split('/')[5];
+    if (!spreadsheetId) return [];
+
+    // Get current data to determine the starting row number
+    const data = await getSheetData(sheetName);
+    const startRowNumber = data.length + 1;
+
+    // Add all rows at once
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: `${sheetName}!A:Z`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: rows
+      }
+    });
+
+    // Return array of row numbers
+    return Array.from({ length: rows.length }, (_, i) => startRowNumber + i);
+  } catch (error) {
+    console.error(`Failed to add rows to ${sheetName}:`, error);
+    throw error;
+  }
+}
+
+export async function addStreamsToSpreadsheet(rows: string[][]) {
+  return addRowsToSpreadsheet('Стримы', rows);
 } 
