@@ -57,4 +57,4 @@ node server/index.js\n\
 EXPOSE 3000
 
 # Start the application with the startup script
-CMD ["/app/start.sh"] 
+ENTRYPOINT ["/bin/sh", "/app/start.sh"] 
