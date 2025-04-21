@@ -39,9 +39,6 @@ jobs:
             npm ci
             npm run build
           
-            # Only restart container if needed (first time or server code changed)
-            if [ ! "$(docker ps -q -f name=zavtratips)" ] || git diff --name-only HEAD^ HEAD | grep -q "^server/"; then
-              docker-compose down
-              docker-compose up -d
-            fi
+            docker-compose down
+            docker-compose up -d
           EOF
