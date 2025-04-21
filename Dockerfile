@@ -37,13 +37,9 @@ COPY --from=builder /app/node_modules ./node_modules
 
 # Copy any other necessary files
 COPY .env* ./
-COPY start.sh ./
-
-# Make start script executable
-RUN chmod +x /app/start.sh
 
 # Expose the port the app runs on
 EXPOSE 3000
 
-# Start the application with the startup script
-CMD ["sh", "/app/start.sh"] 
+# Start the application directly
+CMD ["node", "server/index.js"] 

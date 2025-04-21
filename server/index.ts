@@ -22,6 +22,60 @@ const __dirname = path.dirname(__filename)
 const app = express()
 const prisma = new PrismaClient()
 
+// Function to test database connection with retry logic
+const connectToDatabase = async (retries = 5, delay = 5000) => {
+  let currentAttempt = 0;
+  
+  while (currentAttempt < retries) {
+    try {
+      console.log(`Attempting to connect to database (attempt ${currentAttempt + 1}/${retries})...`);
+      // Try to execute a simple query to test the connection
+      await prisma.$queryRaw`SELECT 1`;
+      console.log('Successfully connected to database!');
+      
+      // If we're here, connection was successful - run migrations if needed
+      try {
+        console.log('Running database migrations...');
+        // Run prisma migrate deploy using exec
+        const { exec } = await import('child_process');
+        await new Promise((resolve, reject) => {
+          exec('npx prisma migrate deploy', (error, stdout, stderr) => {
+            if (error) {
+              console.error(`Migration error: ${error.message}`);
+              reject(error);
+              return;
+            }
+            if (stderr) {
+              console.log(`Migration stderr: ${stderr}`);
+            }
+            console.log(`Migration stdout: ${stdout}`);
+            resolve(stdout);
+          });
+        });
+        console.log('Database migrations completed successfully');
+      } catch (migrationError) {
+        console.error('Failed to run migrations:', migrationError);
+        // Continue anyway since the database is connected
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Database connection failed:', error);
+      currentAttempt++;
+      
+      if (currentAttempt >= retries) {
+        console.error('Maximum connection attempts reached. Giving up.');
+        return false;
+      }
+      
+      console.log(`Retrying in ${delay / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  return false;
+};
+
 // CORS configuration based on environment
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const corsOptions = {
@@ -99,6 +153,12 @@ const PORT = parseInt(process.env.NODE_PORT || '3001', 10)
 // Start the server
 const startServer = async () => {
   try {
+    // First make sure we can connect to the database
+    const dbConnected = await connectToDatabase();
+    if (!dbConnected) {
+      console.error('Could not connect to database after multiple attempts. Starting server anyway...');
+    }
+    
     const server = app.listen(PORT, () => {
       console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`)
       console.log('Daily sync tasks scheduled for midnight')
