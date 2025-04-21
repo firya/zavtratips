@@ -8,6 +8,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./dist:/app/dist
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.zavtratips.rule=Host(`${DOMAIN}`)"
