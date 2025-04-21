@@ -3,9 +3,6 @@ services:
     build: .
     container_name: zavtratips
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - POSTGRES_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
     env_file:
       - .env
     depends_on:

@@ -29,7 +29,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">123
       <AppHeader backPath={showBackButton ? getBackPath() : undefined} />
       <main className="mx-auto px-4 py-6">
         {children}
