@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: zavtratips
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - POSTGRES_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zavtratips.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.zavtratips.tls=true"
+      - "traefik.http.routers.zavtratips.tls.certresolver=letsencrypt"
+      - "traefik.http.services.zavtratips.loadbalancer.server.port=3000"
+    networks:
+      - traefik-public
+      - internal
+
+  db:
+    image: postgres:14-alpine
+    container_name: zavtratips_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+networks:
+  traefik-public:
+    external: true
+  internal:
+    driver: bridge
+
+volumes:
+  postgres_data: 
