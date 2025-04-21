@@ -37,24 +37,13 @@ COPY --from=builder /app/node_modules ./node_modules
 
 # Copy any other necessary files
 COPY .env* ./
+COPY start.sh ./
 
-# Create a startup script
-RUN echo '#!/bin/sh\n\
-# Wait for database to be ready\n\
-echo "Waiting for database..."\n\
-sleep 5\n\
-\n\
-# Run database migrations\n\
-echo "Running database migrations..."\n\
-npx prisma migrate deploy\n\
-\n\
-# Start the application\n\
-echo "Starting application..."\n\
-node server/index.js\n\
-' > /app/start.sh && chmod +x /app/start.sh
+# Make start script executable
+RUN chmod +x /app/start.sh
 
 # Expose the port the app runs on
 EXPOSE 3000
 
 # Start the application with the startup script
-ENTRYPOINT ["/bin/sh", "/app/start.sh"] 
+CMD ["sh", "/app/start.sh"] 
