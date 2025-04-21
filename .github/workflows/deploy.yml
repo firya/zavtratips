@@ -35,10 +35,8 @@ jobs:
             # Set proper permissions for .env
             chmod 600 .env
             
-            # Build frontend
-            npm ci
-            npm run build
-          
+            # Rebuild and restart container
             docker-compose down
+            docker-compose build --no-cache app
             docker-compose up -d
           EOF

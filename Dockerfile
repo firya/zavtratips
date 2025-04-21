@@ -1,9 +1,24 @@
 ARG WORKDIR=/app
 
-FROM node:22-alpine
+# Builder stage for frontend
+FROM node:22-alpine AS builder
 WORKDIR ${WORKDIR}
 
 # Copy package files and install dependencies
+COPY package*.json ./
+RUN npm ci
+
+# Copy the application code
+COPY . .
+
+# Build the frontend
+RUN npm run build
+
+# Production stage
+FROM node:22-alpine
+WORKDIR ${WORKDIR}
+
+# Copy package files and install dependencies (including dev dependencies for tsx)
 COPY package*.json ./
 RUN npm ci
 
@@ -15,8 +30,8 @@ RUN npx prisma generate
 COPY server ./server
 COPY .env* ./
 
-# Create empty dist directory for volume mounting
-RUN mkdir -p dist
+# Copy built frontend from builder stage
+COPY --from=builder ${WORKDIR}/dist ./dist
 
 # Expose the port the app runs on
 EXPOSE 3000
