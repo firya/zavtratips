@@ -11,6 +11,7 @@ interface RecommendationCardProps {
   podcastNumber: string;
   link?: string;
   platforms?: string;
+  genre?: string;
   rate?: number;
   length?: string;
   dima: boolean | null;
@@ -42,6 +43,7 @@ export const RecommendationCard = ({
   podcastNumber,
   link,
   platforms,
+  genre,
   rate,
   length,
   dima,
@@ -100,6 +102,11 @@ export const RecommendationCard = ({
               {rate && (
                 <span className="text-base font-medium text-foreground">: {rate}</span>
               )}
+            </div>
+          )}
+          {genre && (
+            <div className="text-sm text-muted-foreground">
+              {genre}
             </div>
           )}
           {platforms && (

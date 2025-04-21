@@ -95,6 +95,7 @@ export function Recommendations() {
                 podcastNumber={recommendation.podcast?.number || ''}
                 link={recommendation.link}
                 platforms={recommendation.platforms || undefined}
+                genre={recommendation.genre || undefined}
                 rate={recommendation.rate || undefined}
                 length={recommendation.length || undefined}
                 dima={recommendation.dima}

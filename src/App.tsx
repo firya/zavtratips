@@ -8,7 +8,6 @@ export function App() {
     <Theme>
       <RouterProvider router={router} />
       <CustomToaster 
-        position="top-right"
         richColors
         closeButton
       />

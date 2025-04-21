@@ -1,7 +1,8 @@
 import TelegramBot from 'node-telegram-bot-api';
 import dotenv from 'dotenv';
 import localtunnel from 'localtunnel';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+import { handleInlineQuery } from './inlineMode';
 
 dotenv.config();
 
@@ -235,6 +236,11 @@ bot.onText(/\/forcebutton/, async (msg: TelegramBot.Message) => {
     console.error('Error in force reset:', error);
     bot.sendMessage(chatId, `Error: ${error.message}`);
   }
+});
+
+// Add inline query handler for recommendations search
+bot.on('inline_query', async (query) => {
+  await handleInlineQuery(bot, query);
 });
 
 export default bot; 

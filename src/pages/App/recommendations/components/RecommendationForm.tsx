@@ -99,6 +99,7 @@ export function RecommendationForm({
   isLoading: parentIsLoading 
 }: RecommendationFormProps) {
   const [selectedPodcast, setSelectedPodcast] = useState<PodcastInfo | null>(null)
+  const [hasManuallyCleared, setHasManuallyCleared] = useState(false)
   
   // Parse the initial name into components
   const initialParsedName = initialData?.name ? parseRecommendationName(initialData.name) : { originalName: '', otherNames: '', description: '' };
@@ -164,10 +165,13 @@ export function RecommendationForm({
 
   // Set the initial latest podcast if provided
   useEffect(() => {
-    if (!initialData && initialLatestPodcast && !selectedPodcast) {
+    if (!initialData && initialLatestPodcast && !selectedPodcast && !hasManuallyCleared) {
       setSelectedPodcast(initialLatestPodcast);
+    } else if (!initialData && !initialLatestPodcast && selectedPodcast === undefined) {
+      // Explicitly set to null if creating a new recommendation and no latest podcast
+      setSelectedPodcast(null);
     }
-  }, [initialLatestPodcast, initialData, selectedPodcast]);
+  }, [initialLatestPodcast, initialData, selectedPodcast, hasManuallyCleared]);
 
   useEffect(() => {
     fetchConfigs()
@@ -179,12 +183,15 @@ export function RecommendationForm({
   }, [fetchConfigs, initialData?.podcastId, fetchPodcast])
 
   useEffect(() => {
-    if (currentPodcast) {
+    if (currentPodcast && !hasManuallyCleared) {
       setSelectedPodcast(currentPodcast)
     }
-  }, [currentPodcast])
+  }, [currentPodcast, hasManuallyCleared])
 
   const handlePodcastChange = (podcast: PodcastFieldPodcast | null) => {
+    if (podcast === null) {
+      setHasManuallyCleared(true)
+    }
     setSelectedPodcast(podcast)
   }
 
@@ -290,6 +297,17 @@ export function RecommendationForm({
       data.typeId = parseInt(selectedTypeId, 10)
     }
     
+    // Add podcastId explicitly from selectedPodcast
+    if (selectedPodcast?.id) {
+      data.podcastId = selectedPodcast.id;
+    } else if (formData.get('podcastId') && formData.get('podcastId') !== '') {
+      data.podcastId = parseInt(formData.get('podcastId') as string, 10);
+    } else {
+      // If no podcastId is provided, show an error message
+      toast.error('Please select a podcast');
+      return;
+    }
+    
     // Handle release date explicitly (which is controlled by our state)
     // If undefined or null, explicitly set to null to clear it
     data.releaseDate = releaseDate || null;
@@ -342,7 +360,7 @@ export function RecommendationForm({
             onSearch={handlePodcastSearch}
             disabled={isFormLoading}
           />
-          <input type="hidden" name="podcastId" value={selectedPodcast?.id ?? initialData?.podcastId ?? ''} />
+          <input type="hidden" name="podcastId" value={selectedPodcast?.id || ''} />
         </div>
       </div>
 
@@ -609,9 +627,9 @@ export function RecommendationForm({
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="null">Not specified</SelectItem>
-                  <SelectItem value="true">Yes</SelectItem>
-                  <SelectItem value="false">No</SelectItem>
+                  <SelectItem value="null">null</SelectItem>
+                  <SelectItem value="true">👍</SelectItem>
+                  <SelectItem value="false">❌</SelectItem>
                 </SelectContent>
               </Select>
             </div>
