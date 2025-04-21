@@ -1,33 +1,42 @@
 name: Deploy to VPS
-
 on:
   push:
-    branches:
-      - main
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.7.0
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Set up known hosts
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: unnecessary
 
       - name: Deploy to VPS
         env:
-          DOMAIN: ${{ secrets.DOMAIN }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          # Copy files to the server
-          scp -r ./* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}
+          # Deploy
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
+            # Ensure directory exists
+            mkdir -p /opt/apps/$REPO_NAME
+            cd /opt/apps/$REPO_NAME
           
-          # Execute deployment commands on the server
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.DEPLOY_PATH }} && export DOMAIN=${DOMAIN} && docker-compose down && docker-compose build && docker-compose up -d" 
+            # Pull latest changes
+            git pull || git clone https://github.com/${{ github.repository }}.git .
+          
+            # Set proper permissions for .env
+            chmod 600 .env
+          
+            # Restart container
+            docker-compose down
+            docker-compose pull
+            docker-compose up -d
+          EOF
