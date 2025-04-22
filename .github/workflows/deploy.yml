@@ -25,10 +25,15 @@ jobs:
         run: |
           # Deploy
           ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
+            # Ensure directory exists
+            mkdir -p /opt/apps/$REPO_NAME
             cd /opt/apps/$REPO_NAME
           
             # Pull latest changes
-            git pull
+            git pull || git clone https://github.com/${{ github.repository }}.git .
+          
+            # Set proper permissions for .env
+            chmod 600 .env
           
             # Restart container
             docker-compose down
