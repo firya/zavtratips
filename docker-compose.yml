@@ -1,9 +1,7 @@
 services:
   app:
-    build:
-      context: .
-      target: production
-    container_name: zavtratips
+    image: node:22-alpine
+    container_name: zavtratips_app
     restart: unless-stopped
     env_file:
       - .env
@@ -11,14 +9,27 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./:/app
-      - node_modules:/app/node_modules
+      - ./server-dist:/app/dist
+    working_dir: /app
+    command: ["node", "dist/index.js"]
+    networks:
+      - internal
+
+  nginx:
+    image: nginx:alpine
+    container_name: zavtratips_nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    volumes:
+      - ./client-dist:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.zavtratips.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.zavtratips.tls=true"
       - "traefik.http.routers.zavtratips.tls.certresolver=letsencrypt"
-      - "traefik.http.services.zavtratips.loadbalancer.server.port=3000"
+      - "traefik.http.services.zavtratips.loadbalancer.server.port=80"
     networks:
       - traefik-public
       - internal
@@ -48,5 +59,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
-  node_modules: 
+  postgres_data: 
