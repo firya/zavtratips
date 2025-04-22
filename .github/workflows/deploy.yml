@@ -32,9 +32,6 @@ jobs:
             # Pull latest changes
             git pull || git clone https://github.com/${{ github.repository }}.git .
           
-            # Set proper permissions for .env
-            chmod 600 .env
-          
             # Restart container
             docker-compose down
             docker-compose build
