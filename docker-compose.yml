@@ -1,35 +1,22 @@
 services:
   app:
-    image: node:22-alpine
-    container_name: zavtratips_app
+    build: .
+    container_name: zavtratips
     restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - POSTGRES_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
     env_file:
       - .env
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./server-dist:/app/dist
-    working_dir: /app
-    command: ["node", "dist/index.js"]
-    networks:
-      - internal
-
-  nginx:
-    image: nginx:alpine
-    container_name: zavtratips_nginx
-    restart: unless-stopped
-    depends_on:
-      - app
-    volumes:
-      - ./client-dist:/usr/share/nginx/html
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.zavtratips.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.zavtratips.tls=true"
       - "traefik.http.routers.zavtratips.tls.certresolver=letsencrypt"
-      - "traefik.http.services.zavtratips.loadbalancer.server.port=80"
+      - "traefik.http.services.zavtratips.loadbalancer.server.port=3000"
     networks:
       - traefik-public
       - internal
