@@ -161,11 +161,11 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
         ...(filters.podcastShowType && { podcastShowType: filters.podcastShowType }),
         ...(filters.podcastNumber && { podcastNumber: filters.podcastNumber }),
         ...(filters.hosts.length > 0 && { hosts: filters.hosts.join(',') }),
-        ...(filters.dateRange?.from && { 
-          dateFrom: new Date(filters.dateRange.from.setHours(0, 0, 0, 0)).toISOString() 
+        ...(filters.dateRange?.from && {
+          dateFrom: new Date(filters.dateRange.from.setHours(0, 0, 0, 0)).toISOString()
         }),
-        ...(filters.dateRange?.to && { 
-          dateTo: new Date(filters.dateRange.to.setHours(23, 59, 59, 999)).toISOString() 
+        ...(filters.dateRange?.to && {
+          dateTo: new Date(filters.dateRange.to.setHours(23, 59, 59, 999)).toISOString()
         }),
       })
 
@@ -184,26 +184,84 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
   },
 
   deleteRecommendation: async (id: string) => {
-    // Implementation of deleteRecommendation method
+    try {
+      await api.delete(`/recommendations/${id}`)
+      await get().fetchRecommendations()
+    } catch (error) {
+      console.error('Error deleting recommendation:', error)
+      throw error
+    }
   },
 
   fetchRecommendation: async (id: string) => {
-    // Implementation of fetchRecommendation method
+    set({ isLoading: true, error: null })
+    try {
+      const response = await api.get(`/recommendations/${id}`)
+      set({
+        currentRecommendation: response.data,
+        isLoading: false,
+      })
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to fetch recommendation',
+        isLoading: false,
+        currentRecommendation: null,
+      })
+      throw error
+    }
   },
 
   clearCurrentRecommendation: () => {
-    // Implementation of clearCurrentRecommendation method
+    set({ currentRecommendation: null })
   },
 
   searchMedia: async (search: string, typeId: string) => {
-    // Implementation of searchMedia method
+    if (!search || !typeId) {
+      set({ mediaItems: [] })
+      return
+    }
+
+    set({ isMediaSearchLoading: true })
+    try {
+      const response = await api.get(`/recommendations/search-media?search=${search}&typeId=${typeId}`)
+      set({
+        mediaItems: response.data,
+        isMediaSearchLoading: false
+      })
+    } catch (error) {
+      console.error('Error fetching media:', error)
+      set({
+        mediaItems: [],
+        isMediaSearchLoading: false
+      })
+    }
   },
 
   createRecommendation: async (data: Partial<Recommendation>) => {
-    // Implementation of createRecommendation method
+    set({ isLoading: true, error: null })
+    try {
+      await api.post('/recommendations', data)
+      set({ isLoading: false })
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to create recommendation',
+        isLoading: false
+      })
+      throw error
+    }
   },
 
   updateRecommendation: async (id: number, data: Partial<Recommendation>) => {
-    // Implementation of updateRecommendation method
+    set({ isLoading: true, error: null })
+    try {
+      await api.put(`/recommendations/${id}`, data)
+      set({ isLoading: false })
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to update recommendation',
+        isLoading: false
+      })
+      throw error
+    }
   },
 }))
