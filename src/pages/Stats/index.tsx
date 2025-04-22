@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDuration } from '@/lib/utils'
 import { useStatsStore } from '@/stores/statsStore'
+import { useConfigStore } from '@/stores/config'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { Link } from 'react-router-dom'
 
@@ -38,6 +39,7 @@ function HeatmapTooltip({ week, length, yearIndex, color }: HeatmapTooltipProps)
 
 export function Stats() {
   const { stats, isLoading, error, fetchStats } = useStatsStore()
+  const { types } = useConfigStore()
   const hasFetched = useRef(false)
 
   useEffect(() => {
@@ -83,6 +85,12 @@ export function Stats() {
     const remainingDays = days % 365
     return `${years} years ${remainingDays} days`
   }
+
+  // Create a map of type names to IDs
+  const typeNameToId = types.reduce((acc, type) => {
+    acc[type.value] = type.id
+    return acc
+  }, {} as Record<string, number>)
 
   return (
     <Tooltip.Provider>
@@ -225,7 +233,7 @@ export function Stats() {
               {Object.entries(stats.typeStats || {}).map(([type, count]) => (
                 <Link
                   key={type}
-                  to={`/recommendations?type=${type}`}
+                  to={`/recommendations?type=${typeNameToId[type]}`}
                   className="h-auto flex flex-col items-center p-4 hover:bg-accent border rounded-md"
                 >
                   <span className="text-sm font-medium text-muted-foreground">{type}</span>
