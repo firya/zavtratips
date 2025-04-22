@@ -255,7 +255,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Create new recommendation
+// Create new recommendation - now automatically protected
 router.post('/', async (req: Request, res: Response) => {
   try {
     const requestData = { ...req.body };
@@ -352,7 +352,7 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// Update recommendation
+// Update recommendation - now automatically protected
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -449,7 +449,7 @@ router.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Delete recommendation
+// Delete recommendation - now automatically protected
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;

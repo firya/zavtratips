@@ -183,16 +183,53 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const podcastId = Number(id);
     
     // Get the podcast first to get the row number
     const podcast = await prisma.podcast.findUnique({
-      where: { id: Number(id) },
-      select: { rowNumber: true }
+      where: { id: podcastId },
+      select: { rowNumber: true, name: true, showType: true, number: true }
     });
 
+    if (!podcast) {
+      return res.status(404).json({ error: 'Podcast not found' });
+    }
+
+    // First, find all recommendations associated with this podcast
+    const recommendations = await prisma.recommendation.findMany({
+      where: { podcastId: podcastId },
+      select: { id: true, rowNumber: true }
+    });
+
+    console.log(`Found ${recommendations.length} recommendations associated with podcast ${podcastId}`);
+
+    // Delete all associated recommendations from spreadsheet and database
+    for (const recommendation of recommendations) {
+      try {
+        // Clear the row in Google Spreadsheet
+        if (recommendation.rowNumber) {
+          console.log(`Clearing recommendation row ${recommendation.rowNumber} from spreadsheet`);
+          const emptyRow = Array(16).fill('');
+          await updateRowInSpreadsheet('Рекомендации', recommendation.rowNumber, emptyRow);
+        }
+
+        // Delete from database
+        console.log(`Deleting recommendation ${recommendation.id} from database`);
+        await prisma.recommendation.delete({
+          where: { id: recommendation.id }
+        });
+      } catch (recError) {
+        console.error(`Error deleting recommendation ${recommendation.id}:`, recError);
+        // Continue with other recommendations even if one fails
+      }
+    }
+
+    // Now that all associated recommendations are deleted, delete the podcast
+    console.log(`Deleting podcast ${podcastId} (${podcast.showType} #${podcast.number} - ${podcast.name})`);
+    
     // Delete from database
     await prisma.podcast.delete({
-      where: { id: Number(id) },
+      where: { id: podcastId },
     });
 
     // Delete from Google Spreadsheet
@@ -200,10 +237,16 @@ router.delete('/:id', async (req, res) => {
       await deleteRowFromSpreadsheet('Выпуски', podcast.rowNumber);
     }
 
-    res.json({ success: true });
+    res.json({ 
+      success: true, 
+      message: `Successfully deleted podcast and ${recommendations.length} associated recommendations`
+    });
   } catch (error) {
     console.error('Error deleting podcast:', error);
-    res.status(500).json({ error: 'Failed to delete podcast' });
+    res.status(500).json({ 
+      error: 'Failed to delete podcast',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 

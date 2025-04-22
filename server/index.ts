@@ -12,6 +12,7 @@ import statsRouter from './routes/stats'
 import bot, { initBot } from './bot'
 import configRouter from './routes/config'
 import { syncWithDatabase } from './sheets'
+import telegramAuth from './middleware/telegramAuth'
 
 dotenv.config()
 
@@ -88,6 +89,17 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 app.use(express.json())
+
+// Add Telegram auth middleware for non-GET routes
+app.use((req, res, next) => {
+  // Skip authentication for GET requests
+  if (req.method === 'GET') {
+    return next();
+  }
+  
+  // Apply Telegram authentication for non-GET routes
+  telegramAuth(req, res, next);
+});
 
 // API routes
 app.use('/api/recommendations', recommendationsRouter)
