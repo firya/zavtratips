@@ -72,6 +72,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
   const [episodeNumber, setEpisodeNumber] = useState(initialData?.number || '')
   const { showTypes, isLoading: isConfigLoading, error: configError, fetchConfigs } = useConfigStore()
   const { getLastEpisodeNumber } = usePodcastStore()
+  const [calendarOpen, setCalendarOpen] = useState(false)
   
   // Combined loading state from parent and local state
   const isFormLoading = parentIsLoading || isLoading || isConfigLoading
@@ -202,10 +203,13 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form 
+      onSubmit={handleSubmit} 
+      className="space-y-6"
+    >
       <div className="space-y-2">
         <Label htmlFor="date">Date</Label>
-        <Popover>
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -223,7 +227,12 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
             <Calendar
               mode="single"
               selected={date}
-              onSelect={(newDate) => !isFormLoading && setDate(newDate as Date)}
+              onSelect={(newDate) => {
+                if (!isFormLoading && newDate) {
+                  setDate(newDate as Date)
+                  setCalendarOpen(false)
+                }
+              }}
               defaultMonth={date}
             />
           </PopoverContent>
@@ -236,7 +245,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
           <SelectTrigger>
             <SelectValue placeholder={isConfigLoading ? "Loading..." : "Select show type"} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper">
             {showTypes.map((showType) => (
               <SelectItem key={showType.id} value={showType.value}>
                 {showType.value}

@@ -75,4 +75,11 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Mobile font size fix */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important; /* Prevent zoom on mobile */
+  }
 } 

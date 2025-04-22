@@ -172,6 +172,55 @@ router.put('/:id', async (req, res) => {
       ]);
     }
 
+    // If date was changed, update all recommendations linked to this podcast
+    if (date) {
+      const recommendations = await prisma.recommendation.findMany({
+        where: { podcastId: podcast.id },
+        include: {
+          podcast: {
+            select: {
+              id: true,
+              date: true,
+              showType: true,
+              number: true,
+              name: true,
+              length: true
+            }
+          },
+          type: {
+            select: {
+              id: true,
+              value: true
+            }
+          }
+        }
+      });
+
+      // Update each recommendation's row in the spreadsheet
+      for (const recommendation of recommendations) {
+        if (recommendation.rowNumber) {
+          await updateRowInSpreadsheet('Рекомендации', recommendation.rowNumber, [
+            podcast.date.toLocaleDateString(), // Use updated podcast date
+            `${podcast.showType} #${podcast.number}`,
+            recommendation.type.value,
+            recommendation.name,
+            recommendation.link || '',
+            recommendation.image || '',
+            '', // Empty column
+            recommendation.platforms || '',
+            recommendation.rate?.toString() || '',
+            recommendation.genre || '',
+            recommendation.releaseDate?.toLocaleDateString() || '',
+            recommendation.length || '',
+            recommendation.dima === true ? '👍' : recommendation.dima === false ? '❌' : '',
+            recommendation.timur === true ? '👍' : recommendation.timur === false ? '❌' : '',
+            recommendation.maksim === true ? '👍' : recommendation.maksim === false ? '❌' : '',
+            recommendation.guest || ''
+          ]);
+        }
+      }
+    }
+
     res.json(podcast);
   } catch (error) {
     console.error('Error updating podcast:', error);

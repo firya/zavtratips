@@ -100,6 +100,7 @@ export function RecommendationForm({
 }: RecommendationFormProps) {
   const [selectedPodcast, setSelectedPodcast] = useState<PodcastInfo | null>(null)
   const [hasManuallyCleared, setHasManuallyCleared] = useState(false)
+  const [guestValue, setGuestValue] = useState(initialData?.guest || '')
   
   // Parse the initial name into components
   const initialParsedName = initialData?.name ? parseRecommendationName(initialData.name) : { originalName: '', otherNames: '', description: '' };
@@ -121,6 +122,11 @@ export function RecommendationForm({
   const [genreValue, setGenreValue] = useState(initialData?.genre || '')
   const [isMediaDetailsOpen, setIsMediaDetailsOpen] = useState(false)
   const searchContainerRef = useRef<HTMLDivElement>(null)
+  
+  // State for host values
+  const [dimaValue, setDimaValue] = useState<string>(initialData?.dima?.toString() || 'null')
+  const [timurValue, setTimurValue] = useState<string>(initialData?.timur?.toString() || 'null')
+  const [maksimValue, setMaksimValue] = useState<string>(initialData?.maksim?.toString() || 'null')
   
   const { types, isLoading: isConfigLoading, error: configError, fetchConfigs } = useConfigStore()
   const { 
@@ -160,6 +166,10 @@ export function RecommendationForm({
       setPlatformsValue(initialData.platforms || '');
       setRateValue(initialData.rate?.toString() || '');
       setGenreValue(initialData.genre || '');
+      setGuestValue(initialData.guest || '');
+      setDimaValue(initialData.dima?.toString() || 'null');
+      setTimurValue(initialData.timur?.toString() || 'null');
+      setMaksimValue(initialData.maksim?.toString() || 'null');
     }
   }, [initialData]);
 
@@ -323,6 +333,28 @@ export function RecommendationForm({
         // Create
         await createRecommendation(data)
         toast.success('Recommendation created successfully', { id: toastId })
+        
+        // Reset form fields after successful creation (except podcast)
+        setOriginalName('');
+        setOtherNames('');
+        setNameDescription('');
+        setReleaseDate(undefined);
+        setSelectedMedia(null);
+        setSelectedTypeId('');
+        setLinkValue('');
+        setImageValue('');
+        setPlatformsValue('');
+        setRateValue('');
+        setGenreValue('');
+        setGuestValue('');
+        setIsMediaDetailsOpen(false);
+        
+        // Reset host values to null
+        setDimaValue('null');
+        setTimurValue('null');
+        setMaksimValue('null');
+        
+        // Do not reset selectedPodcast or hasManuallyCleared
       }
       
       if (onSuccess) {
@@ -615,12 +647,17 @@ export function RecommendationForm({
       <div className="space-y-4">
         <Label>Hosts</Label>
         <div className="grid grid-cols-3 gap-4">
-          {['dima', 'timur', 'maksim'].map((host) => (
-            <div key={host} className="space-y-2">
-              <Label className="text-sm capitalize">{host}</Label>
+          {[
+            { name: 'dima', value: dimaValue, setValue: setDimaValue },
+            { name: 'timur', value: timurValue, setValue: setTimurValue },
+            { name: 'maksim', value: maksimValue, setValue: setMaksimValue }
+          ].map((host) => (
+            <div key={host.name} className="space-y-2">
+              <Label className="text-sm capitalize">{host.name}</Label>
               <Select
-                name={host}
-                defaultValue={initialData?.[host as keyof Recommendation]?.toString() || 'null'}
+                name={host.name}
+                value={host.value}
+                onValueChange={host.setValue}
                 disabled={isFormLoading}
               >
                 <SelectTrigger>
@@ -642,7 +679,8 @@ export function RecommendationForm({
         <Input
           id="guest"
           name="guest"
-          defaultValue={initialData?.guest}
+          value={guestValue}
+          onChange={(e) => setGuestValue(e.target.value)}
           placeholder="Enter guest name"
           disabled={isFormLoading}
         />

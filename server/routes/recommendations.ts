@@ -108,8 +108,8 @@ router.get('/search-media', async (req: Request, res: Response) => {
     const { search, typeId } = req.query;
     console.log(`Search request with search=${search}, typeId=${typeId}`);
     
-    if (!search || !typeId) {
-      console.log('Missing search or typeId parameters');
+    if (!search || !typeId || search.toString().length < 2) {
+      console.log('Missing search or typeId parameters, or search query is too short');
       return res.json([]);
     }
 
@@ -181,32 +181,49 @@ router.get('/search-media', async (req: Request, res: Response) => {
             // Determine type based on media content type
             type: apiConfig.value.toLowerCase().includes('сериал') || apiConfig.value.toLowerCase().includes('шоу') ? 'series' : 'movie',
           },
+          timeout: 10000, // 10 second timeout
         });
 
         if (response.data.Search) {
           mediaData = await Promise.all(
             response.data.Search.slice(0, 10).map(async (movie: any) => {
               try {
-                const details = await axios.get(`http://www.omdbapi.com/`, {
-                  params: {
-                    apikey: process.env.OMDB_API_KEY,
-                    i: movie.imdbID,
-                    plot: 'short',
-                  },
-                });
+                // Add retry logic for details request
+                let retries = 3;
+                let detailsResponse;
+                
+                while (retries > 0) {
+                  try {
+                    detailsResponse = await axios.get(`http://www.omdbapi.com/`, {
+                      params: {
+                        apikey: process.env.OMDB_API_KEY,
+                        i: movie.imdbID,
+                        plot: 'short',
+                      },
+                      timeout: 10000, // 10 second timeout
+                    });
+                    break; // If successful, break the retry loop
+                  } catch (retryError) {
+                    retries--;
+                    if (retries === 0) throw retryError;
+                    // Wait 1 second before retrying
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                  }
+                }
 
                 return {
                   name: movie.Title,
                   link: `https://www.imdb.com/title/${movie.imdbID}/`,
                   image: movie.Poster,
                   platforms: 'IMDb',
-                  rate: details.data.imdbRating,
-                  genre: details.data.Genre,
-                  releaseDate: details.data.Released,
-                  length: details.data.Runtime,
+                  rate: detailsResponse?.data?.imdbRating,
+                  genre: detailsResponse?.data?.Genre,
+                  releaseDate: detailsResponse?.data?.Released,
+                  length: detailsResponse?.data?.Runtime,
                 };
               } catch (detailsError) {
                 console.error(`Error fetching details for ${movie.imdbID}:`, detailsError);
+                // Return basic info even if details fetch fails
                 return {
                   name: movie.Title,
                   link: `https://www.imdb.com/title/${movie.imdbID}/`,
@@ -219,6 +236,8 @@ router.get('/search-media', async (req: Request, res: Response) => {
         }
       } catch (apiError) {
         console.error('OMDB API error:', apiError);
+        // Return empty array instead of throwing error
+        return res.json([]);
       }
     } else {
       console.log(`No suitable API found for content type: ${apiConfig.type}`);
