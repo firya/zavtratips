@@ -1,13 +1,13 @@
 import { retrieveRawInitData } from '@telegram-apps/sdk';
-import axios from 'axios';
+import { api } from '../lib/api';
 
 /**
- * Configures Axios with Telegram authentication headers
+ * Configures the application's API instance with Telegram authentication headers
  * Adds the Telegram Mini App init data to the requests
  */
 export function setupTelegramAuth() {
   // Add an interceptor to add the Telegram auth header to all non-GET requests
-  axios.interceptors.request.use((config) => {
+  api.interceptors.request.use((config) => {
     // Skip auth for GET requests
     if (config.method?.toLowerCase() === 'get') {
       return config;
