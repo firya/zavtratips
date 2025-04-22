@@ -40,8 +40,12 @@ router.get('/', async (req: Request, res: Response) => {
 
     if (req.query.dateFrom || req.query.dateTo) {
       podcastWhere.date = {
-        ...(req.query.dateFrom ? { gte: new Date(req.query.dateFrom as string) } : {}),
-        ...(req.query.dateTo ? { lte: new Date(req.query.dateTo as string) } : {})
+        ...(req.query.dateFrom ? { 
+          gte: new Date(new Date(req.query.dateFrom as string).setUTCHours(0, 0, 0, 0))
+        } : {}),
+        ...(req.query.dateTo ? { 
+          lte: new Date(new Date(req.query.dateTo as string).setUTCHours(23, 59, 59, 999))
+        } : {})
       };
     }
 
