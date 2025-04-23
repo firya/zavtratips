@@ -4,6 +4,16 @@ import { PrismaClient, Prisma } from '@prisma/client';
 const prisma = new PrismaClient();
 
 /**
+ * Parse recommendation name to extract original title
+ * Format: "{original title} / {additional title 1} / {additional title 2} ... ({description})"
+ */
+const extractOriginalTitle = (name: string): string => {
+  // Extract the part before the first slash or parenthesis
+  const matches = name.match(/^([^/\(]+)/);
+  return matches ? matches[1].trim() : name.trim();
+};
+
+/**
  * Handle inline queries for recommendation search
  * @param bot Telegram bot instance
  * @param query Inline query from Telegram
@@ -43,20 +53,28 @@ export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.Inl
       return;
     }
     
-    // Group recommendations by name
-    const groupedRecommendations = recommendations.reduce<Record<string, typeof recommendations>>((acc, recommendation) => {
-      const name = recommendation.name;
-      if (!acc[name]) {
-        acc[name] = [];
+    // Group recommendations by original title and link
+    const groupedRecommendations: Record<string, typeof recommendations> = {};
+    
+    recommendations.forEach(recommendation => {
+      const originalTitle = extractOriginalTitle(recommendation.name);
+      const link = recommendation.link || '';
+      
+      // Create a key combining original title and link
+      const groupKey = `${originalTitle}:${link}`;
+      
+      if (!groupedRecommendations[groupKey]) {
+        groupedRecommendations[groupKey] = [];
       }
-      acc[name].push(recommendation);
-      return acc;
-    }, {});
+      
+      groupedRecommendations[groupKey].push(recommendation);
+    });
     
     // Format results for inline query
-    const results = Object.entries(groupedRecommendations).map(([name, items], index) => {
+    const results = Object.entries(groupedRecommendations).map(([_, items], index) => {
       // Get the first item for main details
       const mainItem = items[0];
+      const originalTitle = extractOriginalTitle(mainItem.name);
       
       // Compile host recommendations from all items
       const hosts = {
@@ -108,7 +126,7 @@ export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.Inl
       ].filter(Boolean).join('\n');
       
       // Create message text
-      let messageText = `*${name}*\n`;
+      let messageText = `*${mainItem.name}*\n`;
       messageText += `*Тип:* ${mainItem.type.value}\n`;
       
       if (mainItem.platforms) {
@@ -149,7 +167,7 @@ export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.Inl
       const inlineResult: TelegramBot.InlineQueryResultArticle = {
         type: 'article',
         id: `recommendation_${index}`,
-        title: name,
+        title: originalTitle,
         description: `${mainItem.type.value}${mainItem.platforms ? ` • ${mainItem.platforms}` : ''}${mainItem.genre ? ` • ${mainItem.genre}` : ''}${hostEpisodes.dima.length || hostEpisodes.timur.length || hostEpisodes.maksim.length ? ` • ${items.length} упоминаний` : ''}`,
         thumb_url: mainItem.image || undefined,
         input_message_content: {
