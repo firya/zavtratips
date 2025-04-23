@@ -27,9 +27,8 @@ A web application for managing podcast recommendations and streams.
 
 ### Development
 
-- `npm run server:dev` - Start the backend server with hot-reload using nodemon
-- `npm run dev:all` - Start both frontend and backend servers in development mode
-- `npm run bot:dev` - Build the frontend as static and start the backend with hot-reload (useful for Telegram bot development)
+- `npm run dev:all` - Start both frontend and backend servers in development mode, frontend available on localhost:5173
+- `npm run bot:dev` - Build the frontend as static! and start the backend with hot-reload (useful for Telegram bot development)
 
 ### Database
 
