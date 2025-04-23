@@ -123,7 +123,7 @@ router.post('/', async (req, res) => {
       podcast.number,
       `${podcast.showType} #${podcast.number}`,
       podcast.name,
-      `${podcast.showType} #${podcast.number} - ${podcast.name}`,
+      `${podcast.showType} #${podcast.number}${podcast.name ? ' - ' : ''}${podcast.name}`,
       req.body.length || '00:00:00' // Use original HH:MM:SS format for spreadsheet
     ]);
 
@@ -151,7 +151,7 @@ router.put('/:id', async (req, res) => {
       showType,
       number,
       name,
-      length: Number(length) || 0
+      length: length ? timeToMilliseconds(length) : 0
     };
 
     const podcast = await prisma.podcast.update({
@@ -167,8 +167,8 @@ router.put('/:id', async (req, res) => {
         podcast.number,
         `${podcast.showType} #${podcast.number}`,
         podcast.name,
-        `${podcast.showType} #${podcast.number} - ${podcast.name}`,
-        millisecondsToTime(podcast.length)
+        `${podcast.showType} #${podcast.number}${podcast.name ? ' - ' : ''}${podcast.name}`,
+        length || '00:00:00'
       ]);
     }
 
