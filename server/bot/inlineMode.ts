@@ -1,16 +1,12 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, Recommendation, Podcast, Config } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-/**
- * Parse recommendation name to extract original title
- * Format: "{original title} / {additional title 1} / {additional title 2} ... ({description})"
- */
-const extractOriginalTitle = (name: string): string => {
-  // Extract the part before the first slash or parenthesis
-  const matches = name.match(/^([^/\(]+)/);
-  return matches ? matches[1].trim() : name.trim();
+// Define a type that includes the relations
+type RecommendationWithRelations = Recommendation & {
+  podcast: Podcast;
+  type: Config;
 };
 
 /**
@@ -27,13 +23,9 @@ export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.Inl
       return;
     }
     
-    // Search recommendations with proper Prisma types
+    // Search recommendations by name (partial match, case-insensitive)
     const where: Prisma.RecommendationWhereInput = {
-      OR: [
-        { name: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
-        { link: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
-        { platforms: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
-      ]
+      name: { contains: searchTerm, mode: Prisma.QueryMode.insensitive }
     };
     
     const recommendations = await prisma.recommendation.findMany({
@@ -43,9 +35,9 @@ export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.Inl
         podcast: true
       },
       orderBy: {
-        rowNumber: 'desc'
+        rowNumber: 'desc' // Keep some ordering, e.g., by latest appearance
       },
-      take: 50, // Limit to prevent too many results
+      take: 50, // Limit results
     });
     
     if (recommendations.length === 0) {
@@ -53,75 +45,71 @@ export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.Inl
       return;
     }
     
-    // Group recommendations by original title and link
-    const groupedRecommendations: Record<string, typeof recommendations> = {};
+    // Group recommendations by link
+    const groupedRecommendations: Record<string, RecommendationWithRelations[]> = {};
     
     recommendations.forEach(recommendation => {
-      const originalTitle = extractOriginalTitle(recommendation.name);
-      const link = recommendation.link || '';
-      
-      // Create a key combining original title and link
-      const groupKey = `${originalTitle}:${link}`;
-      
-      if (!groupedRecommendations[groupKey]) {
-        groupedRecommendations[groupKey] = [];
+      const link = recommendation.link || 'no-link'; // Use a placeholder if link is null/empty
+            
+      if (!groupedRecommendations[link]) {
+        groupedRecommendations[link] = [];
       }
       
-      groupedRecommendations[groupKey].push(recommendation);
+      groupedRecommendations[link].push(recommendation);
     });
     
     // Format results for inline query
-    const results = Object.entries(groupedRecommendations).map(([_, items], index) => {
+    const results = Object.entries(groupedRecommendations).map(([link, items]: [string, RecommendationWithRelations[]], index) => {
       // Get the first item for main details
       const mainItem = items[0];
-      const originalTitle = extractOriginalTitle(mainItem.name);
       
-      // Compile host recommendations from all items
-      const hosts = {
-        dima: items.some(item => item.dima === true),
-        timur: items.some(item => item.timur === true),
-        maksim: items.some(item => item.maksim === true),
-      };
+      // Track episode and vote status for each host
+      interface EpisodeVote {
+        episode: string;
+        vote: boolean | null;
+      }
+
+      const hostEpisodes: {
+        dima: EpisodeVote[];
+        timur: EpisodeVote[];
+        maksim: EpisodeVote[];
+        guest: string[]; // Guests just listed with episode
+      } = { dima: [], timur: [], maksim: [], guest: [] };
       
-      // Track which episodes each host recommended the item in
-      const hostEpisodes = {
-        dima: [] as string[],
-        timur: [] as string[],
-        maksim: [] as string[],
-        guest: [] as string[]
-      };
-      
-      // Get all podcasts where this was recommended and track host recommendations
+      // Get all podcasts where this was recommended and track host recommendations/votes
       items.forEach(item => {
         const episodeRef = `#${item.podcast.number}`;
         
-        if (item.dima === true) {
-          hostEpisodes.dima.push(episodeRef);
-        }
-        
-        if (item.timur === true) {
-          hostEpisodes.timur.push(episodeRef);
-        }
-        
-        if (item.maksim === true) {
-          hostEpisodes.maksim.push(episodeRef);
-        }
+        // Record vote status for each host for this specific episode mention
+        hostEpisodes.dima.push({ episode: episodeRef, vote: item.dima });
+        hostEpisodes.timur.push({ episode: episodeRef, vote: item.timur });
+        hostEpisodes.maksim.push({ episode: episodeRef, vote: item.maksim });
         
         if (item.guest) {
           hostEpisodes.guest.push(`${item.guest} ${episodeRef}`);
         }
       });
       
-      // Get all podcasts where this was recommended
-      const podcastReferences = items.map(item => 
-        `${item.podcast.showType} #${item.podcast.number}`
-      ).join(', ');
-      
-      // Format host recommendations with episode numbers
+      // Helper function to format vote status
+      const formatVote = (vote: boolean | null): string => {
+        if (vote === true) return '👍';
+        if (vote === false) return '👎';
+        // This case should not be reached if we filter nulls beforehand, 
+        // but return empty string just in case.
+        return ''; 
+      };
+
+      // Format host recommendations showing vote status per episode, filtering out null votes
       const hostRecommendations = [
-        hosts.dima ? `Дима 👍 (${hostEpisodes.dima.join(', ')})` : '',
-        hosts.timur ? `Тимур 👍 (${hostEpisodes.timur.join(', ')})` : '',
-        hosts.maksim ? `Максим 👍 (${hostEpisodes.maksim.join(', ')})` : '',
+        hostEpisodes.dima.filter(v => v.vote !== null).length > 0 
+          ? `Дима: ${hostEpisodes.dima.filter(v => v.vote !== null).map(v => `${formatVote(v.vote)} ${v.episode}`).join(', ')}` 
+          : '',
+        hostEpisodes.timur.filter(v => v.vote !== null).length > 0 
+          ? `Тимур: ${hostEpisodes.timur.filter(v => v.vote !== null).map(v => `${formatVote(v.vote)} ${v.episode}`).join(', ')}` 
+          : '',
+        hostEpisodes.maksim.filter(v => v.vote !== null).length > 0 
+          ? `Максим: ${hostEpisodes.maksim.filter(v => v.vote !== null).map(v => `${formatVote(v.vote)} ${v.episode}`).join(', ')}` 
+          : '',
         hostEpisodes.guest.length > 0 ? `Гости: ${hostEpisodes.guest.join(', ')}` : ''
       ].filter(Boolean).join('\n');
       
@@ -163,11 +151,15 @@ export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.Inl
         ]
       } : undefined;
       
+      // Generate a valid, URL-safe ID for Telegram (must be <= 64 bytes and use safe characters)
+      // Use a hash or truncated/encoded version of the link instead of the full URL
+      const safeResultId = `rec_${index}_${mainItem.id}`;
+      
       // Create InlineQueryResultArticle object with proper types
       const inlineResult: TelegramBot.InlineQueryResultArticle = {
         type: 'article',
-        id: `recommendation_${index}`,
-        title: originalTitle,
+        id: safeResultId, // Use a safe, short ID format
+        title: mainItem.name, // Use full name as title now
         description: `${mainItem.type.value}${mainItem.platforms ? ` • ${mainItem.platforms}` : ''}${mainItem.genre ? ` • ${mainItem.genre}` : ''}${hostEpisodes.dima.length || hostEpisodes.timur.length || hostEpisodes.maksim.length ? ` • ${items.length} упоминаний` : ''}`,
         thumb_url: mainItem.image || undefined,
         input_message_content: {
