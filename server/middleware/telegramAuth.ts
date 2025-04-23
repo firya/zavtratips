@@ -83,10 +83,7 @@ export default function telegramAuth(req: Request, res: Response, next: NextFunc
       throw new Error('Telegram bot token is not configured');
     }
 
-    // Validate init data (valid for 1 hour)
-    validate(authData, token, {
-      expiresIn: 3600,
-    });
+    validate(authData, token);
 
     // Parse and store init data in the request object
     req.telegramInitData = parse(authData);

@@ -13,6 +13,17 @@ import { CreateRecommendation } from '@/pages/App/recommendations/CreateRecommen
 import { RecommendationList } from '@/pages/App/recommendations/RecommendationList'
 import { EditRecommendationPage } from '@/pages/App/recommendations/EditRecommendationPage'
 import { Link, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 function Navigation() {
   const location = useLocation()
@@ -58,6 +69,7 @@ function Navigation() {
 function MainLayout() {
   return (
     <div className="min-h-screen bg-background">
+      <ScrollToTop />
       <Navigation />
       <main className="w-full max-w-7xl mx-auto px-1 sm:px-4 py-4 sm:py-6">
         <Outlet />
