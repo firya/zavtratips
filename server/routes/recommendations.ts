@@ -8,7 +8,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // Get recommendations with filters
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 24;
@@ -16,12 +16,13 @@ router.get('/', async (req: Request, res: Response) => {
 
     const where: Prisma.RecommendationWhereInput = {};
 
+    // Handle search parameter (fix the issue where search is not applied)
     if (req.query.search) {
-      where.OR = [
-        { name: { contains: req.query.search as string, mode: 'insensitive' } },
-        { link: { contains: req.query.search as string, mode: 'insensitive' } },
-        { platforms: { contains: req.query.search as string, mode: 'insensitive' } },
-      ];
+      const searchCondition: Prisma.RecommendationWhereInput = {
+        name: { contains: req.query.search as string, mode: 'insensitive' }
+      };
+      where.AND = where.AND || [];
+      (where.AND as Prisma.RecommendationWhereInput[]).push(searchCondition);
     }
 
     if (req.query.type) {
@@ -55,7 +56,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     if (req.query.hosts) {
       const hosts = (req.query.hosts as string).split(',');
-      const conditions = hosts.map(host => {
+      const hostsConditions: Prisma.RecommendationWhereInput[] = hosts.map(host => {
         if (host === 'dima') return { 
           OR: [
             { dima: true },
@@ -77,7 +78,14 @@ router.get('/', async (req: Request, res: Response) => {
         return { guest: { not: null } };
       });
       
-      where.OR = conditions;
+      // Apply hosts conditions with AND to preserve search filter
+      if (hostsConditions.length === 1) {
+        where.AND = where.AND || [];
+        (where.AND as Prisma.RecommendationWhereInput[]).push(hostsConditions[0]);
+      } else if (hostsConditions.length > 1) {
+        where.AND = where.AND || [];
+        (where.AND as Prisma.RecommendationWhereInput[]).push({ OR: hostsConditions });
+      }
     }
 
     const [recommendations, total] = await Promise.all([
@@ -107,7 +115,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Search media (games/movies) based on type
-router.get('/search-media', async (req: Request, res: Response) => {
+router.get('/search-media', async (req, res) => {
   try {
     const { search, typeId } = req.query;
     console.log(`Search request with search=${search}, typeId=${typeId}`);
@@ -256,7 +264,7 @@ router.get('/search-media', async (req: Request, res: Response) => {
 });
 
 // Get single recommendation by ID
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const recommendation = await prisma.recommendation.findUnique({
@@ -279,7 +287,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Create new recommendation - now automatically protected
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', async (req, res) => {
   try {
     const requestData = { ...req.body };
     
@@ -376,7 +384,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // Update recommendation - now automatically protected
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const requestData = { ...req.body };

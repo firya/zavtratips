@@ -128,6 +128,13 @@ export function RecommendationForm({
   const [timurValue, setTimurValue] = useState<string>(initialData?.timur?.toString() || 'null')
   const [maksimValue, setMaksimValue] = useState<string>(initialData?.maksim?.toString() || 'null')
   
+  // Prevent form submission on Enter key in input fields
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+      e.preventDefault();
+    }
+  };
+
   const { types, isLoading: isConfigLoading, error: configError, fetchConfigs } = useConfigStore()
   const { 
     availablePodcasts, 
@@ -431,6 +438,7 @@ export function RecommendationForm({
               setIsSearching(true);
             }}
             onFocus={() => setIsSearching(true)}
+            onKeyDown={handleKeyDown}
             className="pl-10"
             disabled={isFormLoading}
           />
@@ -468,6 +476,7 @@ export function RecommendationForm({
           placeholder="Enter other names/translations"
           value={otherNames}
           onChange={(e) => setOtherNames(e.target.value)}
+          onKeyDown={handleKeyDown}
           disabled={isFormLoading}
         />
       </div>
@@ -480,6 +489,7 @@ export function RecommendationForm({
           placeholder="Enter description (e.g. 2-й сезон)"
           value={nameDescription}
           onChange={(e) => setNameDescription(e.target.value)}
+          onKeyDown={handleKeyDown}
           disabled={isFormLoading}
         />
       </div>
@@ -493,6 +503,7 @@ export function RecommendationForm({
             type="url"
             value={linkValue}
             onChange={(e) => setLinkValue(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Enter recommendation link"
             disabled={isFormLoading}
           />
@@ -547,6 +558,7 @@ export function RecommendationForm({
                   type="url"
                   value={imageValue}
                   onChange={(e) => setImageValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="Enter image URL"
                   disabled={isFormLoading}
                 />
@@ -559,6 +571,7 @@ export function RecommendationForm({
                   name="platforms"
                   value={platformsValue}
                   onChange={(e) => setPlatformsValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="Enter platforms"
                   disabled={isFormLoading}
                 />
@@ -572,6 +585,7 @@ export function RecommendationForm({
                   type="number"
                   value={rateValue}
                   onChange={(e) => setRateValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="Enter rate"
                   disabled={isFormLoading}
                 />
@@ -584,6 +598,7 @@ export function RecommendationForm({
                   name="genre"
                   value={genreValue}
                   onChange={(e) => setGenreValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="Enter genre"
                   disabled={isFormLoading}
                 />
@@ -635,6 +650,7 @@ export function RecommendationForm({
                   id="length"
                   name="length"
                   defaultValue={initialData?.length}
+                  onKeyDown={handleKeyDown}
                   placeholder="Enter length"
                   disabled={isFormLoading}
                 />
@@ -681,6 +697,7 @@ export function RecommendationForm({
           name="guest"
           value={guestValue}
           onChange={(e) => setGuestValue(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Enter guest name"
           disabled={isFormLoading}
         />

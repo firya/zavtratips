@@ -81,7 +81,7 @@ export function RecommendationsFilters({
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card>
       {/* Mobile toggle button - visible only on mobile */}
       <Button
         type="button"

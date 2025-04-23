@@ -1,15 +1,11 @@
-import { useState, useEffect, KeyboardEvent, ChangeEvent } from 'react'
+import { useState, useEffect, KeyboardEvent, ChangeEvent, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { X, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Podcast as StorePodcast } from '@/stores/podcasts'
 
-export interface Podcast {
-  id?: number
-  showType: string
-  number: string
-  date?: string
-}
+export interface Podcast extends StorePodcast {}
 
 export interface PodcastFieldProps {
   value?: Podcast | null
@@ -19,6 +15,14 @@ export interface PodcastFieldProps {
   placeholder?: string
   className?: string
   disabled?: boolean
+}
+
+// Type guard to ensure each podcast item has the required properties
+const isPodcast = (item: any): item is Podcast => {
+  return typeof item === 'object' && 
+    item !== null && 
+    'showType' in item && 
+    'number' in item;
 }
 
 export function PodcastField({
@@ -32,9 +36,27 @@ export function PodcastField({
 }: PodcastFieldProps) {
   const [podcastSearch, setPodcastSearch] = useState<string>('')
   const [selectedIndex, setSelectedIndex] = useState<number>(-1)
+  const containerRef = useRef<HTMLDivElement>(null)
   
-  // Ensure availablePodcasts is a properly typed array
-  const podcasts = availablePodcasts as Podcast[]
+  // Make sure we have a safe array of properly typed podcasts
+  const safeAvailablePodcasts = Array.isArray(availablePodcasts) 
+    ? availablePodcasts.filter(isPodcast) 
+    : [];
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setPodcastSearch('')
+        setSelectedIndex(-1)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const handlePodcastSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -58,17 +80,17 @@ export function PodcastField({
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (!podcastSearch || podcasts.length === 0) return
+    if (!podcastSearch || safeAvailablePodcasts.length === 0) return
 
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setSelectedIndex(prev => (prev < podcasts.length - 1 ? prev + 1 : prev))
+      setSelectedIndex(prev => (prev < safeAvailablePodcasts.length - 1 ? prev + 1 : prev))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0))
     } else if (e.key === 'Enter' && selectedIndex >= 0) {
       e.preventDefault()
-      handlePodcastSelect(podcasts[selectedIndex])
+      handlePodcastSelect(safeAvailablePodcasts[selectedIndex])
     } else if (e.key === 'Escape') {
       e.preventDefault()
       setPodcastSearch('')
@@ -77,7 +99,7 @@ export function PodcastField({
   }
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative", className)} ref={containerRef}>
       <div className="relative">
         <Input
           placeholder={placeholder}
@@ -99,16 +121,17 @@ export function PodcastField({
         )}
       </div>
 
-      {podcastSearch && !value && podcasts.length > 0 && (
+      {podcastSearch && !value && safeAvailablePodcasts.length > 0 && (
         <div className="absolute top-full left-0 right-0 bg-popover border rounded-md shadow-md mt-1 z-50">
           <div className="max-h-[300px] overflow-y-auto">
-            {podcasts.length === 0 ? (
+            {safeAvailablePodcasts.length === 0 ? (
               <div className="px-2 py-1.5 text-sm text-muted-foreground">
                 No podcast found.
               </div>
             ) : (
-              podcasts.map((podcast, index) => {
-                const typedPodcast = podcast as Podcast;
+              safeAvailablePodcasts.map((podcast, index) => {
+                // Add explicit type assertion
+                const typedPodcast = podcast as unknown as Podcast;
                 return (
                   <div
                     key={`${typedPodcast.showType}-${typedPodcast.number}`}
