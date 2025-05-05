@@ -83,16 +83,16 @@ export default function telegramAuth(req: Request, res: Response, next: NextFunc
       throw new Error('Telegram bot token is not configured');
     }
 
-    validate(authData, token);
+    validate(authData, token, { expiresIn: 0 });
 
     // Parse and store init data in the request object
     req.telegramInitData = parse(authData);
     return next();
   } catch (error) {
     console.error('Telegram auth error:', error);
-    return res.status(401).json({ 
+    return res.status(401).json({
       error: 'Invalid Telegram authentication data',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
-} 
+}
