@@ -41,10 +41,10 @@ router.get('/', async (req, res) => {
 
     if (req.query.dateFrom || req.query.dateTo) {
       podcastWhere.date = {
-        ...(req.query.dateFrom ? { 
+        ...(req.query.dateFrom ? {
           gte: new Date(new Date(req.query.dateFrom as string).setUTCHours(0, 0, 0, 0))
         } : {}),
-        ...(req.query.dateTo ? { 
+        ...(req.query.dateTo ? {
           lte: new Date(new Date(req.query.dateTo as string).setUTCHours(23, 59, 59, 999))
         } : {})
       };
@@ -57,19 +57,19 @@ router.get('/', async (req, res) => {
     if (req.query.hosts) {
       const hosts = (req.query.hosts as string).split(',');
       const hostsConditions: Prisma.RecommendationWhereInput[] = hosts.map(host => {
-        if (host === 'dima') return { 
+        if (host === 'dima') return {
           OR: [
             { dima: true },
             { dima: false }
           ]
         };
-        if (host === 'timur') return { 
+        if (host === 'timur') return {
           OR: [
             { timur: true },
             { timur: false }
           ]
         };
-        if (host === 'maksim') return { 
+        if (host === 'maksim') return {
           OR: [
             { maksim: true },
             { maksim: false }
@@ -77,7 +77,7 @@ router.get('/', async (req, res) => {
         };
         return { guest: { not: null } };
       });
-      
+
       // Apply hosts conditions with AND to preserve search filter
       if (hostsConditions.length === 1) {
         where.AND = where.AND || [];
@@ -119,7 +119,7 @@ router.get('/search-media', async (req, res) => {
   try {
     const { search, typeId } = req.query;
     console.log(`Search request with search=${search}, typeId=${typeId}`);
-    
+
     if (!search || !typeId || search.toString().length < 2) {
       console.log('Missing search or typeId parameters, or search query is too short');
       return res.json([]);
@@ -154,7 +154,7 @@ router.get('/search-media', async (req, res) => {
 
     // Use apiConfig.type to determine which API to call
     let mediaData = [];
-    
+
     if (apiConfig.type === 'rawg') {
       try {
         const response = await axios.get(`https://api.rawg.io/api/games`, {
@@ -182,7 +182,7 @@ router.get('/search-media', async (req, res) => {
       } catch (apiError) {
         console.error('RAWG API error:', apiError);
       }
-    } 
+    }
     // For movies, TV shows, etc. use OMDB/IMDB API
     else if (apiConfig.type === 'imdb') {
       try {
@@ -203,7 +203,7 @@ router.get('/search-media', async (req, res) => {
                 // Add retry logic for details request
                 let retries = 3;
                 let detailsResponse;
-                
+
                 while (retries > 0) {
                   try {
                     detailsResponse = await axios.get(`http://www.omdbapi.com/`, {
@@ -290,44 +290,44 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const requestData = { ...req.body };
-    
+
     // Transform relationship fields for Prisma
     const data: any = {};
-    
+
     // Handle direct fields
     const directFields = [
-      'name', 'image', 'platforms', 'rate', 
-      'genre', 'length', 'dima', 
+      'name', 'image', 'platforms', 'rate',
+      'genre', 'length', 'dima',
       'timur', 'maksim', 'guest', 'rowNumber'
     ];
-    
+
     directFields.forEach(field => {
       if (field in requestData) {
         data[field] = requestData[field];
       }
     });
-    
+
     // Handle link field separately as it's required
     data.link = requestData.link || "";
-    
+
     // Handle releaseDate explicitly - if null/undefined/empty, set to null
     if ('releaseDate' in requestData) {
       data.releaseDate = requestData.releaseDate || null;
     }
-    
+
     // Handle relationship fields
     if ('podcastId' in requestData) {
       data.podcast = {
         connect: { id: Number(requestData.podcastId) }
       };
     }
-    
+
     if ('typeId' in requestData) {
       data.type = {
         connect: { id: Number(requestData.typeId) }
       };
     }
-    
+
     const recommendation = await prisma.recommendation.create({
       data,
       include: {
@@ -352,7 +352,7 @@ router.post('/', async (req, res) => {
 
     // Add to Google Spreadsheet
     const rowNumber = await addRecommendationToSpreadsheet([
-      recommendation.podcast.date.toLocaleDateString(),
+      recommendation.podcast.date ? recommendation.podcast.date.toLocaleDateString() : '',
       `${recommendation.podcast.showType} #${recommendation.podcast.number}`,
       recommendation.type.value,
       recommendation.name,
@@ -388,46 +388,46 @@ router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const requestData = { ...req.body };
-    
+
     // Transform relationship fields for Prisma
     const data: any = {};
-    
+
     // Handle direct fields
     const directFields = [
-      'name', 'image', 'platforms', 'rate', 
-      'genre', 'length', 'dima', 
+      'name', 'image', 'platforms', 'rate',
+      'genre', 'length', 'dima',
       'timur', 'maksim', 'guest', 'rowNumber'
     ];
-    
+
     directFields.forEach(field => {
       if (field in requestData) {
         data[field] = requestData[field];
       }
     });
-    
+
     // Handle link field separately as it's required
     if ('link' in requestData) {
       data.link = requestData.link || "";
     }
-    
+
     // Handle releaseDate explicitly - if null/undefined/empty, set to null
     if ('releaseDate' in requestData) {
       data.releaseDate = requestData.releaseDate || null;
     }
-    
+
     // Handle relationship fields
     if ('podcastId' in requestData) {
       data.podcast = {
         connect: { id: Number(requestData.podcastId) }
       };
     }
-    
+
     if ('typeId' in requestData) {
       data.type = {
         connect: { id: Number(requestData.typeId) }
       };
     }
-    
+
     const recommendation = await prisma.recommendation.update({
       where: { id: Number(id) },
       data,
@@ -484,14 +484,14 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Get the recommendation first to get the row number
     const recommendation = await prisma.recommendation.findUnique({
       where: { id: Number(id) },
-      select: { 
+      select: {
         id: true,
         rowNumber: true,
-        name: true 
+        name: true
       }
     });
 
@@ -511,7 +511,7 @@ router.delete('/:id', async (req, res) => {
         console.log(`Successfully cleared row in Google Spreadsheet: row ${recommendation.rowNumber}`);
       } catch (spreadsheetError) {
         console.error('Error updating Google Spreadsheet:', spreadsheetError);
-        return res.status(500).json({ 
+        return res.status(500).json({
           error: 'Failed to update Google Spreadsheet',
           details: spreadsheetError instanceof Error ? spreadsheetError.message : 'Unknown error'
         });
@@ -528,23 +528,23 @@ router.delete('/:id', async (req, res) => {
       console.log(`Successfully deleted from database: ID ${id}`);
     } catch (dbError) {
       console.error('Error deleting from database:', dbError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Updated Google Spreadsheet but failed to delete from database',
         details: dbError instanceof Error ? dbError.message : 'Unknown error'
       });
     }
 
-    res.json({ 
+    res.json({
       success: true,
       message: `Successfully deleted recommendation ID: ${id}, Name: ${recommendation.name}`
     });
   } catch (error) {
     console.error('Error deleting recommendation:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to delete recommendation',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
-export default router; 
+export default router;

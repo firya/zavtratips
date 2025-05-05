@@ -78,38 +78,38 @@ const parseRecommendationName = (fullName: string) => {
 // Function to compose name back to format: "{original name} / {other names} ({description})"
 const composeRecommendationName = (originalName: string, otherNames: string, description: string) => {
   let fullName = originalName.trim();
-  
+
   // Only add other names if they exist and are different from the original name
   if (otherNames.trim() && otherNames.trim() !== originalName.trim()) {
     fullName += ` / ${otherNames.trim()}`;
   }
-  
+
   if (description.trim()) {
     fullName += ` (${description.trim()})`;
   }
-  
+
   return fullName;
 };
 
-export function RecommendationForm({ 
-  initialData, 
-  initialLatestPodcast, 
-  onSuccess, 
-  onCancel, 
-  isLoading: parentIsLoading 
+export function RecommendationForm({
+  initialData,
+  initialLatestPodcast,
+  onSuccess,
+  onCancel,
+  isLoading: parentIsLoading
 }: RecommendationFormProps) {
   const [selectedPodcast, setSelectedPodcast] = useState<PodcastInfo | null>(null)
   const [hasManuallyCleared, setHasManuallyCleared] = useState(false)
   const [guestValue, setGuestValue] = useState(initialData?.guest || '')
-  
+
   // Parse the initial name into components
   const initialParsedName = initialData?.name ? parseRecommendationName(initialData.name) : { originalName: '', otherNames: '', description: '' };
-  
+
   // State for name components - each is independent
   const [originalName, setOriginalName] = useState(initialParsedName.originalName);
   const [otherNames, setOtherNames] = useState(initialParsedName.otherNames);
   const [nameDescription, setNameDescription] = useState(initialParsedName.description);
-  
+
   const [releaseDate, setReleaseDate] = useState<Date | undefined>(initialData?.releaseDate)
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
   const [selectedTypeId, setSelectedTypeId] = useState<string>(initialData?.typeId?.toString() || '')
@@ -122,12 +122,12 @@ export function RecommendationForm({
   const [genreValue, setGenreValue] = useState(initialData?.genre || '')
   const [isMediaDetailsOpen, setIsMediaDetailsOpen] = useState(false)
   const searchContainerRef = useRef<HTMLDivElement>(null)
-  
+
   // State for host values
   const [dimaValue, setDimaValue] = useState<string>(initialData?.dima?.toString() || 'null')
   const [timurValue, setTimurValue] = useState<string>(initialData?.timur?.toString() || 'null')
   const [maksimValue, setMaksimValue] = useState<string>(initialData?.maksim?.toString() || 'null')
-  
+
   // Prevent form submission on Enter key in input fields
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
@@ -136,15 +136,15 @@ export function RecommendationForm({
   };
 
   const { types, isLoading: isConfigLoading, error: configError, fetchConfigs } = useConfigStore()
-  const { 
-    availablePodcasts, 
+  const {
+    availablePodcasts,
     currentPodcast,
-    fetchPodcasts, 
-    fetchPodcast 
+    fetchPodcasts,
+    fetchPodcast
   } = usePodcastStore()
-  
-  const { 
-    mediaItems, 
+
+  const {
+    mediaItems,
     isLoading: isRecommendationLoading,
     searchMedia,
     createRecommendation,
@@ -154,7 +154,7 @@ export function RecommendationForm({
   // Combined loading state from parent and local states
   const isFormLoading = parentIsLoading || isRecommendationLoading || isConfigLoading;
 
-  const debouncedOriginalName = useDebounce(originalName, 300)
+  const debouncedOriginalName = useDebounce(originalName, 500)
 
   // Update form state when initialData changes
   useEffect(() => {
@@ -164,7 +164,7 @@ export function RecommendationForm({
       setOriginalName(parsedName.originalName);
       setOtherNames(parsedName.otherNames);
       setNameDescription(parsedName.description);
-      
+
       // Update all other form fields
       setReleaseDate(initialData.releaseDate);
       setSelectedTypeId(initialData.typeId?.toString() || '');
@@ -192,7 +192,7 @@ export function RecommendationForm({
 
   useEffect(() => {
     fetchConfigs()
-    
+
     // If we have initialData, fetch the selected podcast
     if (initialData?.podcastId) {
       fetchPodcast(initialData.podcastId)
@@ -214,7 +214,7 @@ export function RecommendationForm({
 
   const handlePodcastSearch = (search: string) => {
     if (!search) return
-    
+
     // Only search for numbers in the input
     const numberMatch = search.match(/\d+/)
     if (numberMatch) {
@@ -240,7 +240,7 @@ export function RecommendationForm({
 
   const handleMediaSelect = (media: MediaItem) => {
     setSelectedMedia(media)
-    
+
     // Parse the name into components
     if (media.name) {
       const parsed = parseRecommendationName(media.name);
@@ -248,13 +248,13 @@ export function RecommendationForm({
       setOtherNames(parsed.otherNames);
       setNameDescription(parsed.description);
     }
-    
+
     setLinkValue(media.link || '')
     setImageValue(media.image || '')
     setPlatformsValue(media.platforms || '')
     setRateValue(media.rate?.toString() || '')
     setGenreValue(media.genre || '')
-    
+
     // Set release date if available
     if (media.releaseDate) {
       try {
@@ -264,7 +264,7 @@ export function RecommendationForm({
         console.error('Invalid date format:', e)
       }
     }
-    
+
     setIsSearching(false)
     // Close the dropdown by clearing the search results
     searchMedia('', '')
@@ -272,16 +272,16 @@ export function RecommendationForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    
+
     const formData = new FormData(e.currentTarget)
     const data: Record<string, any> = {}
-    
+
     formData.forEach((value, key) => {
       // Skip the individual name component fields, as we'll compose them into a single name field
       if (key === 'originalName' || key === 'otherNames' || key === 'nameDescription') {
         return;
       }
-      
+
       // Handle hosts fields from Select components
       if (key === 'dima' || key === 'timur' || key === 'maksim') {
         if (value === 'true') {
@@ -301,19 +301,19 @@ export function RecommendationForm({
         data[key] = value === '' ? null : value
       }
     })
-    
+
     // Compose the name from the three separate fields
     data.name = composeRecommendationName(
       formData.get('originalName') as string || '',
       formData.get('otherNames') as string || '',
       formData.get('nameDescription') as string || ''
     );
-    
+
     // Add typeId from state
     if (selectedTypeId) {
       data.typeId = parseInt(selectedTypeId, 10)
     }
-    
+
     // Add podcastId explicitly from selectedPodcast
     if (selectedPodcast?.id) {
       data.podcastId = selectedPodcast.id;
@@ -324,13 +324,13 @@ export function RecommendationForm({
       toast.error('Please select a podcast');
       return;
     }
-    
+
     // Handle release date explicitly (which is controlled by our state)
     // If undefined or null, explicitly set to null to clear it
     data.releaseDate = releaseDate || null;
-    
+
     const toastId = toast.loading(initialData?.id ? 'Updating recommendation...' : 'Creating recommendation...');
-    
+
     try {
       if (initialData?.id) {
         // Update
@@ -340,7 +340,7 @@ export function RecommendationForm({
         // Create
         await createRecommendation(data)
         toast.success('Recommendation created successfully', { id: toastId })
-        
+
         // Reset form fields after successful creation (except podcast)
         setOriginalName('');
         setOtherNames('');
@@ -355,15 +355,15 @@ export function RecommendationForm({
         setGenreValue('');
         setGuestValue('');
         setIsMediaDetailsOpen(false);
-        
+
         // Reset host values to null
         setDimaValue('null');
         setTimurValue('null');
         setMaksimValue('null');
-        
+
         // Do not reset selectedPodcast or hasManuallyCleared
       }
-      
+
       if (onSuccess) {
         onSuccess()
       }
@@ -405,8 +405,8 @@ export function RecommendationForm({
 
       <div className="space-y-2">
         <Label htmlFor="typeId">Type</Label>
-        <ClearableSelect 
-          name="typeId" 
+        <ClearableSelect
+          name="typeId"
           value={selectedTypeId}
           onValueChange={setSelectedTypeId}
           placeholder="Select type"
@@ -530,134 +530,132 @@ export function RecommendationForm({
           <span>Media Details</span>
           {isMediaDetailsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </Button>
-        {isMediaDetailsOpen && (
-          <CardContent className="pt-4">
-            <div className="flex flex-col gap-4">
-              <div className="mx-auto">
-                <div style={{ height: "256px" }} className="flex items-center justify-center bg-black/5 rounded-md overflow-hidden">
-                  {imageValue ? (
-                    <img
-                      src={imageValue}
-                      alt="Media"
-                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <div className="text-muted-foreground text-sm">No image</div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="image"></Label>
-                <Input
-                  id="image"
-                  name="image"
-                  type="url"
-                  value={imageValue}
-                  onChange={(e) => setImageValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Enter image URL"
-                  disabled={isFormLoading}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="platforms"></Label>
-                <Input
-                  id="platforms"
-                  name="platforms"
-                  value={platformsValue}
-                  onChange={(e) => setPlatformsValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Enter platforms"
-                  disabled={isFormLoading}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="rate"></Label>
-                <Input
-                  id="rate"
-                  name="rate"
-                  type="number"
-                  value={rateValue}
-                  onChange={(e) => setRateValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Enter rate"
-                  disabled={isFormLoading}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="genre"></Label>
-                <Input
-                  id="genre"
-                  name="genre"
-                  value={genreValue}
-                  onChange={(e) => setGenreValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Enter genre"
-                  disabled={isFormLoading}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="releaseDate"></Label>
-                <div className="flex gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "flex-1 justify-start text-left font-normal",
-                          !releaseDate && "text-muted-foreground"
-                        )}
-                        disabled={isFormLoading}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {releaseDate ? format(releaseDate, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={releaseDate}
-                        onSelect={(date) => !isFormLoading && setReleaseDate(date as Date)}
-                        defaultMonth={releaseDate}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {releaseDate && (
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => setReleaseDate(undefined)}
-                      disabled={isFormLoading}
-                    >
-                      ✕
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="length"></Label>
-                <Input
-                  id="length"
-                  name="length"
-                  defaultValue={initialData?.length}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Enter length"
-                  disabled={isFormLoading}
-                />
+        <CardContent className={`pt-4 ${!isMediaDetailsOpen ? 'hidden' : ''}`}>
+          <div className="flex flex-col gap-4">
+            <div className="mx-auto">
+              <div style={{ height: "256px" }} className="flex items-center justify-center bg-black/5 rounded-md overflow-hidden">
+                {imageValue ? (
+                  <img
+                    src={imageValue}
+                    alt="Media"
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="text-muted-foreground text-sm">No image</div>
+                )}
               </div>
             </div>
-          </CardContent>
-        )}
+
+            <div className="space-y-2">
+              <Label htmlFor="image"></Label>
+              <Input
+                id="image"
+                name="image"
+                type="url"
+                value={imageValue}
+                onChange={(e) => setImageValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter image URL"
+                disabled={isFormLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="platforms"></Label>
+              <Input
+                id="platforms"
+                name="platforms"
+                value={platformsValue}
+                onChange={(e) => setPlatformsValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter platforms"
+                disabled={isFormLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="rate"></Label>
+              <Input
+                id="rate"
+                name="rate"
+                type="number"
+                value={rateValue}
+                onChange={(e) => setRateValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter rate"
+                disabled={isFormLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="genre"></Label>
+              <Input
+                id="genre"
+                name="genre"
+                value={genreValue}
+                onChange={(e) => setGenreValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter genre"
+                disabled={isFormLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="releaseDate"></Label>
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal",
+                        !releaseDate && "text-muted-foreground"
+                      )}
+                      disabled={isFormLoading}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {releaseDate ? format(releaseDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={releaseDate}
+                      onSelect={(date) => !isFormLoading && setReleaseDate(date as Date)}
+                      defaultMonth={releaseDate}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {releaseDate && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setReleaseDate(undefined)}
+                    disabled={isFormLoading}
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="length"></Label>
+              <Input
+                id="length"
+                name="length"
+                defaultValue={initialData?.length}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter length"
+                disabled={isFormLoading}
+              />
+            </div>
+          </div>
+        </CardContent>
       </Card>
 
       <div className="space-y-4">
@@ -722,4 +720,4 @@ export function RecommendationForm({
       </div>
     </form>
   )
-} 
+}

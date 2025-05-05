@@ -19,7 +19,7 @@ model Config {
 
 model Podcast {
   id             Int             @id @default(autoincrement())
-  date           DateTime
+  date           DateTime?
   showType       String
   number         String
   name           String

@@ -41,7 +41,7 @@ export function EditPodcastPage() {
   useEffect(() => {
     const fetchPodcast = async () => {
       if (!id) return
-      
+
       try {
         setIsLoading(true)
         const response = await api.get(`/podcasts/${id}`)
@@ -54,15 +54,15 @@ export function EditPodcastPage() {
         setIsLoading(false)
       }
     }
-    
+
     fetchPodcast()
   }, [id, navigate])
 
   const handleDelete = async () => {
     if (!id) return
-    
+
     const toastId = toast.loading('Deleting podcast...')
-    
+
     try {
       setIsDeleting(true)
       await api.delete(`/podcasts/${id}`)
@@ -97,7 +97,7 @@ export function EditPodcastPage() {
       <PodcastForm
         initialData={podcast ? {
           id: podcast.id,
-          date: new Date(podcast.date),
+          date: podcast.date ? new Date(podcast.date) : undefined,
           showType: podcast.showType,
           number: podcast.number,
           name: podcast.name,
@@ -122,8 +122,8 @@ export function EditPodcastPage() {
         </div>
       )}
 
-      <Dialog 
-        open={isDeleteDialogOpen} 
+      <Dialog
+        open={isDeleteDialogOpen}
         onOpenChange={(open: boolean) => !open && setIsDeleteDialogOpen(false)}
       >
         <DialogContent>
@@ -134,17 +134,17 @@ export function EditPodcastPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
               disabled={isDeleting}
             >
               Cancel
             </Button>
-            <Button 
-              type="button" 
-              variant="destructive" 
+            <Button
+              type="button"
+              variant="destructive"
               onClick={handleDelete}
               disabled={isDeleting}
             >
@@ -160,4 +160,4 @@ export function EditPodcastPage() {
       </Dialog>
     </div>
   )
-} 
+}

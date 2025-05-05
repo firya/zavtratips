@@ -16,7 +16,7 @@ import InputMask from 'react-input-mask'
 
 interface Podcast {
   id?: number
-  date: Date
+  date?: Date
   showType: string
   number: string
   name: string
@@ -34,28 +34,23 @@ interface PodcastFormProps {
   mode?: 'create' | 'edit'
 }
 
-function HHMMSSToMilliseconds(time: string): number {
-  const [hours, minutes, seconds] = time.split(':').map(Number)
-  return (hours * 3600 + minutes * 60 + seconds) * 1000
-}
-
 function millisecondsToHHMMSS(ms: number | string): string {
   if (!ms) return ''
-  
+
   // Check if the input is already in HH:MM:SS format (contains colons)
   if (typeof ms === 'string' && ms.includes(':')) {
     return ms
   }
-  
+
   const milliseconds = typeof ms === 'string' ? parseInt(ms, 10) : ms
-  
+
   if (isNaN(milliseconds)) return ''
-  
+
   const totalSeconds = Math.floor(milliseconds / 1000)
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
-  
+
   return [
     hours.toString().padStart(2, '0'),
     minutes.toString().padStart(2, '0'),
@@ -64,7 +59,7 @@ function millisecondsToHHMMSS(ms: number | string): string {
 }
 
 export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: parentIsLoading, mode = 'create' }: PodcastFormProps) {
-  const [date, setDate] = useState<Date | undefined>(initialData?.date ? new Date(initialData.date) : new Date())
+  const [date, setDate] = useState<Date | undefined>(initialData?.date ? new Date(initialData.date) : undefined)
   const [isLoading, setIsLoading] = useState(false)
   const initialLength = initialData?.length ? millisecondsToHHMMSS(initialData.length) : ''
   const [length, setLength] = useState(initialLength)
@@ -73,7 +68,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
   const { showTypes, isLoading: isConfigLoading, error: configError, fetchConfigs } = useConfigStore()
   const { getLastEpisodeNumber } = usePodcastStore()
   const [calendarOpen, setCalendarOpen] = useState(false)
-  
+
   // Combined loading state from parent and local state
   const isFormLoading = parentIsLoading || isLoading || isConfigLoading
 
@@ -96,7 +91,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
   // Custom handler for show type changes to update episode number in create mode
   const handleShowTypeChange = async (newShowType: string) => {
     setSelectedShowType(newShowType);
-    
+
     // Only auto-increment episode number in create mode
     if (mode === 'create') {
       const lastNumber = await getLastEpisodeNumber(newShowType);
@@ -112,7 +107,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
     const fetchNextNumber = async () => {
       // Only run this when in create mode, not edit mode, and when no episode number is set
       const isCreateMode = mode === 'create';
-      
+
       if (selectedShowType && isCreateMode && !episodeNumber) {
         const lastNumber = await getLastEpisodeNumber(selectedShowType)
         if (lastNumber !== null) {
@@ -131,24 +126,24 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
       if (initialData.date) {
         setDate(new Date(initialData.date))
       }
-      
+
       // Try to access length property, accounting for different possible data structures
       let lengthValue = initialData.length
-      
+
       // Check for nested length in data property if present
       if (initialData.data?.length) {
         lengthValue = initialData.data.length
       }
-      
+
       if (lengthValue) {
         const formattedLength = millisecondsToHHMMSS(lengthValue)
         setLength(formattedLength)
       }
-      
+
       if (initialData.showType) {
         setSelectedShowType(initialData.showType)
       }
-      
+
       if (initialData.number) {
         setEpisodeNumber(initialData.number)
       }
@@ -157,17 +152,17 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!date || !selectedShowType || !episodeNumber) {
+    if (!selectedShowType || !episodeNumber) {
       toast.error('Please fill in all required fields')
       return
     }
 
     setIsLoading(true)
     const toastId = toast.loading(initialData?.id ? 'Updating podcast...' : 'Creating podcast...')
-    
+
     try {
       const formData = new FormData(e.currentTarget)
-      
+
       // Convert length to milliseconds or preserve format as needed
       let lengthValue = ''
       if (length && length.trim() !== '') {
@@ -176,9 +171,9 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
       } else {
         lengthValue = '00:00:00' // Default to zero length if empty
       }
-      
+
       const data: Podcast = {
-        date,
+        date: date,
         showType: selectedShowType,
         number: episodeNumber,
         name: formData.get('name') as string || '',
@@ -192,7 +187,7 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
         await api.post('/podcasts', data)
         toast.success('Podcast created successfully', { id: toastId })
       }
-      
+
       onSuccess?.()
     } catch (error) {
       console.error('Error saving podcast:', error)
@@ -203,40 +198,53 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
   }
 
   return (
-    <form 
-      onSubmit={handleSubmit} 
+    <form
+      onSubmit={handleSubmit}
       className="space-y-6"
     >
       <div className="space-y-2">
         <Label htmlFor="date">Date</Label>
-        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          <PopoverTrigger asChild>
+        <div className="flex gap-2">
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !date && "text-muted-foreground"
+                )}
+                disabled={isFormLoading}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date ? format(date, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(newDate) => {
+                  if (!isFormLoading && newDate) {
+                    setDate(newDate as Date)
+                    setCalendarOpen(false)
+                  }
+                }}
+                defaultMonth={date}
+              />
+            </PopoverContent>
+          </Popover>
+          {date && (
             <Button
+              type="button"
               variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
+              size="icon"
+              onClick={() => setDate(undefined)}
               disabled={isFormLoading}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP") : <span>Pick a date</span>}
+              ✕
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(newDate) => {
-                if (!isFormLoading && newDate) {
-                  setDate(newDate as Date)
-                  setCalendarOpen(false)
-                }
-              }}
-              defaultMonth={date}
-            />
-          </PopoverContent>
-        </Popover>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -318,4 +326,4 @@ export function PodcastForm({ initialData, onSuccess, onCancel, isLoading: paren
       </div>
     </form>
   )
-} 
+}
