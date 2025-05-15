@@ -454,7 +454,7 @@ router.put('/:id', async (req, res) => {
     // Update in Google Spreadsheet
     if (recommendation.rowNumber) {
       await updateRowInSpreadsheet('Рекомендации', recommendation.rowNumber, [
-        recommendation.podcast.date.toLocaleDateString(),
+        recommendation.podcast.date ? recommendation.podcast.date.toLocaleDateString() : '',
         `${recommendation.podcast.showType} #${recommendation.podcast.number}`,
         recommendation.type.value,
         recommendation.name,

@@ -111,8 +111,8 @@ async function syncConfig() {
 
         if (!existingConfig) {
           await prisma.config.create({
-            data: { 
-              type, 
+            data: {
+              type,
               value,
               rowNumber: rowIndex + 2 // +2 because we skip header row and 1-based indexing
             }
@@ -138,14 +138,10 @@ async function syncPodcasts() {
 
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
     const row = rows[rowIndex];
-    if (row.length < 7) continue;
 
     const [dateStr, showType, number, , name, , duration] = row;
     const date = parsePodcastDate(dateStr);
-    if (!date) continue;
-
     const length = parsePodcastDuration(duration);
-    if (!length) continue;
 
     try {
       const existingPodcast = await prisma.podcast.findFirst({
@@ -155,21 +151,21 @@ async function syncPodcasts() {
       if (existingPodcast) {
         await prisma.podcast.update({
           where: { id: existingPodcast.id },
-          data: { 
-            date, 
-            name, 
-            length,
+          data: {
+            date,
+            name,
+            length: length || 0,
             rowNumber: rowIndex + 3 // +3 because we skip two header rows and 1-based indexing
           }
         });
       } else {
         await prisma.podcast.create({
-          data: { 
-            date, 
-            showType, 
-            number, 
-            name, 
-            length,
+          data: {
+            date,
+            showType,
+            number,
+            name,
+            length: length || 0,
             rowNumber: rowIndex + 3
           }
         });
@@ -205,18 +201,18 @@ async function syncStreams() {
       if (existingStream) {
         await prisma.stream.update({
           where: { id: existingStream.id },
-          data: { 
-            link, 
+          data: {
+            link,
             length,
             rowNumber: rowIndex + 3 // +3 because we skip two header rows and 1-based indexing
           }
         });
       } else {
         await prisma.stream.create({
-          data: { 
-            date, 
-            title, 
-            link, 
+          data: {
+            date,
+            title,
+            link,
             length,
             rowNumber: rowIndex + 3
           }
@@ -234,7 +230,7 @@ async function syncRecommendations() {
 
   const rows = data.slice(1);
   console.log(`Total rows in spreadsheet: ${rows.length}`);
-  
+
   let processedRows = 0;
 
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
@@ -563,4 +559,4 @@ export async function addRowsToSpreadsheet(sheetName: string, rows: string[][]) 
 
 export async function addStreamsToSpreadsheet(rows: string[][]) {
   return addRowsToSpreadsheet('Стримы', rows);
-} 
+}

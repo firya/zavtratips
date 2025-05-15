@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
     if (latest) {
       // Get the most recent podcast
       const latestPodcast = await prisma.podcast.findFirst({
-        orderBy: { date: 'desc' }
+        orderBy: { rowNumber: 'desc' }
       });
 
       podcasts = latestPodcast ? [latestPodcast] : [];
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
       const [exactMatches, exactCount] = await Promise.all([
         prisma.podcast.findMany({
           where: { number: search },
-          orderBy: { date: 'desc' }
+          orderBy: { rowNumber: 'desc' }
         }),
         prisma.podcast.count({ where: { number: search } })
       ]);
@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
             number: { contains: search },
             NOT: { number: search }
           },
-          orderBy: { date: 'desc' },
+          orderBy: { rowNumber: 'desc' },
           skip: Math.max(0, skip - exactCount),
           take: limit - exactMatches.length
         }),
@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
     } else {
       [podcasts, total] = await Promise.all([
         prisma.podcast.findMany({
-          orderBy: { date: 'desc' },
+          orderBy: { rowNumber: 'desc' },
           skip,
           take: limit
         }),
@@ -162,7 +162,7 @@ router.put('/:id', async (req, res) => {
     // Update in Google Spreadsheet
     if (podcast.rowNumber) {
       await updateRowInSpreadsheet('Выпуски', podcast.rowNumber, [
-        podcast.date.toLocaleDateString(),
+        podcast.date ? podcast.date.toLocaleDateString() : '',
         podcast.showType,
         podcast.number,
         `${podcast.showType} #${podcast.number}`,
