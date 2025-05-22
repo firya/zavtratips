@@ -1,6 +1,6 @@
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, format, isToday, isWithinInterval } from "date-fns"
+import { addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, format, isToday, isWithinInterval, startOfWeek, endOfWeek } from "date-fns"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,6 @@ export function Calendar({
   mode = "single",
   selected,
   onSelect,
-  numberOfMonths = 1,
   defaultMonth = new Date(),
   className,
 }: CalendarProps) {
@@ -35,7 +34,13 @@ export function Calendar({
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
+
+  // Указываем, что неделя начинается в понедельник ({ weekStartsOn: 1 })
+  const displayStart = startOfWeek(monthStart, { weekStartsOn: 1 as const })
+  // Указываем, что неделя начинается в понедельник ({ weekStartsOn: 1 })
+  const displayEnd = endOfWeek(monthEnd, { weekStartsOn: 1 as const })
+
+  const allDaysInGrid = eachDayOfInterval({ start: displayStart, end: displayEnd })
 
   const handleDateClick = (date: Date) => {
     if (mode === "single") {
@@ -59,14 +64,14 @@ export function Calendar({
       return selected && isSameDay(date, selected as Date)
     }
     const range = selected as DateRange
-    return range?.from && isSameDay(date, range.from) || range?.to && isSameDay(date, range.to)
+    return (range?.from && isSameDay(date, range.from)) || (range?.to && isSameDay(date, range.to))
   }
 
   const isDateInRange = (date: Date) => {
     if (mode === "single") return false
     const range = selected as DateRange
-    if (!range?.from || !range?.to) return false
-    return isWithinInterval(date, { start: range.from, end: range.to })
+    if (!range?.from || !range?.to) return false;
+    return isWithinInterval(date, { start: range.from, end: range.to });
   }
 
   return (
@@ -94,7 +99,8 @@ export function Calendar({
       </div>
 
       <div className="grid grid-cols-7 gap-1 mb-2">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+        {/* Изменен порядок дней недели: начинается с понедельника */}
+        {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((day) => (
           <div
             key={day}
             className="text-center text-sm font-normal text-muted-foreground"
@@ -105,11 +111,21 @@ export function Calendar({
       </div>
 
       <div className="grid grid-cols-7 gap-1">
-        {days.map((day, dayIdx) => {
-          const isSelected = isDateSelected(day)
-          const isInRange = isDateInRange(day)
-          const isCurrentMonth = isSameMonth(day, currentMonth)
-          const isCurrentDay = isToday(day)
+        {allDaysInGrid.map((day) => {
+          const isCurrentMonthDay = isSameMonth(day, currentMonth);
+
+          if (!isCurrentMonthDay) {
+            return (
+              <div
+                key={day.toString()}
+                className="h-9 w-9 p-0"
+              />
+            );
+          }
+
+          const isSelected = isDateSelected(day);
+          const isInRange = isDateInRange(day);
+          const isCurrentDay = isToday(day);
 
           return (
             <Button
@@ -117,8 +133,7 @@ export function Calendar({
               variant="ghost"
               className={cn(
                 "h-9 w-9 p-0 font-normal",
-                !isCurrentMonth && "text-muted-foreground opacity-50",
-                isCurrentDay && "text-primary font-semibold",
+                isCurrentDay && "text-primary font-semibold bg-primary/20",
                 (isSelected || isInRange) && "bg-primary text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground",
                 !isSelected && !isInRange && "hover:bg-accent hover:text-accent-foreground"
               )}
@@ -128,9 +143,9 @@ export function Calendar({
             >
               {format(day, "d")}
             </Button>
-          )
+          );
         })}
       </div>
     </div>
-  )
-} 
+  );
+}
