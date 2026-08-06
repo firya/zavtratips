@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
-import { addRecommendationToSpreadsheet, updateRowInSpreadsheet, deleteRowFromSpreadsheet } from '../sheets';
+import { addRecommendationToSpreadsheet, updateRowInSpreadsheet } from '../sheets';
 import axios from 'axios';
-import { Request, Response } from 'express';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -157,30 +156,75 @@ router.get('/search-media', async (req, res) => {
 
     if (apiConfig.type === 'rawg') {
       try {
-        const response = await axios.get(`https://api.rawg.io/api/games`, {
+        // IGDB uses OAuth2 client-credentials (Twitch)
+        const tokenResp = await axios.post('https://id.twitch.tv/oauth2/token', null, {
           params: {
-            key: process.env.RAWG_API_KEY,
-            search: search,
-            page_size: 10,
+            client_id: process.env.IGDB_CLIENT_ID,
+            client_secret: process.env.IGDB_SECRET,
+            grant_type: 'client_credentials',
           },
+          timeout: 10000,
         });
+        const accessToken = tokenResp.data.access_token;
 
-        mediaData = response.data.results.map((game: any) => ({
-          name: game.name,
-          link: `https://rawg.io/games/${game.slug}`,
-          image: game.background_image,
-          platforms: game.platforms?.map((p: any) => p.platform.name).join(', '),
-          rate: game.metacritic,
-          genre: game.genres?.map((g: any) => g.name).join(', '),
-          releaseDate: game.released,
-          length: {
-            gameplayMain: game.playtime,
-            gameplayMainExtra: game.playtime,
-            gameplayCompletionist: game.playtime,
-          },
-        }));
+        const igdbHeaders = {
+          'Client-ID': process.env.IGDB_CLIENT_ID,
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        };
+        const igdbFields = 'id,name,slug,cover.image_id,artworks.image_id,platforms.name,genres.name,first_release_date,rating,aggregated_rating';
+
+        const gamesResp = await axios.post(
+          'https://api.igdb.com/v4/games',
+          `search "${search}"; fields ${igdbFields}; limit 10;`,
+          { headers: igdbHeaders, timeout: 10000 },
+        );
+
+        const games: any[] = gamesResp.data;
+
+        // Fetch playtime (game_time_to_beat) in parallel for each game
+        mediaData = await Promise.all(
+          games.map(async (game: any) => {
+            let length: any = null;
+            try {
+              const ttbResp = await axios.post(
+                'https://api.igdb.com/v4/game_time_to_beats',
+                `fields normally,hastily,completely; where game = ${game.id};`,
+                { headers: igdbHeaders, timeout: 10000 },
+              );
+              const ttb = ttbResp.data[0];
+              if (ttb) {
+                length = {
+                  gameplayMain: ttb.normally ?? null,
+                  gameplayMainExtra: ttb.hastily ?? null,
+                  gameplayCompletionist: ttb.completely ?? null,
+                };
+              }
+            } catch (ttbError) {
+              console.error(`IGDB time_to_beat error for game ${game.id}:`, ttbError);
+            }
+
+            const imageId = game.cover?.image_id ?? game.artworks?.[0]?.image_id;
+            const image = imageId
+              ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${imageId}.jpg`
+              : null;
+
+            return {
+              name: game.name,
+              link: `https://www.igdb.com/games/${game.slug}`,
+              image,
+              platforms: game.platforms?.map((p: any) => p.name).join(', '),
+              rate: game.rating ?? game.aggregated_rating,
+              genre: game.genres?.map((g: any) => g.name).join(', '),
+              releaseDate: game.first_release_date
+                ? new Date(game.first_release_date * 1000).toISOString().split('T')[0]
+                : null,
+              length,
+            };
+          }),
+        );
       } catch (apiError) {
-        console.error('RAWG API error:', apiError);
+        console.error('IGDB API error:', apiError);
       }
     }
     // For movies, TV shows, etc. use OMDB/IMDB API

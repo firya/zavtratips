@@ -66,7 +66,7 @@ See `.env.example` for a complete list of required environment variables and the
 - Telegram bot integration
 - Google Sheets synchronization
 - YouTube playlist integration
-- RAWG and OMDB API integration for game and movie recommendations
+- IGDB and OMDB API integration for game and movie recommendations
 
 ## Tech Stack
 

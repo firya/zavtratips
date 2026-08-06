@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { CalendarIcon, Search, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
 import { useConfigStore } from '@/stores/config'
-import { usePodcastStore, Podcast as StorePodcast } from '@/stores/podcasts'
+import { usePodcastStore } from '@/stores/podcasts'
 import { useRecommendationsStore, MediaItem } from '@/stores/recommendations'
 import { useDebounce } from '@/hooks/useDebounce'
 import { PodcastField, Podcast as PodcastFieldPodcast, ClearableSelect } from '@/components/common'
@@ -179,6 +179,16 @@ export function RecommendationForm({
       setMaksimValue(initialData.maksim?.toString() || 'null');
     }
   }, [initialData]);
+
+  // Ensure type is set once both initialData and types are loaded (handles SPA navigation/race conditions)
+  useEffect(() => {
+    if (initialData?.typeId && !selectedTypeId) {
+      const hasTypeInConfig = types.some((type) => type.id === initialData.typeId);
+      if (hasTypeInConfig) {
+        setSelectedTypeId(initialData.typeId.toString());
+      }
+    }
+  }, [initialData, selectedTypeId, types]);
 
   // Set the initial latest podcast if provided
   useEffect(() => {
