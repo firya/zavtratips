@@ -15,14 +15,10 @@ export function CustomToaster(props: ToasterProps) {
     const toastContainer = document.createElement('div');
     toastContainer.id = 'toast-container';
     toastContainer.style.position = 'fixed';
-    toastContainer.style.top = '0';
-    
-    // Instead of covering the full width, set right-aligned positioning
-    // This leaves space for the back button on the left
+    toastContainer.style.bottom = '0';
     toastContainer.style.right = '0';
-    // Only take up 70% of the screen width (leaves space for back button)
     toastContainer.style.maxWidth = '70%';
-    
+
     toastContainer.style.zIndex = '2147483647'; // Maximum possible z-index
     toastContainer.style.pointerEvents = 'none'; // Allow clicking through the container
     
@@ -43,7 +39,7 @@ export function CustomToaster(props: ToasterProps) {
   return createPortal(
     <Toaster
       {...props}
-      position="top-right" // Force top-right positioning
+      position="bottom-right" // Force bottom-right positioning
       className={`pointer-events-auto ${props.className || ''}`}
       toastOptions={{
         ...props.toastOptions,
