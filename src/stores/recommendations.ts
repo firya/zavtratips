@@ -14,6 +14,9 @@ interface Podcast {
 }
 
 export interface MediaItem {
+  tmdbId?: number
+  mediaType?: string
+  otherNames?: string
   imdbId?: string
   year?: string
   name: string

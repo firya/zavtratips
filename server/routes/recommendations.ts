@@ -3,6 +3,7 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { addRecommendationToSpreadsheet, updateRowInSpreadsheet } from '../sheets';
 import axios from 'axios';
 import { omdbMedia } from '../services/omdb';
+import { tmdbMedia } from '../services/tmdb';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -215,9 +216,9 @@ router.get('/search-media', async (req, res) => {
         console.error(`IGDB API error (${status}): ${msg}`);
       }
     }
-    // OMDb has separate movie/series filters; anime includes both.
+    // Keep existing type configuration IDs; TMDB searches translated titles.
     else if (apiConfig.type === 'imdb') {
-      mediaData = await omdbMedia.search(search.toString(), apiConfig.value);
+      mediaData = await tmdbMedia.search(search.toString(), apiConfig.value);
     } else {
       console.log(`No suitable API found for content type: ${apiConfig.type}`);
     }
@@ -232,6 +233,13 @@ router.get('/search-media', async (req, res) => {
 
 // Return cached metadata for the selected title.
 router.get('/media-details', async (req, res) => {
+  const tmdbId = Number(req.query.tmdbId);
+  const kind = req.query.mediaType === 'series' ? 'tv' : req.query.mediaType === 'movie' ? 'movie' : undefined;
+  if (req.query.tmdbId !== undefined) {
+    if (!kind || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) return res.status(400).json({ error: 'Invalid TMDB ID' });
+    try { return res.json(await tmdbMedia.selected(kind, tmdbId)); }
+    catch { return res.status(502).json({ error: 'Unable to load movie details' }); }
+  }
   const id = req.query.imdbId?.toString() || '';
   if (!/^tt\d{7,10}$/.test(id)) return res.status(400).json({ error: 'Invalid IMDb ID' });
   try {

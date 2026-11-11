@@ -67,8 +67,7 @@ const parseRecommendationName = (fullName: string) => {
   const nameParts = fullName.split(' / ');
   if (nameParts.length > 1) {
     originalName = nameParts[0].trim();
-    // Take only the first other name to avoid duplicates
-    otherNames = nameParts[1].trim();
+    otherNames = nameParts.slice(1).join(' / ').trim();
   } else {
     originalName = fullName.trim();
   }
@@ -122,6 +121,7 @@ export function RecommendationForm({
   const [platformsValue, setPlatformsValue] = useState(initialData?.platforms || '')
   const [rateValue, setRateValue] = useState(initialData?.rate?.toString() || '')
   const [genreValue, setGenreValue] = useState(initialData?.genre || '')
+  const [lengthValue, setLengthValue] = useState(initialData?.length || '')
   const [isMediaDetailsOpen, setIsMediaDetailsOpen] = useState(false)
   const searchContainerRef = useRef<HTMLDivElement>(null)
 
@@ -175,6 +175,7 @@ export function RecommendationForm({
       setPlatformsValue(initialData.platforms || '');
       setRateValue(initialData.rate?.toString() || '');
       setGenreValue(initialData.genre || '');
+      setLengthValue(initialData.length || '');
       setGuestValue(initialData.guest || '');
       setDimaValue(initialData.dima?.toString() || 'null');
       setTimurValue(initialData.timur?.toString() || 'null');
@@ -256,8 +257,9 @@ export function RecommendationForm({
     setIsMediaDetailsLoading(true)
     let media = item
     try {
-      if (item.imdbId) {
-        const response = await api.get('/recommendations/media-details', { params: { imdbId: item.imdbId } })
+      if (item.tmdbId || item.imdbId) {
+        const params = item.tmdbId ? { tmdbId: item.tmdbId, mediaType: item.mediaType } : { imdbId: item.imdbId }
+        const response = await api.get('/recommendations/media-details', { params })
         media = { ...item, ...response.data }
       }
     } catch {
@@ -269,9 +271,9 @@ export function RecommendationForm({
 
     // Parse the name into components
     if (media.name) {
-      const parsed = parseRecommendationName(media.name);
+      const parsed = media.tmdbId ? { originalName: media.name, otherNames: '', description: '' } : parseRecommendationName(media.name);
       setOriginalName(parsed.originalName);
-      setOtherNames(parsed.otherNames);
+      setOtherNames(media.otherNames ?? parsed.otherNames);
       setNameDescription(parsed.description);
     }
 
@@ -280,6 +282,7 @@ export function RecommendationForm({
     setPlatformsValue(media.platforms || '')
     setRateValue(media.rate?.toString() || '')
     setGenreValue(media.genre || '')
+    setLengthValue(typeof media.length === 'string' ? media.length : '')
 
     const date = media.releaseDate ? new Date(media.releaseDate) : undefined
     setReleaseDate(date && !isNaN(date.getTime()) ? date : undefined)
@@ -667,7 +670,8 @@ export function RecommendationForm({
               <Input
                 id="length"
                 name="length"
-                defaultValue={initialData?.length}
+                value={lengthValue}
+                onChange={(e) => setLengthValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Enter length"
                 disabled={isFormLoading}

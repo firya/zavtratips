@@ -60,6 +60,14 @@ export function Settings() {
           {isSyncingYouTube ? 'Syncing...' : 'Sync YouTube Playlist'}
         </Button>
       </div>
+      <section aria-label="About" className="max-w-sm space-y-2 text-center text-sm text-muted-foreground">
+        <h2 className="font-medium">О приложении</h2>
+        <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" className="inline-block">
+          <img src="/tmdb.svg" alt="TMDB" className="mx-auto h-5 w-auto" />
+        </a>
+        <p>Данные фильмов и сериалов — TMDB. Рейтинг IMDb — OMDb.</p>
+        <p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+      </section>
     </div>
   )
 } 

@@ -49,11 +49,14 @@ A web application for managing podcast recommendations and streams.
 
 ## Deployment
 
-The application is configured for deployment using Docker Compose. The deployment process is automated through GitHub Actions.
+Deploy manually after publishing to GitHub main:
 
-1. Set up your VPS with Docker and Docker Compose
-2. Configure GitHub repository secrets with your deployment credentials
-3. Push to the main branch to trigger automatic deployment
+```bash
+git pull --ff-only origin main
+docker compose up -d --build --no-deps app
+```
+
+Set `TMDB_READ_ACCESS_TOKEN` in the server's `.env` before deployment. Never commit credentials. No GitHub webhook or automatic deployment is configured.
 
 ## Environment Variables
 
@@ -66,21 +69,25 @@ See `.env.example` for a complete list of required environment variables and the
 - Telegram bot integration
 - Google Sheets synchronization
 - YouTube playlist integration
-- IGDB and OMDB API integration for game and movie recommendations
+- IGDB, TMDB and OMDb API integration for game and movie recommendations
 
 ## Tech Stack
 
 - Frontend: React, Vite, TypeScript, TailwindCSS
 - Backend: Node.js, Express, TypeScript
 - Database: PostgreSQL, Prisma ORM
-- Deployment: Docker, Docker Compose, GitHub Actions
+- Deployment: Docker, Docker Compose
 
 ## Поиск фильмов и аниме
 
-Поиск рекомендаций через OMDb собирает все доступные страницы OMDb (до 100), затем показывает до 20 подходящих результатов по году премьеры от новых к старым. В категории Фильм исключены короткие ролики, документальные материалы и музыкальные видео; записи прохождений игр и рекламные трейлеры отсекаются по названию. Для аниме ищутся и фильмы, и сериалы; отдельные эпизоды исключены. Можно вводить английское название, IMDb ID или ссылку IMDb. Год/диапазон лет виден в прокручиваемом списке.
+Поиск через TMDB: оригинальные, русские и альтернативные названия, IMDb ID или IMDb-ссылка. До 20 результатов по году премьеры от новых к старым. Загружаются доступные страницы поиска (до 100 на вариант запроса).
 
-Выбранный тип учитывает формат и жанр: фильмы и сериалы без анимации, мультфильмы и мультсериалы с жанром Animation, аниме — японская анимация обоих форматов. Подробности кешируются на сутки, поиск — на пять минут; одновременно загружается не более четырёх карточек, одинаковые запросы объединяются. Запросы с символами `&`, `+`, `#` корректно кодируются; устаревший ответ не заменяет результаты более нового запроса.
+Тип формы учитывается: фильмы/сериалы без анимации, мультфильмы/мультсериалы с жанром Animation, аниме — японская анимация обоих форматов. Год в конце (`Resident Evil 2026`) проверяется как год премьеры и как часть названия (`Blade Runner 2049`). Совпадения по указанному году идут первыми.
 
-Проверка: `npm test` и `npm run build`. Автодеплой не настроен: после обновления GitHub выполнить на сервере `git pull --ff-only` и `docker compose up -d --build --no-deps app`.
+После выбора оригинал заполняет Original Name, русское и английское названия без повторов — Other Names. Также заполняются постер, ссылка IMDb (при наличии), жанры, дата выхода, длительность фильма или серии. Рейтинг IMDb запрашивается отдельно через OMDb при выборе; если рейтинга нет, поле остаётся пустым. Другие названия сохраняются при повторном редактировании. Существующие записи автоматически не меняются.
 
-Год в конце запроса (например, `Resident Evil 2026`) ищется как год премьеры и как часть полного названия. Результаты указанного года идут первыми. Названия вроде `Blade Runner 2049` и номера частей продолжают работать.
+Подробности кешируются на сутки, поиск — на пять минут, максимум четыре одновременных запроса к TMDB. Токен остаётся на сервере, сообщения об ошибках его не содержат. Для api.themoviedb.org используется DNS over HTTPS через Cloudflare: штатный DNS хостинга возвращает loopback. DNS других сервисов не меняется.
+
+Атрибуция TMDB и официальный логотип — в настройках, в блоке «О приложении». API требует соблюдения условий TMDB; бесплатный доступ предназначен для некоммерческого использования.
+
+Проверки: `npm test` и `npm run build`.
