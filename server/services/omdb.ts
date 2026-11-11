@@ -10,6 +10,7 @@ interface OmdbTitle {
   imdbRating?: string;
   Genre?: string;
   Runtime?: string;
+  Country?: string;
 }
 
 interface OmdbResponse extends Partial<OmdbTitle> {
@@ -43,13 +44,28 @@ function mediaItem(title: OmdbTitle) {
     platforms: 'IMDb',
     rate: clean(title.imdbRating),
     genre: clean(title.Genre),
+    country: clean(title.Country),
     releaseDate: clean(title.Released),
     length: clean(title.Runtime),
   };
 }
 
+export function matchesContentType(item: { mediaType: string; genre?: string; country?: string }, contentType: string) {
+  const name = contentType.toLowerCase();
+  const type = omdbType(contentType);
+  if (item.mediaType === 'episode' || (type && item.mediaType !== type)) return false;
+  const animation = /\bAnimation\b/i.test(item.genre || '');
+  if (name.includes('аниме')) return animation && /\bJapan\b/i.test(item.country || '');
+  if (name.includes('мульт')) return animation;
+  if (name.includes('фильм') || name.includes('сериал')) return !animation;
+  return true;
+}
+
 export class OmdbMediaService {
   private cache = new Map<string, { expires: number; data: unknown }>();
+  private inFlight = new Map<string, Promise<ReturnType<typeof mediaItem>>>();
+  private activeDetails = 0;
+  private waiting: (() => void)[] = [];
 
   constructor(private request: OmdbRequest) {}
 
@@ -59,9 +75,9 @@ export class OmdbMediaService {
     this.cache.delete(key);
   }
 
-  private remember<T>(key: string, data: T): T {
-    if (this.cache.size >= 200) this.cache.delete(this.cache.keys().next().value!);
-    this.cache.set(key, { data, expires: Date.now() + 5 * 60 * 1000 });
+  private remember<T>(key: string, data: T, ttl = 5 * 60 * 1000): T {
+    if (this.cache.size >= 1000) this.cache.delete(this.cache.keys().next().value!);
+    this.cache.set(key, { data, expires: Date.now() + ttl });
     return data;
   }
 
@@ -69,15 +85,29 @@ export class OmdbMediaService {
     if (!/^tt\d{7,10}$/.test(id)) throw new Error('Invalid IMDb ID');
     const hit = this.cached<ReturnType<typeof mediaItem>>(`id:${id}`);
     if (hit) return hit;
-    const data = await this.request({ i: id, plot: 'short' });
-    if (!data.imdbID || data.Response === 'False') throw new Error('Title not found in OMDb');
-    return this.remember(`id:${id}`, mediaItem(data as OmdbTitle));
+    const pending = this.inFlight.get(id);
+    if (pending) return pending;
+    const load = (async () => {
+      if (this.activeDetails >= 4) await new Promise<void>(resolve => this.waiting.push(resolve));
+      else this.activeDetails++;
+      try {
+        const data = await this.request({ i: id, plot: 'short' });
+        if (!data.imdbID || data.Response === 'False') throw new Error('Title not found in OMDb');
+        return this.remember(`id:${id}`, mediaItem(data as OmdbTitle), 24 * 60 * 60 * 1000);
+      } finally {
+        const next = this.waiting.shift();
+        if (next) next();
+        else this.activeDetails--;
+      }
+    })();
+    this.inFlight.set(id, load);
+    try { return await load; } finally { this.inFlight.delete(id); }
   }
 
   async search(query: string, contentType: string) {
     query = query.trim();
     const type = omdbType(contentType);
-    const key = `search:${type || 'all'}:${query.toLowerCase()}`;
+    const key = `search:${contentType}:${query.toLowerCase()}`;
     const hit = this.cached<ReturnType<typeof mediaItem>[]>(key);
     if (hit) return hit;
 
@@ -85,7 +115,7 @@ export class OmdbMediaService {
     const id = query.match(/^(?:https?:\/\/(?:www\.)?imdb\.com\/title\/)?(tt\d{7,10})(?:\/.*|\?.*)?$/i)?.[1];
     if (id) {
       const item = await this.details(id.toLowerCase());
-      return item.mediaType !== 'episode' && (!type || item.mediaType === type) ? [item] : [];
+      return matchesContentType(item, contentType) ? [item] : [];
     }
 
     const params: Record<string, string | number> = { s: query };
@@ -106,8 +136,12 @@ export class OmdbMediaService {
 
     const unique = [...new Map(results.filter(title => title.Type !== 'episode' && (!type || title.Type === type))
       .map(title => [title.imdbID, title])).values()];
-    unique.sort((a, b) => releaseYear(b.Year) - releaseYear(a.Year) || a.Title.localeCompare(b.Title));
-    return this.remember(key, unique.slice(0, 50).map(mediaItem));
+    // Search summaries have no genre/country. Classify using cached details,
+    // with shared in-flight requests and at most four upstream detail calls.
+    const detailed = await Promise.allSettled(unique.map(title => this.details(title.imdbID)));
+    const matching = detailed.flatMap(result => result.status === 'fulfilled' && matchesContentType(result.value, contentType) ? [result.value] : []);
+    matching.sort((a, b) => releaseYear(b.year) - releaseYear(a.year) || a.name.localeCompare(b.name));
+    return this.remember(key, matching.slice(0, 50));
   }
 }
 

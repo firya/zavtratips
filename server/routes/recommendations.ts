@@ -230,7 +230,7 @@ router.get('/search-media', async (req, res) => {
   }
 });
 
-// Details are loaded only after selection, rather than 50 requests per search.
+// Return cached metadata for the selected title.
 router.get('/media-details', async (req, res) => {
   const id = req.query.imdbId?.toString() || '';
   if (!/^tt\d{7,10}$/.test(id)) return res.status(400).json({ error: 'Invalid IMDb ID' });
