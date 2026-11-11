@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "test": "tsx --test server/services/*.test.ts",
     "dev": "vite",
     "build": "vite build",
     "type-check": "tsc",

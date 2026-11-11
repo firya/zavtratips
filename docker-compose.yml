@@ -5,9 +5,13 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - ZAVTRATIPS_BOT_ACTIVE=1
+      - DEPLOY_REQUEST_DIR=/app/deploy-requests
       - POSTGRES_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
     env_file:
       - .env
+    volumes:
+      - /var/lib/zavtratips-deploy/requests:/app/deploy-requests
     depends_on:
       db:
         condition: service_healthy
