@@ -74,12 +74,11 @@ See `.env.example` for a complete list of required environment variables and the
 - Backend: Node.js, Express, TypeScript
 - Database: PostgreSQL, Prisma ORM
 - Deployment: Docker, Docker Compose, GitHub Actions
-# Автоматический деплой
 
-Основная ветка — `main`. GitHub webhook `https://zavtratips.firya.ru/hooks/github/zavtratips` принимает только подписанные события `push` репозитория `firya/zavtratips` в эту ветку. Слияние PR вызывает такой push. Опроса GitHub и таймеров нет.
+## Поиск фильмов и аниме
 
-Секрет `GITHUB_WEBHOOK_SECRET` хранится только в серверном `.env` и настройке webhook GitHub. В GitHub выбрать Content type `application/json`, событие `push`, SSL verification включить. Секрет в репозиторий не добавлять.
+Поиск рекомендаций через OMDb возвращает до 50 уникальных результатов с пяти страниц и сортирует их по году премьеры от новых к старым. Для аниме ищутся и фильмы, и сериалы; отдельные эпизоды исключены. Можно вводить английское название, IMDb ID или ссылку IMDb. Год/диапазон лет виден в прокручиваемом списке.
 
-На сервере один раз выполнить `sudo bash scripts/install-deploy-hook.sh`. Приложение записывает проверенный запрос в `/var/lib/zavtratips-deploy/requests`; `systemd.path` запускает деплой только при появлении такого файла. Деплой использует GitHub `main`, тестирует и собирает образ, сохраняет дамп БД и обновляет только приложение. При неудачной сборке старая версия остаётся работать; при неудачной проверке запуска возвращается прежний образ.
+Рейтинг, жанр и дата выхода загружаются при выборе результата. Поиск и подробности кешируются на пять минут. Запросы с символами `&`, `+`, `#` корректно кодируются; устаревший ответ не заменяет результаты более нового запроса.
 
-Логи: `journalctl -u zavtratips-deploy.service`. Текущий коммит: `/var/lib/zavtratips-deploy/deployed-commit`. Ошибочные запросы: `/var/lib/zavtratips-deploy/failed`. Ручной повтор: `sudo /usr/local/sbin/zavtratips-deploy --manual`.
+Проверка: `npm test` и `npm run build`. Автодеплой не настроен: после обновления GitHub выполнить на сервере `git pull --ff-only` и `docker compose up -d --build --no-deps app`.

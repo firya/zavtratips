@@ -13,7 +13,6 @@ import bot, { initBot } from './bot'
 import configRouter from './routes/config'
 import { syncWithDatabase } from './sheets'
 import telegramAuth from './middleware/telegramAuth'
-import { githubWebhook } from './services/githubWebhook'
 
 dotenv.config()
 
@@ -89,8 +88,6 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions))
-// Verify GitHub's signature before JSON parsing and Telegram authentication.
-app.post('/hooks/github/zavtratips', express.raw({ type: 'application/json', limit: '2mb' }), githubWebhook())
 app.use(express.json())
 
 // Add Telegram auth middleware for non-GET routes
