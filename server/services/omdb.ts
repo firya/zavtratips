@@ -32,6 +32,7 @@ export function releaseYear(year?: string): number {
 }
 
 const clean = (value?: string) => value && value !== 'N/A' ? value : undefined;
+const isSearchJunk = (title: string) => /\b(full[\s_-]+game|gameplay|walkthrough|playthrough|longplay|fan[\s_-]+trailer|official[\s_-]+trailer)\b/i.test(title);
 
 function mediaItem(title: OmdbTitle) {
   return {
@@ -50,14 +51,16 @@ function mediaItem(title: OmdbTitle) {
   };
 }
 
-export function matchesContentType(item: { mediaType: string; genre?: string; country?: string }, contentType: string) {
+export function matchesContentType(item: { name?: string; mediaType: string; genre?: string; country?: string }, contentType: string) {
   const name = contentType.toLowerCase();
   const type = omdbType(contentType);
   if (item.mediaType === 'episode' || (type && item.mediaType !== type)) return false;
+  if (isSearchJunk(item.name || '')) return false;
   const animation = /\bAnimation\b/i.test(item.genre || '');
   if (name.includes('аниме')) return animation && /\bJapan\b/i.test(item.country || '');
   if (name.includes('мульт')) return animation;
-  if (name.includes('фильм') || name.includes('сериал')) return !animation;
+  if (name.includes('фильм')) return !animation && !/\b(Short|Documentary|Music)\b/i.test(item.genre || '');
+  if (name.includes('сериал')) return !animation && !/\bDocumentary\b/i.test(item.genre || '');
   return true;
 }
 
@@ -106,8 +109,20 @@ export class OmdbMediaService {
 
   async search(query: string, contentType: string) {
     query = query.trim();
+    const suffix = query.match(/^(.+?)\s+((?:18|19|20|21)\d{2})$/);
+    if (!suffix) return this.searchTitles(query, contentType);
+    // A trailing year may be a release filter OR part of the actual title.
+    // Keep both interpretations, prioritising matches for the requested year.
+    const [byYear, byTitle] = await Promise.all([
+      this.searchTitles(suffix[1], contentType, suffix[2]),
+      this.searchTitles(query, contentType),
+    ]);
+    return [...new Map([...byYear, ...byTitle].map(item => [item.imdbId, item])).values()].slice(0, 20);
+  }
+
+  private async searchTitles(query: string, contentType: string, year?: string) {
     const type = omdbType(contentType);
-    const key = `search:${contentType}:${query.toLowerCase()}`;
+    const key = `search:${contentType}:${year || ''}:${query.toLowerCase()}`;
     const hit = this.cached<ReturnType<typeof mediaItem>[]>(key);
     if (hit) return hit;
 
@@ -120,28 +135,45 @@ export class OmdbMediaService {
 
     const params: Record<string, string | number> = { s: query };
     if (type) params.type = type;
+    if (year) params.y = year;
     const [first, exact] = await Promise.all([
       this.request({ ...params, page: 1 }),
-      this.request({ t: query, ...(type ? { type } : {}) }).catch(() => ({} as OmdbResponse)),
+      this.request({ t: query, ...(type ? { type } : {}), ...(year ? { y: year } : {}) }).catch(() => ({} as OmdbResponse)),
     ]);
     const results = [...(first.Search || [])];
-    const pages = Math.min(5, Math.ceil(Number(first.totalResults || 0) / 10));
-    const additional = await Promise.allSettled(
-      Array.from({ length: Math.max(0, pages - 1) }, (_, index) => this.request({ ...params, page: index + 2 })),
-    );
-    for (const response of additional) {
-      if (response.status === 'fulfilled') results.push(...(response.value.Search || []));
+    const pages = Math.min(100, Math.ceil(Number(first.totalResults || 0) / 10));
+    let complete = true;
+    // OMDb orders by relevance, not year. Collect all provider pages before
+    // sorting; otherwise a new film can be hidden behind older matches.
+    for (let start = 2; start <= pages; start += 4) {
+      const additional = await Promise.allSettled(
+        Array.from({ length: Math.min(4, pages - start + 1) }, (_, index) => this.request({ ...params, page: start + index })),
+      );
+      for (const response of additional) {
+        if (response.status === 'fulfilled' && response.value.Search) results.push(...response.value.Search);
+        else complete = false;
+      }
     }
     if (exact.imdbID && exact.Response !== 'False') results.push(exact as OmdbTitle);
 
-    const unique = [...new Map(results.filter(title => title.Type !== 'episode' && (!type || title.Type === type))
+    const unique = [...new Map(results.filter(title => title.Type !== 'episode' && !isSearchJunk(title.Title) && (!type || title.Type === type))
       .map(title => [title.imdbID, title])).values()];
+    unique.sort((a, b) => releaseYear(b.Year) - releaseYear(a.Year) || a.Title.localeCompare(b.Title));
     // Search summaries have no genre/country. Classify using cached details,
     // with shared in-flight requests and at most four upstream detail calls.
-    const detailed = await Promise.allSettled(unique.map(title => this.details(title.imdbID)));
-    const matching = detailed.flatMap(result => result.status === 'fulfilled' && matchesContentType(result.value, contentType) ? [result.value] : []);
+    const matching: ReturnType<typeof mediaItem>[] = [];
+    // Hydrate newest candidates first, and stop once 20 suitable titles are
+    // available rather than spending detail requests on the entire catalogue.
+    for (let start = 0; start < unique.length && matching.length < 20; start += 10) {
+      const detailed = await Promise.allSettled(unique.slice(start, start + 10).map(title => this.details(title.imdbID)));
+      for (const result of detailed) {
+        if (result.status === 'fulfilled') {
+          if (matchesContentType(result.value, contentType) && (!year || releaseYear(result.value.year) === Number(year))) matching.push(result.value);
+        } else complete = false;
+      }
+    }
     matching.sort((a, b) => releaseYear(b.year) - releaseYear(a.year) || a.name.localeCompare(b.name));
-    return this.remember(key, matching.slice(0, 50));
+    return complete ? this.remember(key, matching.slice(0, 20)) : matching.slice(0, 20);
   }
 }
 
