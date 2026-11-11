@@ -4,18 +4,21 @@ import { TmdbMediaService, matchesTmdb, tmdbKinds, tmdbNames } from './tmdb';
 
 const movie = (id: number, title: string, year: number, genres = [28]) => ({ id, title, original_title: title, release_date: `${year}-01-01`, genre_ids: genres, genres: genres.map(id => ({ id, name: id === 16 ? 'Animation' : 'Action' })), production_countries: [{ iso_3166_1: 'US' }] });
 
-test('original, Russian and English names are deduplicated without losing Japanese originals', () => {
+test('Other Names contains one Russian title only, preserving the original name', () => {
   assert.deepEqual(tmdbNames({ id: 603, title: 'The Matrix', original_title: 'The Matrix', translations: { translations: [
     { iso_639_1: 'ru', data: { title: 'Матрица' } }, { iso_639_1: 'ru', data: { title: 'Матрица' } }, { iso_639_1: 'en', data: { title: 'The Matrix' } },
   ] } }), { name: 'The Matrix', otherNames: 'Матрица' });
   assert.deepEqual(tmdbNames({ id: 1, name: 'Tower of God', original_name: '神之塔', translations: { translations: [
     { iso_639_1: 'ru', data: { name: 'Башня Бога' } }, { iso_639_1: 'en', data: { name: 'Tower of God' } },
-  ] } }), { name: '神之塔', otherNames: 'Башня Бога / Tower of God' });
+  ] } }), { name: '神之塔', otherNames: 'Башня Бога' });
   assert.equal(tmdbNames({ id: 1, title: 'No translation' }).otherNames, '');
   assert.deepEqual(tmdbNames({ id: 105248, name: 'Cyberpunk: Edgerunners', alternative_titles: { results: [
     { iso_3166_1: 'RU', title: 'Киберпанк: Бегущие по краю', type: '' },
     { iso_3166_1: 'RU', title: 'Киберпанк: Бегущие по краю 2', type: 'season 2' },
+    { iso_3166_1: 'RU', title: 'Ещё одно русское название', type: '' },
+    { iso_3166_1: 'US', title: 'Cyberpunk 2', type: '' },
   ] } }), { name: 'Cyberpunk: Edgerunners', otherNames: 'Киберпанк: Бегущие по краю' });
+  assert.deepEqual(tmdbNames({ id: 1, original_title: 'Матрица', translations: { translations: [{ iso_639_1: 'ru', data: { title: 'Матрица' } }] } }), { name: 'Матрица', otherNames: '' });
 });
 
 test('five content categories respect format, animation and Japanese origin', () => {

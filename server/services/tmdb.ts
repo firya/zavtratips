@@ -39,17 +39,11 @@ export function matchesTmdb(title: Title, kind: Kind, category: string) {
 export function tmdbNames(title: Title) {
   const name = title.original_title || title.original_name || title.title || title.name || '';
   const translations = title.translations?.translations || [];
-  const values = ['ru', 'en'].flatMap(lang => translations.filter(t => t.iso_639_1 === lang).map(t => t.data.title || t.data.name || ''));
   const alternatives = title.alternative_titles?.titles || title.alternative_titles?.results || [];
-  values.push(...alternatives.filter(t => ['RU', 'US', 'GB'].includes(t.iso_3166_1) && !/season|\bS\d|logo/i.test(t.type || '')).map(t => t.title));
-  values.push(title.title || title.name || '');
-  const seen = new Set([name.trim().toLocaleLowerCase()]);
-  const aliases = values.map(v => v.trim()).filter(v => {
-    const key = v.toLocaleLowerCase();
-    if (!v || seen.has(key)) return false;
-    seen.add(key); return true;
-  });
-  return { name, otherNames: aliases.join(' / ') };
+  const translated = translations.filter(t => t.iso_639_1 === 'ru').map(t => (t.data.title || t.data.name || '').trim()).find(Boolean);
+  const alternative = alternatives.find(t => t.iso_3166_1 === 'RU' && t.title.trim() && /[А-Яа-яЁё]/.test(t.title) && !/season|\bS\d|logo/i.test(t.type || ''))?.title.trim();
+  const russian = translated || alternative || '';
+  return { name, otherNames: russian.toLocaleLowerCase() === name.trim().toLocaleLowerCase() ? '' : russian };
 }
 
 export class TmdbMediaService {
