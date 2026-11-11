@@ -13,6 +13,7 @@ import { CalendarIcon, Search, ExternalLink, ChevronDown, ChevronUp } from 'luci
 import { useConfigStore } from '@/stores/config'
 import { usePodcastStore } from '@/stores/podcasts'
 import { useRecommendationsStore, MediaItem } from '@/stores/recommendations'
+import { api } from '@/lib/api'
 import { useDebounce } from '@/hooks/useDebounce'
 import { PodcastField, Podcast as PodcastFieldPodcast, ClearableSelect } from '@/components/common'
 
@@ -113,6 +114,7 @@ export function RecommendationForm({
   const [releaseDate, setReleaseDate] = useState<Date | undefined>(initialData?.releaseDate)
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
   const [selectedTypeId, setSelectedTypeId] = useState<string>(initialData?.typeId?.toString() || '')
+  const [isMediaDetailsLoading, setIsMediaDetailsLoading] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [lastSearched, setLastSearched] = useState({ query: '', typeId: '' })
   const [linkValue, setLinkValue] = useState(initialData?.link || '')
@@ -152,7 +154,7 @@ export function RecommendationForm({
   } = useRecommendationsStore()
 
   // Combined loading state from parent and local states
-  const isFormLoading = parentIsLoading || isRecommendationLoading || isConfigLoading;
+  const isFormLoading = parentIsLoading || isRecommendationLoading || isConfigLoading || isMediaDetailsLoading;
 
   const debouncedOriginalName = useDebounce(originalName, 500)
 
@@ -248,7 +250,21 @@ export function RecommendationForm({
     }
   }, [debouncedOriginalName, selectedTypeId, searchMedia, isSearching, lastSearched])
 
-  const handleMediaSelect = (media: MediaItem) => {
+  const handleMediaSelect = async (item: MediaItem) => {
+    setIsSearching(false)
+    searchMedia('', '')
+    setIsMediaDetailsLoading(true)
+    let media = item
+    try {
+      if (item.imdbId) {
+        const response = await api.get('/recommendations/media-details', { params: { imdbId: item.imdbId } })
+        media = { ...item, ...response.data }
+      }
+    } catch {
+      toast.error('Не удалось загрузить подробности. Основные данные сохранены — остальные можно заполнить вручную.')
+    } finally {
+      setIsMediaDetailsLoading(false)
+    }
     setSelectedMedia(media)
 
     // Parse the name into components
@@ -265,15 +281,8 @@ export function RecommendationForm({
     setRateValue(media.rate?.toString() || '')
     setGenreValue(media.genre || '')
 
-    // Set release date if available
-    if (media.releaseDate) {
-      try {
-        const date = new Date(media.releaseDate)
-        setReleaseDate(date)
-      } catch (e) {
-        console.error('Invalid date format:', e)
-      }
-    }
+    const date = media.releaseDate ? new Date(media.releaseDate) : undefined
+    setReleaseDate(date && !isNaN(date.getTime()) ? date : undefined)
 
     setIsSearching(false)
     // Close the dropdown by clearing the search results
@@ -453,7 +462,7 @@ export function RecommendationForm({
             disabled={isFormLoading}
           />
           {mediaItems.length > 0 && isSearching && !isFormLoading && (
-            <div className="absolute w-full mt-1 bg-background border rounded-md shadow-lg z-10">
+            <div className="absolute w-full mt-1 max-h-72 overflow-y-auto overscroll-contain bg-background border rounded-md shadow-lg z-10">
               {mediaItems.map((media, index) => (
                 <button
                   key={index}
@@ -462,7 +471,7 @@ export function RecommendationForm({
                   onClick={() => handleMediaSelect(media)}
                 >
                   {media.name}
-                  {media.releaseDate && (() => {
+                  {media.year ? ` (${media.year})` : media.releaseDate && (() => {
                     try {
                       const date = new Date(media.releaseDate);
                       const year = date.getFullYear();

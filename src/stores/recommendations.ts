@@ -14,6 +14,8 @@ interface Podcast {
 }
 
 export interface MediaItem {
+  imdbId?: string
+  year?: string
   name: string
   link: string
   image: string
@@ -91,6 +93,8 @@ const defaultFilters: Filters = {
   page: 1,
   limit: 24,
 }
+
+let mediaSearchRequestId = 0
 
 export const useRecommendationsStore = create<RecommendationsStore>((set, get) => ({
   recommendations: [],
@@ -216,19 +220,22 @@ export const useRecommendationsStore = create<RecommendationsStore>((set, get) =
   },
 
   searchMedia: async (search: string, typeId: string) => {
+    const requestId = ++mediaSearchRequestId
     if (!search || !typeId) {
-      set({ mediaItems: [] })
+      set({ mediaItems: [], isMediaSearchLoading: false })
       return
     }
 
     set({ isMediaSearchLoading: true })
     try {
-      const response = await api.get(`/recommendations/search-media?search=${search}&typeId=${typeId}`)
+      const response = await api.get('/recommendations/search-media', { params: { search, typeId } })
+      if (requestId !== mediaSearchRequestId) return
       set({
         mediaItems: response.data,
         isMediaSearchLoading: false
       })
     } catch (error) {
+      if (requestId !== mediaSearchRequestId) return
       console.error('Error fetching media:', error)
       set({
         mediaItems: [],
