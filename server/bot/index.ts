@@ -25,7 +25,7 @@ if (!defaultAdminId) {
 }
 
 // Initialize the bot with polling
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token, { polling: process.env.ZAVTRATIPS_BOT_ACTIVE === '1' });
 
 // Store for administrators
 const admins = new Set<number>();

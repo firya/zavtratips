@@ -73,4 +73,13 @@ See `.env.example` for a complete list of required environment variables and the
 - Frontend: React, Vite, TypeScript, TailwindCSS
 - Backend: Node.js, Express, TypeScript
 - Database: PostgreSQL, Prisma ORM
-- Deployment: Docker, Docker Compose, GitHub Actions 
+- Deployment: Docker, Docker Compose, GitHub Actions
+# Автоматический деплой
+
+Основная ветка — `main`. GitHub webhook `https://zavtratips.firya.ru/hooks/github/zavtratips` принимает только подписанные события `push` репозитория `firya/zavtratips` в эту ветку. Слияние PR вызывает такой push. Опроса GitHub и таймеров нет.
+
+Секрет `GITHUB_WEBHOOK_SECRET` хранится только в серверном `.env` и настройке webhook GitHub. В GitHub выбрать Content type `application/json`, событие `push`, SSL verification включить. Секрет в репозиторий не добавлять.
+
+На сервере один раз выполнить `sudo bash scripts/install-deploy-hook.sh`. Приложение записывает проверенный запрос в `/var/lib/zavtratips-deploy/requests`; `systemd.path` запускает деплой только при появлении такого файла. Деплой использует GitHub `main`, тестирует и собирает образ, сохраняет дамп БД и обновляет только приложение. При неудачной сборке старая версия остаётся работать; при неудачной проверке запуска возвращается прежний образ.
+
+Логи: `journalctl -u zavtratips-deploy.service`. Текущий коммит: `/var/lib/zavtratips-deploy/deployed-commit`. Ошибочные запросы: `/var/lib/zavtratips-deploy/failed`. Ручной повтор: `sudo /usr/local/sbin/zavtratips-deploy --manual`.
