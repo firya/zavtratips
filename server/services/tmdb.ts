@@ -18,6 +18,13 @@ interface Response extends Partial<Title> {
 }
 type Request = (path: string, params?: Record<string, string | number | boolean>) => Promise<Response>;
 
+function imdbPoster(image?: string) {
+  try {
+    const url = new URL(image || '');
+    return url.protocol === 'https:' && ['m.media-amazon.com', 'ia.media-imdb.com', 'images-na.ssl-images-amazon.com'].includes(url.hostname) ? url.href : '';
+  } catch { return ''; }
+}
+
 export function tmdbKinds(category: string): Kind[] {
   if (/аниме/i.test(category)) return ['movie', 'tv'];
   return [/сериал|шоу/i.test(category) ? 'tv' : 'movie'];
@@ -90,7 +97,8 @@ export class TmdbMediaService {
         tmdbId: id, mediaType: kind === 'tv' ? 'series' : 'movie', imdbId,
         ...tmdbNames(title), year, releaseDate: date || undefined,
         link: imdbId ? `https://www.imdb.com/title/${imdbId}/` : `https://www.themoviedb.org/${kind}/${id}`,
-        image: title.poster_path ? `https://image.tmdb.org/t/p/w500${title.poster_path}` : undefined,
+        // Search results must not supply a TMDB poster as a selection fallback.
+        image: '',
         platforms: 'TMDB', genre: title.genres?.map(g => g.name).join(', '),
         length: runtime ? `${runtime} min` : undefined,
         country: (title.origin_country || title.production_countries?.map(c => c.iso_3166_1))?.join(', '),
@@ -103,7 +111,8 @@ export class TmdbMediaService {
     const item = await this.details(kind, id);
     // Preserve the existing IMDb score. TMDB votes are a different rating.
     const imdb = item.imdbId ? await this.imdbDetails(item.imdbId).catch(() => undefined) : undefined;
-    return { ...item, rate: imdb?.rate };
+    // Store only the direct IMDb/Amazon CDN URL, never image files or TMDB URLs.
+    return { ...item, image: imdbPoster(imdb?.image), rate: imdb?.rate };
   }
 
   async findImdb(id: string, category?: string) {

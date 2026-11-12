@@ -91,13 +91,24 @@ test('selection fills Russian alias, poster, runtime and IMDb score; shared deta
   let calls = 0; let ratings = 0;
   const service = new TmdbMediaService(async () => {
     calls++; return { ...movie(603, 'The Matrix', 1999), imdb_id: 'tt0133093', runtime: 136, poster_path: '/matrix.jpg', translations: { translations: [{ iso_639_1: 'ru', data: { title: 'Матрица' } }] } };
-  }, async id => { ratings++; assert.equal(id, 'tt0133093'); return { rate: '8.7' } as Awaited<ReturnType<import('./omdb').OmdbMediaService['details']>>; });
+  }, async id => { ratings++; assert.equal(id, 'tt0133093'); return { rate: '8.7', image: 'https://m.media-amazon.com/images/M/matrix.jpg' } as Awaited<ReturnType<import('./omdb').OmdbMediaService['details']>>; });
   await Promise.all([service.details('movie', 603), service.details('movie', 603)]);
   const result = await service.selected('movie', 603);
   assert.equal(calls, 1); assert.equal(ratings, 1);
   assert.equal(result.otherNames, 'Матрица'); assert.equal(result.length, '136 min'); assert.equal(result.rate, '8.7');
-  assert.equal(result.image, 'https://image.tmdb.org/t/p/w500/matrix.jpg');
+  assert.equal(result.image, 'https://m.media-amazon.com/images/M/matrix.jpg');
+  assert.equal((await service.details('movie', 603)).image, '');
   await assert.rejects(service.details('movie', -1));
+});
+
+test('missing IMDb posters or OMDb failures leave the image blank without a TMDB fallback', async () => {
+  for (const poster of [undefined, 'https://image.tmdb.org/t/p/w500/matrix.jpg', 'http://m.media-amazon.com/matrix.jpg', 'unavailable']) {
+    const service = new TmdbMediaService(async () => ({ ...movie(603, 'The Matrix', 1999), imdb_id: 'tt0133093', poster_path: '/matrix.jpg' }), async () => {
+      if (poster === 'unavailable') throw new Error('OMDb unavailable');
+      return { image: poster } as Awaited<ReturnType<import('./omdb').OmdbMediaService['details']>>;
+    });
+    assert.equal((await service.selected('movie', 603)).image, '');
+  }
 });
 
 test('IMDb links use the TMDB mapping and obey the selected category', async () => {
