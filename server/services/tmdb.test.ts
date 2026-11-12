@@ -4,13 +4,14 @@ import { TmdbMediaService, matchesTmdb, tmdbKinds, tmdbNames } from './tmdb';
 
 const movie = (id: number, title: string, year: number, genres = [28]) => ({ id, title, original_title: title, release_date: `${year}-01-01`, genre_ids: genres, genres: genres.map(id => ({ id, name: id === 16 ? 'Animation' : 'Action' })), production_countries: [{ iso_3166_1: 'US' }] });
 
-test('Other Names contains one Russian title only, preserving the original name', () => {
+test('Original Name uses English while Other Names contains one Russian title only', () => {
   assert.deepEqual(tmdbNames({ id: 603, title: 'The Matrix', original_title: 'The Matrix', translations: { translations: [
     { iso_639_1: 'ru', data: { title: 'Матрица' } }, { iso_639_1: 'ru', data: { title: 'Матрица' } }, { iso_639_1: 'en', data: { title: 'The Matrix' } },
   ] } }), { name: 'The Matrix', otherNames: 'Матрица' });
   assert.deepEqual(tmdbNames({ id: 1, name: 'Tower of God', original_name: '神之塔', translations: { translations: [
     { iso_639_1: 'ru', data: { name: 'Башня Бога' } }, { iso_639_1: 'en', data: { name: 'Tower of God' } },
-  ] } }), { name: '神之塔', otherNames: 'Башня Бога' });
+  ] } }), { name: 'Tower of God', otherNames: 'Башня Бога' });
+  assert.deepEqual(tmdbNames({ id: 1, name: 'Tower of God', original_name: '神之塔' }), { name: 'Tower of God', otherNames: '' });
   assert.equal(tmdbNames({ id: 1, title: 'No translation' }).otherNames, '');
   assert.deepEqual(tmdbNames({ id: 105248, name: 'Cyberpunk: Edgerunners', alternative_titles: { results: [
     { iso_3166_1: 'RU', title: 'Киберпанк: Бегущие по краю', type: '' },
@@ -18,7 +19,25 @@ test('Other Names contains one Russian title only, preserving the original name'
     { iso_3166_1: 'RU', title: 'Ещё одно русское название', type: '' },
     { iso_3166_1: 'US', title: 'Cyberpunk 2', type: '' },
   ] } }), { name: 'Cyberpunk: Edgerunners', otherNames: 'Киберпанк: Бегущие по краю' });
-  assert.deepEqual(tmdbNames({ id: 1, original_title: 'Матрица', translations: { translations: [{ iso_639_1: 'ru', data: { title: 'Матрица' } }] } }), { name: 'Матрица', otherNames: '' });
+  assert.deepEqual(tmdbNames({ id: 1, title: 'The Matrix', original_title: 'Матрица', translations: { translations: [{ iso_639_1: 'ru', data: { title: 'Матрица' } }] } }), { name: 'The Matrix', otherNames: 'Матрица' });
+});
+
+test('Russian search returns English titles and selecting a result keeps the same English name', async () => {
+  const service = new TmdbMediaService(async (path, params) => {
+    assert.equal(params?.language, 'en-US');
+    const title = { ...movie(78, 'Blade Runner', 1982), original_title: 'Бегущий по лезвию', translations: { translations: [{ iso_639_1: 'ru', data: { title: 'Бегущий по лезвию' } }] } };
+    if (path === '/search/movie') {
+      assert.equal(params?.query, 'Бегущий по лезвию');
+      return { results: [title], total_pages: 1 };
+    }
+    return title;
+  });
+  const results = await service.search('Бегущий по лезвию', 'Фильм');
+  assert.equal(results[0].name, 'Blade Runner');
+  assert.equal(results[0].otherNames, 'Бегущий по лезвию');
+  const selected = await service.selected('movie', results[0].tmdbId);
+  assert.equal(selected.name, 'Blade Runner');
+  assert.equal(selected.otherNames, 'Бегущий по лезвию');
 });
 
 test('five content categories respect format, animation and Japanese origin', () => {

@@ -37,9 +37,12 @@ export function matchesTmdb(title: Title, kind: Kind, category: string) {
 }
 
 export function tmdbNames(title: Title) {
-  const name = title.original_title || title.original_name || title.title || title.name || '';
   const translations = title.translations?.translations || [];
   const alternatives = title.alternative_titles?.titles || title.alternative_titles?.results || [];
+  const english = translations.filter(t => t.iso_639_1 === 'en').map(t => (t.data.title || t.data.name || '').trim()).find(Boolean);
+  // Details are requested with language=en-US. original_title/original_name
+  // are the production-language title (e.g. Japanese), not the English name.
+  const name = english || title.title || title.name || '';
   const translated = translations.filter(t => t.iso_639_1 === 'ru').map(t => (t.data.title || t.data.name || '').trim()).find(Boolean);
   const alternative = alternatives.find(t => t.iso_3166_1 === 'RU' && t.title.trim() && /[А-Яа-яЁё]/.test(t.title) && !/season|\bS\d|logo/i.test(t.type || ''))?.title.trim();
   const russian = translated || alternative || '';
