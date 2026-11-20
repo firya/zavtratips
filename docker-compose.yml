@@ -1,8 +1,15 @@
+x-logging: &service-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   app:
     build: .
     container_name: zavtratips
     restart: unless-stopped
+    logging: *service-logging
     environment:
       - NODE_ENV=production
       - ZAVTRATIPS_BOT_ACTIVE=1
@@ -26,6 +33,7 @@ services:
     image: postgres:14-alpine
     container_name: zavtratips_db
     restart: unless-stopped
+    logging: *service-logging
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -34,7 +42,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 5s
+      interval: 30s
+      start_period: 30s
+      start_interval: 5s
       timeout: 5s
       retries: 5
     networks:
