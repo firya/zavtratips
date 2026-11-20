@@ -5,11 +5,14 @@ import dotenv from 'dotenv'
 import cron from 'node-cron'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { createRequire } from 'node:module'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import recommendationsRouter from './routes/recommendations'
 import podcastsRouter from './routes/podcasts'
 import streamsRouter, { syncYouTubePlaylist } from './routes/streams'
 import statsRouter from './routes/stats'
-import bot, { initBot } from './bot'
+import bot, { initBot, pollingEnabled } from './bot'
 import configRouter from './routes/config'
 import { syncWithDatabase } from './sheets'
 import telegramAuth from './middleware/telegramAuth'
@@ -37,22 +40,11 @@ const connectToDatabase = async (retries = 5, delay = 5000) => {
       // If we're here, connection was successful - run migrations if needed
       try {
         console.log('Running database migrations...');
-        // Run prisma migrate deploy using exec
-        const { exec } = await import('child_process');
-        await new Promise((resolve, reject) => {
-          exec('npx prisma migrate deploy', (error, stdout, stderr) => {
-            if (error) {
-              console.error(`Migration error: ${error.message}`);
-              reject(error);
-              return;
-            }
-            if (stderr) {
-              console.log(`Migration stderr: ${stderr}`);
-            }
-            console.log(`Migration stdout: ${stdout}`);
-            resolve(stdout);
-          });
-        });
+        const require = createRequire(import.meta.url);
+        const prismaCLI = path.join(path.dirname(require.resolve('prisma/package.json')), 'build/index.js');
+        const { stdout, stderr } = await promisify(execFile)(process.execPath, [prismaCLI, 'migrate', 'deploy']);
+        console.log(stdout);
+        if (stderr) console.log(stderr);
         console.log('Database migrations completed successfully');
       } catch (migrationError) {
         console.error('Failed to run migrations:', migrationError);
@@ -89,6 +81,17 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 app.use(express.json())
+
+if (isDevelopment && !pollingEnabled) {
+  app.post(`/bot${process.env.TELEGRAM_TOKEN}`, async (req, res) => {
+    try {
+      await bot.handleUpdate(req.body)
+      res.sendStatus(200)
+    } catch {
+      res.sendStatus(500)
+    }
+  })
+}
 
 // Add Telegram auth middleware for non-GET routes
 app.use((req, res, next) => {
@@ -177,15 +180,23 @@ const startServer = async () => {
       console.log(`Serving frontend from ${distPath}`)
     })
     
+    if (pollingEnabled) {
+      void bot.startPolling().catch(() => {
+        console.error('Telegram polling stopped unexpectedly')
+        process.exit(1)
+      })
+    }
+
     // Initialize bot with localtunnel if we're in development mode
     if (isDevelopment) {
-      const { tunnel, bot } = await initBot(PORT)
+      const { tunnel } = await initBot(PORT)
       console.log('Telegram bot initialized')
       
       // Graceful shutdown
       process.on('SIGINT', async () => {
         console.log('Shutting down server and bot')
         server.close()
+        bot.stop()
         tunnel?.close()
         process.exit(0)
       })

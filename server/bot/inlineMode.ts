@@ -1,4 +1,5 @@
-import TelegramBot from 'node-telegram-bot-api';
+import type { Bot } from 'node-telegram-bot-api';
+import type { InlineQuery, InlineQueryResultArticle } from 'node-telegram-bot-api/types';
 import { PrismaClient, Prisma, Recommendation, Podcast, Config } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -14,12 +15,12 @@ type RecommendationWithRelations = Recommendation & {
  * @param bot Telegram bot instance
  * @param query Inline query from Telegram
  */
-export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.InlineQuery): Promise<void> => {
+export const handleInlineQuery = async (bot: Bot, query: InlineQuery): Promise<void> => {
   try {
     const searchTerm = query.query.trim();
     
     if (!searchTerm) {
-      await bot.answerInlineQuery(query.id, [], { cache_time: 0 });
+      await bot.api.answerInlineQuery({ inline_query_id: query.id, results: [], cache_time: 0 });
       return;
     }
     
@@ -41,7 +42,7 @@ export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.Inl
     });
     
     if (recommendations.length === 0) {
-      await bot.answerInlineQuery(query.id, [], { cache_time: 300 });
+      await bot.api.answerInlineQuery({ inline_query_id: query.id, results: [], cache_time: 300 });
       return;
     }
     
@@ -156,12 +157,12 @@ export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.Inl
       const safeResultId = `rec_${index}_${mainItem.id}`;
       
       // Create InlineQueryResultArticle object with proper types
-      const inlineResult: TelegramBot.InlineQueryResultArticle = {
+      const inlineResult: InlineQueryResultArticle = {
         type: 'article',
         id: safeResultId, // Use a safe, short ID format
         title: mainItem.name, // Use full name as title now
         description: `${mainItem.type.value}${mainItem.platforms ? ` • ${mainItem.platforms}` : ''}${mainItem.genre ? ` • ${mainItem.genre}` : ''}${hostEpisodes.dima.length || hostEpisodes.timur.length || hostEpisodes.maksim.length ? ` • ${items.length} упоминаний` : ''}`,
-        thumb_url: mainItem.image || undefined,
+        thumbnail_url: mainItem.image || undefined,
         input_message_content: {
           message_text: messageText,
           parse_mode: 'Markdown'
@@ -176,9 +177,9 @@ export const handleInlineQuery = async (bot: TelegramBot, query: TelegramBot.Inl
       return inlineResult;
     });
     
-    await bot.answerInlineQuery(query.id, results, { cache_time: 300 });
+    await bot.api.answerInlineQuery({ inline_query_id: query.id, results: results, cache_time: 300 });
   } catch (error) {
     console.error('Error handling inline query:', error);
-    await bot.answerInlineQuery(query.id, [], { cache_time: 0 });
+    await bot.api.answerInlineQuery({ inline_query_id: query.id, results: [], cache_time: 0 });
   }
 }; 

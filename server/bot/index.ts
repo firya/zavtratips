@@ -1,12 +1,9 @@
-import TelegramBot from 'node-telegram-bot-api';
+import { Bot } from 'node-telegram-bot-api';
 import dotenv from 'dotenv';
 import localtunnel from 'localtunnel';
-import { PrismaClient, Prisma } from '@prisma/client';
 import { handleInlineQuery } from './inlineMode';
 
 dotenv.config();
-
-const prisma = new PrismaClient();
 
 // Get bot token from environment variables
 const token = process.env.TELEGRAM_TOKEN;
@@ -24,8 +21,8 @@ if (!defaultAdminId) {
   console.warn('TELEGRAM_DEFAULT_ADMIN is not defined in environment variables');
 }
 
-// Initialize the bot with polling
-const bot = new TelegramBot(token, { polling: process.env.ZAVTRATIPS_BOT_ACTIVE === '1' });
+const bot = new Bot(token);
+export const pollingEnabled = process.env.ZAVTRATIPS_BOT_ACTIVE === '1';
 
 // Store for administrators
 const admins = new Set<number>();
@@ -72,8 +69,8 @@ const setupWebhook = async () => {
   
   try {
     const webhookUrl = `${tunnelUrl}/bot${token}`;
-    await bot.setWebHook(webhookUrl);
-    console.log(`Webhook set to ${webhookUrl}`);
+    await bot.api.setWebhook({ url: webhookUrl });
+    console.log('Telegram webhook configured');
   } catch (error) {
     console.error('Failed to set webhook:', error);
   }
@@ -89,7 +86,7 @@ const setupMiniAppButton = async () => {
     console.log('Setting new WebApp button...');
     
     // Set global default button first
-    await bot.setChatMenuButton({
+    await bot.api.setChatMenuButton({
       menu_button: {
         type: 'web_app',
         text: 'App',
@@ -99,7 +96,7 @@ const setupMiniAppButton = async () => {
     
     // Set button for default user if available
     if (defaultAdminId) {
-      await bot.setChatMenuButton({
+      await bot.api.setChatMenuButton({
         chat_id: defaultAdminId,
         menu_button: {
           type: 'web_app',
@@ -120,7 +117,7 @@ const setupMiniAppButton = async () => {
 export const initBot = async (port: number) => {
   const tunnel = await setupTunnel(port);
   if (tunnel) {
-    await setupWebhook();
+    if (!pollingEnabled) await setupWebhook();
     await setupMiniAppButton();
   }
   
@@ -131,8 +128,9 @@ export const initBot = async (port: number) => {
 };
 
 // Telegram bot commands
-bot.onText(/\/start/, async (msg: TelegramBot.Message) => {
-  const chatId = msg.chat.id;
+bot.hears(/\/start/, async (ctx) => {
+  const msg = ctx.message;
+  if (!msg) return;
   const userId = msg.from?.id;
   
   if (!userId) {
@@ -142,15 +140,16 @@ bot.onText(/\/start/, async (msg: TelegramBot.Message) => {
   let message = 'Welcome to ZavtraTips Bot! Use /help to see available commands.';
   
   if (isAdmin(userId)) {
-    bot.sendMessage(chatId, 'Welcome, Administrator! You can access the web app via the WebApp button below the message input field.');
+    await ctx.reply('Welcome, Administrator! You can access the web app via the WebApp button below the message input field.');
   } else {
-    bot.sendMessage(chatId, message);
+    await ctx.reply(message);
   }
 });
 
 // Help command
-bot.onText(/\/help/, (msg: TelegramBot.Message) => {
-  const chatId = msg.chat.id;
+bot.hears(/\/help/, async (ctx) => {
+  const msg = ctx.message;
+  if (!msg) return;
   const userId = msg.from?.id;
   
   if (!userId) {
@@ -167,23 +166,24 @@ bot.onText(/\/help/, (msg: TelegramBot.Message) => {
     helpText += '\n/forcebutton - Force reset menu button (requires Telegram restart)';
   }
   
-  bot.sendMessage(chatId, helpText);
+  await ctx.reply(helpText);
 });
 
 // Add app command for immediate WebApp access
-bot.onText(/\/app/, async (msg: TelegramBot.Message) => {
-  const chatId = msg.chat.id;
+bot.hears(/\/app/, async (ctx) => {
+  const msg = ctx.message;
+  if (!msg) return;
   const userId = msg.from?.id;
   
   if (!userId || !isAdmin(userId)) {
-    bot.sendMessage(chatId, 'Sorry, this command is only available for administrators.');
+    await ctx.reply('Sorry, this command is only available for administrators.');
     return;
   }
   
   const webAppUrl = `${tunnelUrl || process.env.PUBLIC_URL || ''}/app`;
   
   // Send message with inline keyboard button to launch webapp
-  bot.sendMessage(chatId, 'Click the button below to open the Admin WebApp:', {
+  await ctx.reply('Click the button below to open the Admin WebApp:', {
     reply_markup: {
       inline_keyboard: [
         [
@@ -197,39 +197,40 @@ bot.onText(/\/app/, async (msg: TelegramBot.Message) => {
   });
   
   // Also notify about menu button status
-  bot.sendMessage(chatId, 'Note: The menu button should also be configured to open the WebApp. If it still shows "Menu", please use /forcebutton command and restart Telegram app.');
+  await ctx.reply('Note: The menu button should also be configured to open the WebApp. If it still shows "Menu", please use /forcebutton command and restart Telegram app.');
 });
 
 // Force reset the bot button (admin only)
-bot.onText(/\/forcebutton/, async (msg: TelegramBot.Message) => {
-  const chatId = msg.chat.id;
+bot.hears(/\/forcebutton/, async (ctx) => {
+  const msg = ctx.message;
+  if (!msg) return;
   const userId = msg.from?.id;
   
   if (!userId || !isAdmin(userId)) {
-    bot.sendMessage(chatId, 'Sorry, this command is only available for administrators.');
+    await ctx.reply('Sorry, this command is only available for administrators.');
     return;
   }
   
   try {
     // Get the current button configuration
-    const currentButton = await bot.getChatMenuButton({});
-    bot.sendMessage(chatId, `Current button configuration: ${JSON.stringify(currentButton)}`);
+    const currentButton = await bot.api.getChatMenuButton({});
+    await ctx.reply(`Current button configuration: ${JSON.stringify(currentButton)}`);
     
     // First remove button completely
-    await bot.setChatMenuButton({
+    await bot.api.setChatMenuButton({
       menu_button: {
         type: 'commands'
       }
     });
     
-    bot.sendMessage(chatId, 'Button removed. Now waiting 3 seconds before setting the new button...');
+    await ctx.reply('Button removed. Now waiting 3 seconds before setting the new button...');
     
     // Wait longer
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     // Set with a unique name for testing
     const webAppUrl = `${tunnelUrl || process.env.PUBLIC_URL || ''}/app`;
-    await bot.setChatMenuButton({
+    await bot.api.setChatMenuButton({
       menu_button: {
         type: 'web_app',
         text: 'App',
@@ -239,7 +240,7 @@ bot.onText(/\/forcebutton/, async (msg: TelegramBot.Message) => {
     
     // Also set button specifically for this user if they're the admin
     if (defaultAdminId && userId === defaultAdminId) {
-      await bot.setChatMenuButton({
+      await bot.api.setChatMenuButton({
         chat_id: userId,
         menu_button: {
           type: 'web_app',
@@ -249,10 +250,10 @@ bot.onText(/\/forcebutton/, async (msg: TelegramBot.Message) => {
       });
     }
     
-    bot.sendMessage(chatId, '✅ Button has been reset to "App". Please follow these steps to see the changes:\n\n1. Close Telegram completely (swipe away from recent apps)\n2. Reopen Telegram and return to this chat\n3. You should now see "App" instead of "Menu"');
+    await ctx.reply('✅ Button has been reset to "App". Please follow these steps to see the changes:\n\n1. Close Telegram completely (swipe away from recent apps)\n2. Reopen Telegram and return to this chat\n3. You should now see "App" instead of "Menu"');
     
     // Send an inline button as immediate alternative
-    bot.sendMessage(chatId, 'In the meantime, you can use this inline button to access the WebApp:', {
+    await ctx.reply('In the meantime, you can use this inline button to access the WebApp:', {
       reply_markup: {
         inline_keyboard: [
           [
@@ -266,13 +267,13 @@ bot.onText(/\/forcebutton/, async (msg: TelegramBot.Message) => {
     });
   } catch (error: any) {
     console.error('Error in force reset:', error);
-    bot.sendMessage(chatId, `Error: ${error.message}`);
+    await ctx.reply(`Error: ${error.message}`);
   }
 });
 
 // Add inline query handler for recommendations search
-bot.on('inline_query', async (query) => {
-  await handleInlineQuery(bot, query);
+bot.on('inline_query', async (ctx) => {
+  if (ctx.inlineQuery) await handleInlineQuery(bot, ctx.inlineQuery);
 });
 
 export default bot; 

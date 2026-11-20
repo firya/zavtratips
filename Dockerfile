@@ -1,39 +1,25 @@
-ARG WORKDIR=/app
-
-FROM node:22-alpine AS builder
-WORKDIR ${WORKDIR}
-
-# Copy package files and install dependencies
+FROM node:22-alpine AS build
+WORKDIR /app
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm ci
-
-# Copy the application code
 COPY . .
+RUN ./node_modules/.bin/prisma generate && npm test && npm run build && \
+    ./node_modules/.bin/esbuild server/index.ts --bundle --platform=node --packages=external --format=esm --target=node22 --outfile=server/production.mjs
 
-# Build the frontend
-RUN npm test && npm run build
-
-# Production stage
-FROM node:22-alpine
-WORKDIR ${WORKDIR}
-
-# Copy package files and install dependencies (including dev dependencies for tsx)
+FROM node:22-alpine AS dependencies
+WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+COPY prisma ./prisma
+RUN npm ci --omit=dev && ./node_modules/.bin/prisma generate
 
-# Copy prisma schema and generate client
-COPY prisma ./prisma/
-RUN npx prisma generate
-
-# Copy server code and environment files
-COPY server ./server
-COPY .env* ./
-
-# Copy built frontend from builder stage
-COPY --from=builder ${WORKDIR}/dist ./dist
-
-# Expose the port the app runs on
+FROM node:22-alpine
+WORKDIR /app
+RUN apk upgrade --no-cache && rm -rf /usr/local/lib/node_modules/npm /opt/yarn-*
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=dependencies /app/prisma ./prisma
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/server/production.mjs ./server/production.mjs
+COPY package.json ./
 EXPOSE 3000
-
-# Start the application with tsx to run TypeScript files
-CMD ["npx", "tsx", "server/index.ts"] 
+CMD ["node", "server/production.mjs"]

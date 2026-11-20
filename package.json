@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test": "tsx --test server/services/*.test.ts",
+    "test": "tsx --test server/services/*.test.ts server/bot/*.test.ts",
     "dev": "vite",
     "build": "vite build",
     "type-check": "tsc",
@@ -39,7 +39,6 @@
     "@types/express": "^5.0.1",
     "@types/localtunnel": "^2.0.4",
     "@types/node-cron": "^3.0.11",
-    "@types/node-telegram-bot-api": "^0.64.8",
     "axios": "^1.8.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
@@ -52,7 +51,7 @@
     "localtunnel": "^2.0.2",
     "lucide-react": "^0.344.0",
     "node-cron": "^3.0.3",
-    "node-telegram-bot-api": "^0.66.0",
+    "node-telegram-bot-api": "^2.4.0",
     "react": "^18.2.0",
     "react-day-picker": "^9.6.3",
     "react-dom": "^18.2.0",
@@ -63,7 +62,8 @@
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.24.2",
-    "zustand": "^4.5.1"
+    "zustand": "^4.5.1",
+    "prisma": "^6.5.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.16",
@@ -81,10 +81,20 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "nodemon": "^3.1.9",
     "postcss": "^8.4.35",
-    "prisma": "^6.5.0",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.19.3",
     "typescript": "^5.3.3",
-    "vite": "^5.1.4"
+    "vite": "^5.1.4",
+    "esbuild": "^0.25.0"
+  },
+  "overrides": {
+    "uuid@8": "^11.1.1",
+    "uuid@9": "^11.1.1",
+    "axios@0.21": "^0.34.0",
+    "valibot@1.0.0-beta.14": "^1.2.0",
+    "valibot@1": "^1.2.0",
+    "effect@3": "^3.22.1",
+    "deepmerge-ts@7": "^8.0.0",
+    "form-data@4": "^4.0.6"
   }
 }
